@@ -1,0 +1,956 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+/* Tailwind custom variant para modo oscuro: dark (&:is(.dark *)) */
+
+:root {
+
+  --fondo:        #16162E;  /* fondo general, azul-noche */
+
+  --fondo-panel:  #1E1B45;  /* seccion "Juegos Disponibles" */
+
+  --nav:          #241F4E;  /* barra superior */
+
+  --footer:       #2A2456;  /* bloque "Quienes Somos" */
+
+  --acento:       #5B3FD1;  /* botones "Ver Catalogo" */
+
+  --texto:        #FFFFFF;
+
+  --texto-suave:  #C9C4E8;  /* parrafo del footer */
+
+  --radio:        8px;      /* esquinas de imagenes y botones */
+
+  --gap:          20px;     /* separacion entre tarjetas */
+
+  --ancho-max:    1200px;
+
+  --background:        oklch(1 0 0);
+
+  --foreground:        oklch(0.145 0 0);
+
+  --card:        oklch(1 0 0);
+
+  --card-foreground:        oklch(0.145 0 0);
+
+  --popover:        oklch(1 0 0);
+
+  --popover-foreground:        oklch(0.145 0 0);
+
+  --primary:        oklch(0.205 0 0);
+
+  --primary-foreground:        oklch(0.985 0 0);
+
+  --secondary:        oklch(0.97 0 0);
+
+  --secondary-foreground:        oklch(0.205 0 0);
+
+  --muted:        oklch(0.97 0 0);
+
+  --muted-foreground:        oklch(0.556 0 0);
+
+  --accent:        oklch(0.97 0 0);
+
+  --accent-foreground:        oklch(0.205 0 0);
+
+  --destructive:        oklch(0.577 0.245 27.325);
+
+  --border:        oklch(0.922 0 0);
+
+  --input:        oklch(0.922 0 0);
+
+  --ring:        oklch(0.708 0 0);
+
+  --chart-1:        oklch(0.87 0 0);
+
+  --chart-2:        oklch(0.556 0 0);
+
+  --chart-3:        oklch(0.439 0 0);
+
+  --chart-4:        oklch(0.371 0 0);
+
+  --chart-5:        oklch(0.269 0 0);
+
+  --radius:        0.625rem;
+
+  --sidebar:        oklch(0.985 0 0);
+
+  --sidebar-foreground:        oklch(0.145 0 0);
+
+  --sidebar-primary:        oklch(0.205 0 0);
+
+  --sidebar-primary-foreground:        oklch(0.985 0 0);
+
+  --sidebar-accent:        oklch(0.97 0 0);
+
+  --sidebar-accent-foreground:        oklch(0.205 0 0);
+
+  --sidebar-border:        oklch(0.922 0 0);
+
+  --sidebar-ring:        oklch(0.708 0 0);
+
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+
+  background: var(--fondo);
+
+  color: var(--texto);
+
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  line-height: 1.5;
+
+}
+
+img { display: block; max-width: 100%; }
+
+.contenedor {
+
+  max-width: var(--ancho-max);
+
+  margin: 0 auto;
+
+  padding: 0 20px;
+
+}
+
+/* ---------- Navbar ---------- */
+
+.navbar {
+
+  background: var(--nav);
+
+  padding: 14px 0;
+
+}
+
+.navbar .contenedor {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 24px;
+
+}
+
+.navbar .logo { font-weight: 700; font-size: 18px; }
+
+.navbar nav { display: flex; gap: 24px; }
+
+.navbar nav a {
+
+  color: var(--texto-suave);
+
+  text-decoration: none;
+
+  font-size: 14px;
+
+}
+
+.navbar nav a:hover { color: var(--texto); }
+
+.navbar .carrito { font-size: 20px; cursor: pointer; }
+
+/* ---------- Seccion Juegos ---------- */
+
+.juegos {
+
+  background: var(--fondo-panel);
+
+  padding: 40px 0;
+
+}
+
+.juegos h2 {
+
+  text-align: center;
+
+  margin-bottom: 28px;
+
+  font-size: 24px;
+
+}
+
+
+
+.catalogo .grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+.catalogo .game-card img {
+  aspect-ratio: 5 / 7;      /* proporcion real de una carta TCG */
+  object-fit: contain;      /* muestra la carta completa, sin recortar el borde */
+  background: #0f0f22;      /* relleno detras de la carta */
+  display: block;
+}
+.catalogo .game-card a { text-decoration: none; color: inherit; }
+
+
+
+.catalogo-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
+}
+
+.catalogo-main {
+  min-width: 0;
+}
+
+.catalogo-sidebar {
+  background: var(--nav);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radio);
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  position: sticky;
+  top: 20px;
+}
+
+.catalogo-sidebar h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.catalogo .grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+.catalogo .game-card img {
+  aspect-ratio: 5 / 7;
+  object-fit: contain;
+  background: #0f0f22;
+  display: block;
+}
+.catalogo .game-card a {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.catalogo .game-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radio);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 16px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.catalogo .game-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(91, 63, 209, 0.75);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.22);
+}
+.catalogo .game-card a {
+  padding: 16px;
+  width: 100%;
+}
+.catalogo .game-card h3 {
+  font-size: 20px;
+  margin: 12px 0 10px;
+  line-height: 1.15;
+}
+.catalogo .game-card p {
+  margin: 0 16px 10px;
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+.catalogo .game-card p:first-of-type {
+  color: var(--texto);
+  font-size: 18px;
+  font-weight: 800;
+  margin-top: 12px;
+}
+.catalogo .game-card p:last-of-type {
+  font-size: 13px;
+}
+.catalogo .game-card button {
+  margin: 0 16px 20px;
+  width: calc(100% - 32px);
+  background: linear-gradient(135deg, #6d4eff 0%, #4c2cc8 100%);
+  color: var(--texto);
+  border: none;
+  border-radius: 999px;
+  padding: 14px 0;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.catalogo .game-card button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(91, 63, 209, 0.25);
+}
+.catalogo .game-card a:hover h3 {
+  color: var(--acento);
+}
+
+/* ---------- Detalle de carta ---------- */
+.detalle-carta {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  padding: 32px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radio);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+.detalle-carta > img {
+  width: 320px;
+  max-width: 100%;
+  border-radius: var(--radio);
+  background: #0f0f22;
+}
+.detalle-info {
+  flex: 1;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.detalle-info h2 {
+  font-size: 32px;
+  margin: 0;
+}
+.detalle-precio {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 8px 0;
+  color: var(--acento);
+}
+.detalle-info p {
+  color: var(--texto-suave);
+  margin: 0;
+}
+.detalle-info button {
+  background: var(--acento);
+  color: var(--texto);
+  border: none;
+  border-radius: var(--radio);
+  padding: 14px 22px;
+  cursor: pointer;
+  font-size: 15px;
+  margin: 12px 0;
+  width: fit-content;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.detalle-info button:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.detalle-info button:hover {
+  filter: brightness(1.05);
+}
+
+
+
+.filtro-bloque + .filtro-bloque {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.filtro-bloque label {
+  display: block;
+  font-size: 13px;
+  color: var(--texto-suave);
+  margin-bottom: 8px;
+}
+
+.filtro-select,
+.filtro-range {
+  width: 100%;
+}
+
+.filtro-select {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--texto);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.filtro-range {
+  accent-color: var(--acento);
+}
+
+.filtro-valor {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.filtro-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  
+}
+
+.filtro-check input {
+  width: auto;
+  margin: 0 10px 0 0;
+  transform: translateY(2px);
+  accent-color: var(--acento);
+}
+
+.grid {
+
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+  gap: var(--gap);
+
+}
+
+.stock-text {
+  font-size: 12px;
+  color: var(--texto-suave);
+  padding: 0 12px;
+}
+
+.sin-resultados {
+  grid-column: 1 / -1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: var(--radio);
+  padding: 24px;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+@media (max-width: 900px) {
+  .catalogo-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogo-sidebar {
+    position: static;
+  }
+}
+
+/* ---------- GameCard ---------- */
+
+.game-card {
+
+  background: var(--nav);
+
+  border-radius: var(--radio);
+
+  overflow: hidden;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+
+  display: flex;
+
+  flex-direction: column;
+
+}
+
+.game-card img {
+
+  width: 100%;
+
+  aspect-ratio: 3 / 4;
+
+  object-fit: cover;
+
+}
+
+.game-card h3 {
+
+  font-size: 15px;
+
+  padding: 12px 12px 0;
+
+  text-align: center;
+
+}
+
+.game-card a {
+
+  width: 100%;
+
+  display: flex;
+
+  justify-content: center;
+
+}
+
+.game-card button {
+
+  margin: 12px;
+
+  background: var(--acento);
+
+  color: var(--texto);
+
+  border: none;
+
+  border-radius: var(--radio);
+
+  padding: 10px 18px;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  min-width: 160px;
+
+}
+
+.game-card button:hover { filter: brightness(1.1); }
+
+/* ---------- Banner (imagen de fondo, texto encima) ---------- */
+
+.banner {
+
+  width: 100%;
+
+  min-height: 300px;
+
+  background-size: cover;
+
+  background-position: center;
+
+  background-repeat: no-repeat;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 8%;
+
+}
+
+.banner.derecha { justify-content: flex-end; text-align: right; }
+
+.banner-contenido { max-width: 45%; }
+
+.banner-etiqueta {
+
+  display: block;
+
+  color: #E8A33D;
+
+  font-size: 12px;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+
+  margin-bottom: 6px;
+
+}
+
+.banner h2 {
+
+  font-size: 34px;
+
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+
+}
+
+/* ---------- Seccion destacada (patron Capsule Corp + carta) ---------- */
+
+.destacada {
+
+  position: relative;
+
+  isolation: isolate;
+
+  background-color: var(--fondo);
+
+  padding: 56px 0;
+
+  overflow: hidden;
+
+}
+
+.destacada::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background-image: url("/img/patron-logo.png");
+
+  background-size: cover;
+
+  background-position: center;
+
+  opacity: 0.18;
+
+  z-index: -1;
+
+}
+
+.destacada-inner {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 40px;
+
+}
+
+.destacada h2 {
+
+  font-size: 32px;
+
+  max-width: 45%;
+
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+
+}
+
+.carta-destacada { text-align: center; margin: 0; }
+
+.carta-destacada img {
+
+  width: 240px;
+
+  border-radius: var(--radio);
+
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+
+}
+
+.carta-destacada figcaption {
+
+  margin-top: 12px;
+
+  background: var(--acento);
+
+  color: var(--texto);
+
+  display: inline-block;
+
+  padding: 6px 18px;
+
+  border-radius: var(--radio);
+
+  font-size: 14px;
+
+}
+
+
+/* ---------- Footer ---------- */
+
+.footer {
+
+  background: var(--footer);
+
+  padding: 40px 0;
+
+}
+
+.footer h3 { margin-bottom: 12px; }
+
+.footer p { color: var(--texto-suave); font-size: 14px; margin-bottom: 6px; }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 720px) {
+
+  .banner, .banner.derecha { flex-direction: column; }
+
+  .navbar nav { display: none; }
+
+  .destacada-inner { flex-direction: column; text-align: center; }
+
+  .destacada h2 { max-width: 100%; }
+
+}
+
+:root inline {
+
+  --font-heading:        var(--font-sans);
+
+  --font-sans:        'Geist Variable', sans-serif;
+
+  --color-sidebar-ring:        var(--sidebar-ring);
+
+  --color-sidebar-border:        var(--sidebar-border);
+
+  --color-sidebar-accent-foreground:        var(--sidebar-accent-foreground);
+
+  --color-sidebar-accent:        var(--sidebar-accent);
+
+  --color-sidebar-primary-foreground:        var(--sidebar-primary-foreground);
+
+  --color-sidebar-primary:        var(--sidebar-primary);
+
+  --color-sidebar-foreground:        var(--sidebar-foreground);
+
+  --color-sidebar:        var(--sidebar);
+
+  --color-chart-5:        var(--chart-5);
+
+  --color-chart-4:        var(--chart-4);
+
+  --color-chart-3:        var(--chart-3);
+
+  --color-chart-2:        var(--chart-2);
+
+  --color-chart-1:        var(--chart-1);
+
+  --color-ring:        var(--ring);
+
+  --color-input:        var(--input);
+
+  --color-border:        var(--border);
+
+  --color-destructive:        var(--destructive);
+
+  --color-accent-foreground:        var(--accent-foreground);
+
+  --color-accent:        var(--accent);
+
+  --color-muted-foreground:        var(--muted-foreground);
+
+  --color-muted:        var(--muted);
+
+  --color-secondary-foreground:        var(--secondary-foreground);
+
+  --color-secondary:        var(--secondary);
+
+  --color-primary-foreground:        var(--primary-foreground);
+
+  --color-primary:        var(--primary);
+
+  --color-popover-foreground:        var(--popover-foreground);
+
+  --color-popover:        var(--popover);
+
+  --color-card-foreground:        var(--card-foreground);
+
+  --color-card:        var(--card);
+
+  --color-foreground:        var(--foreground);
+
+  --color-background:        var(--background);
+
+  --radius-sm:        calc(var(--radius) * 0.6);
+
+  --radius-md:        calc(var(--radius) * 0.8);
+
+  --radius-lg:        var(--radius);
+
+  --radius-xl:        calc(var(--radius) * 1.4);
+
+  --radius-2xl:        calc(var(--radius) * 1.8);
+
+  --radius-3xl:        calc(var(--radius) * 2.2);
+
+  --radius-4xl:        calc(var(--radius) * 2.6);
+
+}
+
+.dark {
+
+  --background:        oklch(0.145 0 0);
+
+  --foreground:        oklch(0.985 0 0);
+
+  --card:        oklch(0.205 0 0);
+
+  --card-foreground:        oklch(0.985 0 0);
+
+  --popover:        oklch(0.205 0 0);
+
+  --popover-foreground:        oklch(0.985 0 0);
+
+  --primary:        oklch(0.922 0 0);
+
+  --primary-foreground:        oklch(0.205 0 0);
+
+  --secondary:        oklch(0.269 0 0);
+
+  --secondary-foreground:        oklch(0.985 0 0);
+
+  --muted:        oklch(0.269 0 0);
+
+  --muted-foreground:        oklch(0.708 0 0);
+
+  --accent:        oklch(0.269 0 0);
+
+  --accent-foreground:        oklch(0.985 0 0);
+
+  --destructive:        oklch(0.704 0.191 22.216);
+
+  --border:        oklch(1 0 0 / 10%);
+
+  --input:        oklch(1 0 0 / 15%);
+
+  --ring:        oklch(0.556 0 0);
+
+  --chart-1:        oklch(0.87 0 0);
+
+  --chart-2:        oklch(0.556 0 0);
+
+  --chart-3:        oklch(0.439 0 0);
+
+  --chart-4:        oklch(0.371 0 0);
+
+  --chart-5:        oklch(0.269 0 0);
+
+  --sidebar:        oklch(0.205 0 0);
+
+  --sidebar-foreground:        oklch(0.985 0 0);
+
+  --sidebar-primary:        oklch(0.488 0.243 264.376);
+
+  --sidebar-primary-foreground:        oklch(0.985 0 0);
+
+  --sidebar-accent:        oklch(0.269 0 0);
+
+  --sidebar-accent-foreground:        oklch(0.985 0 0);
+
+  --sidebar-border:        oklch(1 0 0 / 10%);
+
+  --sidebar-ring:        oklch(0.556 0 0);
+
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: rgb(from var(--ring) r g b / 50%);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+  html {
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* ---------- Agregar carta (admin) ---------- */
+.agregar-carta { padding: 32px 20px; }
+.agregar-carta-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+.agregar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.agregar-print-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.agregar-buscador { display: flex; gap: 10px; margin: 16px 0; flex-wrap: wrap; }
+.agregar-buscador input { flex: 1; min-width: 220px; }
+.agregar-carta input,
+.agregar-carta select {
+  background: var(--nav);
+  color: var(--texto);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radio);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.agregar-carta button {
+  background: var(--acento);
+  color: var(--texto);
+  border: none;
+  border-radius: var(--radio);
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.agregar-carta button:disabled { opacity: 0.6; cursor: default; }
+.agregar-preview {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.agregar-preview > img { width: 240px; max-width: 100%; border-radius: var(--radio); }
+.agregar-form { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
+.agregar-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+.agregar-prints .grid,
+.agregar-print-list .grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.agregar-mensaje { margin-top: 16px; font-weight: 600; }
+
+@media (max-width: 900px) {
+  .agregar-carta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.agregar-accesorio {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radio);
+}
+
+.accesorio-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.accesorio-row label,
+.agregar-accesorio > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.accesorio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+@media (max-width: 760px) {
+  .accesorio-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+
