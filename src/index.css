@@ -915,42 +915,4 @@ img { display: block; max-width: 100%; }
   }
 }
 
-.agregar-accesorio {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radio);
-}
-
-.accesorio-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.accesorio-row label,
-.agregar-accesorio > label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--texto-suave);
-}
-
-.accesorio-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-@media (max-width: 760px) {
-  .accesorio-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 

@@ -3,9 +3,8 @@ import Home from "./pages/Home.jsx";
 import Catalogo from "./pages/Catalogo.jsx";
 import { Routes, Route } from "react-router-dom";
 import { useState } from "react";
-import AgregarCarta from "./pages/AgregarCarta.jsx";
+import  AgregarCarta  from "./pages/AgregarCarta.jsx";
 import DetalleCarta from "./pages/DetalleCarta.jsx";
-import Accesorios from "./pages/Accesorios.jsx";
 
 
 export default function App() {
@@ -20,9 +19,7 @@ export default function App() {
         <Route path="/" element={<Home onAgregar={agregar} />} />
         <Route path="/catalogo/:juegoId" element={<Catalogo onAgregar={agregar} />} />
         <Route path="/carta/:cartaId" element={<DetalleCarta onAgregar={agregar} />} />
-        <Route path="/accesorios" element={<Accesorios />} />
         <Route path="/admin/agregar" element={<AgregarCarta />} />
-
       </Routes>
     </>
   );

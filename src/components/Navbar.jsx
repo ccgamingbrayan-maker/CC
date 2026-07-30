@@ -10,7 +10,6 @@ export default function Navbar({total}) {
           <Link to="/">Catálogo</Link>
           <Link to="/catalogo/5">Pre-Ventas</Link>
           <Link to="/admin/agregar">Agregar carta</Link>
-          <Link to="/accesorios">Accesorios</Link>
         </nav>
         <span className="carrito" aria-label="Carrito">🛒 {total}</span>
       </div>

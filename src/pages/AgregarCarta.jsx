@@ -10,6 +10,7 @@ import {
 } from "../lib/onepiece.js";
 import { supabase } from "../lib/supabase.js";
 import { juegos } from "../data/juegos.js";
+import CarouselStore from "../components/CarouselStore.jsx";
 
 export default function AgregarCarta() {
   const [nombre, setNombre] = useState("");
@@ -25,16 +26,7 @@ export default function AgregarCarta() {
   const [mensaje, setMensaje] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [modoAgregarAccesorio, setModoAgregarAccesorio] = useState(false);
-  const [tituloAccesorio, setTituloAccesorio] = useState("");
-  const [imagenUrlAccesorio, setImagenUrlAccesorio] = useState("");
-  const [archivoAccesorio, setArchivoAccesorio] = useState(null);
-  const [precioAccesorio, setPrecioAccesorio] = useState("");
-  const [stockAccesorio, setStockAccesorio] = useState("");
-  const [colorAccesorio, setColorAccesorio] = useState("");
-  const [detallesAccesorio, setDetallesAccesorio] = useState("");
-  const [mensajeAccesorio, setMensajeAccesorio] = useState("");
-  const [guardandoAccesorio, setGuardandoAccesorio] = useState(false);
+  const isCarrusel = Number(juegoId) === 6;
 
   async function buscar() {
     if (!nombre) return;
@@ -62,7 +54,12 @@ export default function AgregarCarta() {
   }
 
   async function guardar() {
-    if (!datosApi || !precio || !stock) {
+    if (!datosApi) {
+      setMensaje("Selecciona una carta antes de guardar.");
+      return;
+    }
+
+    if (!isCarrusel && (!precio || !stock)) {
       setMensaje("Completa precio y stock antes de guardar.");
       return;
     }
@@ -79,15 +76,15 @@ export default function AgregarCarta() {
     }
 
     const juegoToSave = userSelectedJuego
-      ? Number(juegoId)
+      ? (isCarrusel ? 6 : Number(juegoId))
       : (mapFuenteToJuego(fuente) ?? Number(juegoId));
 
     const { error } = await supabase.from("cartas").insert({
       juego_id: Number(juegoToSave),
       nombre: datosApi.nombre,
       imagen: datosApi.imagen,
-      precio: Number(precio),
-      stock: Number(stock),
+      precio: isCarrusel ? null : precio ? Number(precio) : null,
+      stock: isCarrusel ? null : stock ? Number(stock) : null,
     });
     setGuardando(false);
 
@@ -104,63 +101,7 @@ export default function AgregarCarta() {
       setUserSelectedJuego(false);
       setJuegoId(4);
     }
-  }
-
-  async function guardarAccesorio() {
-    if (!tituloAccesorio || (!imagenUrlAccesorio && !archivoAccesorio) || !precioAccesorio || !stockAccesorio || !colorAccesorio) {
-      setMensajeAccesorio("Completa todos los campos requeridos: título, imagen, precio, stock y color.");
-      return;
     }
-
-    setGuardandoAccesorio(true);
-    setMensajeAccesorio("");
-
-    try {
-      let imagenFinal = imagenUrlAccesorio;
-
-      if (archivoAccesorio) {
-        const nombreArchivo = `${Date.now()}_${archivoAccesorio.name}`;
-        const path = `accesorios/${nombreArchivo}`;
-        const { error: uploadError } = await supabase.storage.from("accesorios").upload(path, archivoAccesorio);
-        if (uploadError) throw uploadError;
-
-        const { data: urlData, error: urlError } = supabase.storage.from("accesorios").getPublicUrl(path);
-        if (urlError) throw urlError;
-        imagenFinal = urlData.publicUrl;
-      }
-
-      const { error } = await supabase.from("accesorios").insert({
-        titulo: tituloAccesorio,
-        imagen: imagenFinal,
-        precio: Number(precioAccesorio),
-        stock: Number(stockAccesorio),
-        color: colorAccesorio,
-        detalles: detallesAccesorio,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      setMensajeAccesorio(`Accesorio "${tituloAccesorio}" agregado con éxito.`);
-      setTituloAccesorio("");
-      setImagenUrlAccesorio("");
-      setArchivoAccesorio(null);
-      setPrecioAccesorio("");
-      setStockAccesorio("");
-      setColorAccesorio("");
-      setDetallesAccesorio("");
-      setModoAgregarAccesorio(false);
-    } catch (error) {
-      console.error(error);
-      const bucketMessage = error?.message?.includes("Bucket not found")
-        ? "No se encontró el bucket de almacenamiento. Revisa la configuración del bucket en Supabase o usa el nombre de bucket correcto."
-        : "Error al guardar el accesorio: " + error.message;
-      setMensajeAccesorio(bucketMessage);
-    } finally {
-      setGuardandoAccesorio(false);
-    }
-  }
 
   return (
     <section className="juegos">
@@ -322,28 +263,45 @@ export default function AgregarCarta() {
                       {juegos.map((j) => (
                         <option key={j.id} value={j.id}>{j.nombre}</option>
                       ))}
+                      <option value={6}>Carrusel</option>
                     </select>
                   </label>
 
-                  <label>
-                    Precio (COP)
-                    <input
-                      type="number"
-                      placeholder="15000"
-                      value={precio}
-                      onChange={(e) => setPrecio(e.target.value)}
-                    />
-                  </label>
+                  {isCarrusel && (
+                    <div style={{ marginTop: 12 }}>
+                      <CarouselStore
+                        onPick={(c) => {
+                          setDatosApi({ nombre: c.nombre, imagen: c.imagen, set: c.set });
+                          setFuente("carrusel");
+                          setUserSelectedJuego(true);
+                        }}
+                      />
+                    </div>
+                  )}
 
-                  <label>
-                    Stock
-                    <input
-                      type="number"
-                      placeholder="10"
-                      value={stock}
-                      onChange={(e) => setStock(e.target.value)}
-                    />
-                  </label>
+                  {!isCarrusel && (
+                    <>
+                      <label>
+                        Precio (COP)
+                        <input
+                          type="number"
+                          placeholder="15000"
+                          value={precio}
+                          onChange={(e) => setPrecio(e.target.value)}
+                        />
+                      </label>
+
+                      <label>
+                        Stock
+                        <input
+                          type="number"
+                          placeholder="10"
+                          value={stock}
+                          onChange={(e) => setStock(e.target.value)}
+                        />
+                      </label>
+                    </>
+                  )}
 
                   <button onClick={guardar} disabled={guardando}>
                     {guardando ? "Guardando…" : "Guardar en mi tienda"}
@@ -351,94 +309,6 @@ export default function AgregarCarta() {
                 </div>
               </div>
             )}
-
-            <div style={{ marginTop: 24 }}>
-              <button onClick={() => setModoAgregarAccesorio((activo) => !activo)}>
-                {modoAgregarAccesorio ? "Cancelar agregar accesorio" : "Agregar accesorio"}
-              </button>
-
-              {modoAgregarAccesorio && (
-                <div className="agregar-accesorio" style={{ marginTop: 16 }}>
-                  <div className="accesorio-row">
-                    <label>
-                      Título
-                      <input
-                        value={tituloAccesorio}
-                        onChange={(e) => setTituloAccesorio(e.target.value)}
-                      />
-                    </label>
-
-                    <label>
-                      Precio
-                      <input
-                        type="number"
-                        value={precioAccesorio}
-                        onChange={(e) => setPrecioAccesorio(e.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="accesorio-row">
-                    <label>
-                      Imagen (URL)
-                      <input
-                        value={imagenUrlAccesorio}
-                        onChange={(e) => setImagenUrlAccesorio(e.target.value)}
-                      />
-                    </label>
-
-                    <label>
-                      Stock
-                      <input
-                        type="number"
-                        value={stockAccesorio}
-                        onChange={(e) => setStockAccesorio(e.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="accesorio-row">
-                    <label>
-                      Color
-                      <input
-                        value={colorAccesorio}
-                        onChange={(e) => setColorAccesorio(e.target.value)}
-                      />
-                    </label>
-
-                    <label>
-                      O subir archivo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setArchivoAccesorio(e.target.files?.[0] ?? null)}
-                      />
-                    </label>
-                  </div>
-
-                  <label>
-                    Detalles
-                    <textarea
-                      value={detallesAccesorio}
-                      onChange={(e) => setDetallesAccesorio(e.target.value)}
-                    />
-                  </label>
-
-                  <div className="accesorio-actions">
-                    <button onClick={guardarAccesorio} disabled={guardandoAccesorio}>
-                      {guardandoAccesorio ? "Guardando…" : "Guardar accesorio"}
-                    </button>
-                    <button type="button" onClick={() => setModoAgregarAccesorio(false)}>
-                      Cancelar
-                    </button>
-                  </div>
-
-                  {mensajeAccesorio && (
-                    <p className="agregar-mensaje">{mensajeAccesorio}</p>
-                  )}
-                </div>
-              )}
-            </div>
 
             {mensaje && <p className="agregar-mensaje">{mensaje}</p>}
           </div>
