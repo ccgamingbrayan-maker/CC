@@ -11,8 +11,10 @@ import {
 import { supabase } from "../lib/supabase.js";
 import { juegos } from "../data/juegos.js";
 import CarouselStore from "../components/CarouselStore.jsx";
+import AgregarAccesorio from "./AgregarAccesorio.jsx";
 
 export default function AgregarCarta() {
+  const [pestana, setPestana] = useState("cartas");
   const [nombre, setNombre] = useState("");
   const [datosApi, setDatosApi] = useState(null);
   const [prints, setPrints] = useState([]);
@@ -106,7 +108,27 @@ export default function AgregarCarta() {
   return (
     <section className="juegos">
       <div className="contenedor agregar-carta">
-        <h2>Agregar carta (admin)</h2>
+        <h2>Agregar a la tienda (admin)</h2>
+
+        <div className="admin-tabs">
+          <button
+            className={`admin-tab ${pestana === "cartas" ? "active" : ""}`}
+            onClick={() => setPestana("cartas")}
+          >
+            Cartas
+          </button>
+          <button
+            className={`admin-tab ${pestana === "accesorios" ? "active" : ""}`}
+            onClick={() => setPestana("accesorios")}
+          >
+            Accesorios
+          </button>
+        </div>
+
+        {pestana === "accesorios" ? (
+          <AgregarAccesorio />
+        ) : (
+        <>
         <p style={{ color: "var(--texto-suave)" }}>
           Busca por nombre en Scryfall, pon tu precio y stock, y se guarda en Supabase.
         </p>
@@ -357,9 +379,13 @@ export default function AgregarCarta() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </section>
   );
 }
+
+
 
 

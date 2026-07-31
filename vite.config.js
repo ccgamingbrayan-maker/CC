@@ -10,4 +10,15 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+     
+      "/tcgcsv": {
+        target: "https://tcgcsv.com",
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/tcgcsv/, ""),
+      },
+    },
+  },
 });
+
