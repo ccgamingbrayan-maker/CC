@@ -90,9 +90,15 @@ export default function DetalleCarta({ onAgregar }) {
 
         <div className="detalle-info">
           <h2>{carta.nombre}</h2>
-          <p className="detalle-precio">${carta.precio.toLocaleString("es-CO")} COP</p>
-          <p style={{ color: "var(--texto-suave)" }}>Stock: {carta.stock}</p>
-          <button onClick={onAgregar}>Agregar al carrito</button>
+          {carta.precio != null ? (
+            <>
+              <p className="detalle-precio">${carta.precio.toLocaleString("es-CO")} COP</p>
+              <p style={{ color: "var(--texto-suave)" }}>Stock: {carta.stock}</p>
+              <button onClick={onAgregar}>Agregar al carrito</button>
+            </>
+          ) : (
+            <p style={{ color: "var(--texto-suave)" }}>Carta de exhibición, no disponible para la venta.</p>
+          )}
 
           <BuyThisCard compra={compra} />
         </div>
