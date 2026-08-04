@@ -38,6 +38,9 @@ export function AuthProvider({ children }) {
     login(email, password) {
       return supabase.auth.signInWithPassword({ email, password });
     },
+    registro(email, password, datos = {}) {
+      return supabase.auth.signUp({ email, password, options: { data: datos } });
+    },
     logout() {
       return supabase.auth.signOut();
     },
