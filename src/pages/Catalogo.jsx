@@ -16,8 +16,8 @@ export default function Catalogo({ onAgregar }) {
   const [busqueda, setBusqueda] = useState("");
   const [expansionSel, setExpansionSel] = useState("");
   const [condicionSel, setCondicionSel] = useState("");
-  const [precioMin, setPrecioMin] = useState("");
-  const [precioMax, setPrecioMax] = useState("");
+  const [precioMin, setPrecioMin] = useState(0);
+  const [precioMax, setPrecioMax] = useState(0);
   const [expansiones, setExpansiones] = useState([]);
 
   useEffect(() => {
@@ -40,8 +40,8 @@ export default function Catalogo({ onAgregar }) {
     setBusqueda("");
     setExpansionSel("");
     setCondicionSel("");
-    setPrecioMin("");
-    setPrecioMax("");
+    setPrecioMin(0);
+    setPrecioMax(0);
     listarExpansiones(juegoId).then(setExpansiones);
   }, [juegoId]);                            // se vuelve a ejecutar si cambias de juego
 
@@ -59,22 +59,33 @@ export default function Catalogo({ onAgregar }) {
     return [...valores].sort((a, b) => a.localeCompare(b));
   }, [cartas]);
 
+  // Techo del slider: el precio más alto del catálogo, redondeado hacia arriba.
+  const maxPrecio = useMemo(() => {
+    const max = cartas.reduce((m, c) => Math.max(m, Number(c.precio ?? 0)), 0);
+    return Math.max(1000, Math.ceil(max / 1000) * 1000);
+  }, [cartas]);
+
+  // El tope del rango siempre sigue al máximo real del catálogo.
+  useEffect(() => {
+    setPrecioMax(maxPrecio);
+  }, [maxPrecio]);
+
   const filtradas = useMemo(() => {
     return cartas.filter((c) => {
       if (busqueda && !c.nombre.toLowerCase().includes(busqueda.trim().toLowerCase())) return false;
       if (expansionSel && (c.expansion ?? "") !== expansionSel) return false;
       if (condicionSel && (c.condicion ?? "") !== condicionSel) return false;
       const p = Number(c.precio ?? 0);
-      if (precioMin !== "" && p < Number(precioMin)) return false;
-      if (precioMax !== "" && p > Number(precioMax)) return false;
+      if (precioMin > 0 && p < precioMin) return false;
+      if (precioMax < maxPrecio && p > precioMax) return false;
       return true;
     });
-  }, [cartas, busqueda, expansionSel, condicionSel, precioMin, precioMax]);
+  }, [cartas, busqueda, expansionSel, condicionSel, precioMin, precioMax, maxPrecio]);
 
   if (cargando) return <Cargando texto="Cargando cartas…" />;
 
   const hayFiltros =
-    busqueda || expansionSel || condicionSel || precioMin !== "" || precioMax !== "";
+    busqueda || expansionSel || condicionSel || precioMin > 0 || precioMax < maxPrecio;
 
   return (
     <section className="juegos catalogo">
@@ -100,38 +111,59 @@ export default function Catalogo({ onAgregar }) {
               <option key={x} value={x}>{x}</option>
             ))}
           </select>
-          <div className="filtro-precio">
-            <input
-              type="number"
-              min="0"
-              placeholder="Precio mín"
-              value={precioMin}
-              onChange={(e) => setPrecioMin(e.target.value)}
-            />
-            <span>–</span>
-            <input
-              type="number"
-              min="0"
-              placeholder="Precio máx"
-              value={precioMax}
-              onChange={(e) => setPrecioMax(e.target.value)}
-            />
+          <div className="filtro-slider">
+            <div className="filtro-slider-info">
+              <span>Precio</span>
+              <span>
+                ${precioMin.toLocaleString("es-CO")} – ${precioMax.toLocaleString("es-CO")}
+              </span>
+            </div>
+            <div className="filtro-slider-pistas">
+              <div
+                className="filtro-slider-relleno"
+                style={{
+                  left: `${(precioMin / maxPrecio) * 100}%`,
+                  right: `${100 - (precioMax / maxPrecio) * 100}%`,
+                }}
+              />
+              <input
+                type="range"
+                min={0}
+                max={maxPrecio}
+                step={100}
+                value={precioMin}
+                onChange={(e) =>
+                  setPrecioMin(Math.min(Number(e.target.value), precioMax))
+                }
+                aria-label="Precio mínimo"
+              />
+              <input
+                type="range"
+                min={0}
+                max={maxPrecio}
+                step={100}
+                value={precioMax}
+                onChange={(e) =>
+                  setPrecioMax(Math.max(Number(e.target.value), precioMin))
+                }
+                aria-label="Precio máximo"
+              />
+            </div>
           </div>
-          {hayFiltros && (
-            <button
-              type="button"
-              className="filtro-limpiar"
-              onClick={() => {
-                setBusqueda("");
-                setExpansionSel("");
-                setCondicionSel("");
-                setPrecioMin("");
-                setPrecioMax("");
-              }}
-            >
-              Limpiar
-            </button>
-          )}
+          <button
+            type="button"
+            className={`filtro-limpiar${hayFiltros ? "" : " oculto"}`}
+            onClick={() => {
+              setBusqueda("");
+              setExpansionSel("");
+              setCondicionSel("");
+              setPrecioMin(0);
+              setPrecioMax(maxPrecio);
+            }}
+            tabIndex={hayFiltros ? 0 : -1}
+          >
+            Limpiar
+          </button>
         </div>
 
         {filtradas.length === 0 && (

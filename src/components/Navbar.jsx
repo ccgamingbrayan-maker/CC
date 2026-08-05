@@ -27,22 +27,17 @@ export default function Navbar({ total }) {
   }
 
   return (
-    <header className="navbar">
-      <div className="navbar-busqueda">
-        <div className="contenedor">
+    <nav className="navbar">
+      <div className="navbar-inner">
+        {/* Logo */}
+        <Link to="/" className="logo">CapsuleCorp Gaming</Link>
+
+        {/* Barra de búsqueda global */}
+        <div className="navbar-busqueda">
           <BuscadorNav />
         </div>
-      </div>
 
-      <div className="contenedor navbar-fila">
-        <Link to="/" className="logo">CapsuleCorp Gaming</Link>
-        <nav>
-          <Link to="/">Catálogo</Link>
-          <Link to="/accesorios">Accesorios</Link>
-          <Link to="/catalogo/5">Pre-Ventas</Link>
-          {esAdmin && <Link to="/admin/agregar">Agregar</Link>}
-        </nav>
-
+        {/* Sección usuario/carrito */}
         <div className="navbar-iconos">
           {user && (
             <span className="bienvenida">
@@ -98,6 +93,16 @@ export default function Navbar({ total }) {
           </span>
         </div>
       </div>
-    </header>
+
+      {/* Fila de navegación (estilo TCGplayer) */}
+      <div className="navbar-subfila">
+        <ul className="nav-links">
+          <li><Link to="/">Catálogo</Link></li>
+          <li><Link to="/accesorios">Accesorios</Link></li>
+          <li><Link to="/catalogo/5">Pre-Ventas</Link></li>
+          {esAdmin && <li><Link to="/admin/agregar">Agregar</Link></li>}
+        </ul>
+      </div>
+    </nav>
   );
 }
