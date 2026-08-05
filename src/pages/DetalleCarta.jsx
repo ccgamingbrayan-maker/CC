@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
 import BuyThisCard from "../components/BuyThisCard.jsx";
+import Cargando from "../components/Cargando.jsx";
 import CarruselRelacionados from "../components/CarruselRelacionados.jsx";
 
 export default function DetalleCarta({ onAgregar }) {
@@ -80,7 +81,7 @@ export default function DetalleCarta({ onAgregar }) {
     cargar();
   }, [cartaId]);
 
-  if (cargando) return <p className="contenedor">Cargando carta…</p>;
+  if (cargando) return <Cargando texto="Cargando carta…" />;
   if (!carta) return <p className="contenedor">Carta no encontrada.</p>;
 
   return (
@@ -93,11 +94,11 @@ export default function DetalleCarta({ onAgregar }) {
           {carta.precio != null ? (
             <>
               <p className="detalle-precio">${carta.precio.toLocaleString("es-CO")} COP</p>
-              <p style={{ color: "var(--texto-suave)" }}>Stock: {carta.stock}</p>
+              <p className="detalle-stock">Stock: {carta.stock}</p>
               <button onClick={onAgregar}>Agregar al carrito</button>
             </>
           ) : (
-            <p style={{ color: "var(--texto-suave)" }}>Carta de exhibición, no disponible para la venta.</p>
+            <p className="detalle-suave">Carta de exhibición, no disponible para la venta.</p>
           )}
 
           <BuyThisCard compra={compra} />

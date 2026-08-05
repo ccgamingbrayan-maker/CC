@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
+import Cargando from "../components/Cargando.jsx";
 
 export default function Accesorios({ onAgregar }) {
   const [accesorios, setAccesorios] = useState([]);
@@ -20,7 +21,7 @@ export default function Accesorios({ onAgregar }) {
     traerAccesorios();
   }, []);
 
-  if (cargando) return <p className="contenedor">Cargando accesorios…</p>;
+  if (cargando) return <Cargando texto="Cargando accesorios…" />;
 
   return (
     <section className="juegos catalogo">

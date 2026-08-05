@@ -890,7 +890,8 @@ img { display: block; max-width: 100%; }
 /* ---------- Detalle de carta ---------- */
 .detalle-carta {
   display: flex;
-  gap: 32px;
+  gap: 40px;
+  align-items: flex-start;
   flex-wrap: wrap;
   padding: 32px 20px;
   background: rgba(255, 255, 255, 0.03);
@@ -903,6 +904,7 @@ img { display: block; max-width: 100%; }
   max-width: 100%;
   border-radius: var(--radio);
   background: #0f0f22;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 .detalle-info {
   flex: 1;
@@ -921,15 +923,24 @@ img { display: block; max-width: 100%; }
   margin: 8px 0;
   color: var(--acento);
 }
+.detalle-stock {
+  display: inline-block;
+  width: fit-content;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  font-size: 13px;
+}
 .detalle-info p {
   color: var(--texto-suave);
   margin: 0;
 }
 .detalle-info button {
-  background: var(--acento);
-  color: var(--texto);
+  background: linear-gradient(135deg, #6d4eff 0%, #4c2cc8 100%);
+  color: #fff;
   border: none;
-  border-radius: var(--radio);
+  border-radius: 999px;
   padding: 14px 22px;
   cursor: pointer;
   font-size: 15px;
@@ -938,13 +949,78 @@ img { display: block; max-width: 100%; }
   transition: filter 0.2s ease, transform 0.2s ease;
 }
 .detalle-info button:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.08);
   transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(91, 63, 209, 0.30);
 }
 
-.detalle-info button:hover {
-  filter: brightness(1.05);
+/* ---------- Loader / spinner de carga ---------- */
+.cargando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 320px;
+  width: 100%;
+  padding: 40px 20px;
 }
+.cargando-spinner {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.10);
+  border-top-color: var(--acento);
+  animation: girar 0.8s linear infinite;
+}
+.cargando p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Compra externa (marketplaces) ---------- */
+.buy-card {
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radio);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 16px 18px;
+}
+.buy-card h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--texto-suave);
+}
+.buy-lista { display: flex; flex-direction: column; }
+.buy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 6px;
+  text-decoration: none;
+  color: var(--texto);
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  transition: background 0.15s;
+}
+.buy-row:last-child { border-bottom: none; }
+.buy-row:hover { background: rgba(255, 255, 255, 0.04); }
+.buy-tienda { font-weight: 600; }
+.buy-precio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--acento);
+}
+.buy-precio svg { color: var(--texto-suave); }
 
 
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { juegos } from "../data/juegos.js";
 import { supabase } from "../lib/supabase.js";
+import Cargando from "../components/Cargando.jsx";
 
 export default function Catalogo({ onAgregar }) {
   const { juegoId } = useParams();               // lee el numero de la URL (viene como texto)
@@ -24,7 +25,7 @@ export default function Catalogo({ onAgregar }) {
     traerCartas();
   }, [juegoId]);                            // se vuelve a ejecutar si cambias de juego
 
-  if (cargando) return <p className="contenedor">Cargando cartas…</p>;
+  if (cargando) return <Cargando texto="Cargando cartas…" />;
 
   return (
     <section className="juegos catalogo">
