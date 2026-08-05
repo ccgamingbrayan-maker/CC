@@ -43,7 +43,7 @@ export default function Catalogo({ onAgregar }) {
               <p style={{ fontSize: 12, color: "var(--texto-suave)" }}>
                 Stock: {c.stock}
               </p>
-              <button onClick={onAgregar}>Agregar al carrito</button>
+              <button onClick={() => onAgregar({ tipo: "carta", id: c.id })}>Agregar al carrito</button>
             </div>
           ))}
         </div>

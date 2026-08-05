@@ -68,6 +68,9 @@ export default function Navbar({ total }) {
                       <p className="usuario-nombre">{user.user_metadata.nombre}</p>
                     )}
                     <p className="usuario-email">{user.email}</p>
+                    <Link to="/perfil" onClick={() => setMenuAbierto(false)}>
+                      Mi perfil
+                    </Link>
                     {esAdmin && (
                       <Link to="/admin/agregar" onClick={() => setMenuAbierto(false)}>
                         Panel de administración

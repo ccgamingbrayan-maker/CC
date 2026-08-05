@@ -94,7 +94,7 @@ export default function DetalleAccesorio({ onAgregar }) {
           )}
 
           <button
-            onClick={onAgregar}
+            onClick={() => onAgregar({ tipo: "accesorio", id: accesorio.id })}
             disabled={accesorio.estado === "agotado" || (accesorio.stock ?? 0) <= 0}
           >
             {accesorio.estado === "agotado" || (accesorio.stock ?? 0) <= 0

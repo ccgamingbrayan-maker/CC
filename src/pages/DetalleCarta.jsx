@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { Heart, ShoppingCart } from "lucide-react";
 import { supabase } from "../lib/supabase.js";
+import { useAuth } from "../lib/AuthContext.jsx";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
 import BuyThisCard from "../components/BuyThisCard.jsx";
 import Cargando from "../components/Cargando.jsx";
@@ -8,7 +10,11 @@ import CarruselRelacionados from "../components/CarruselRelacionados.jsx";
 
 export default function DetalleCarta({ onAgregar }) {
   const { cartaId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [carta, setCarta] = useState(null);
+  const [enWishlist, setEnWishlist] = useState(false);
+  const [enCarritos, setEnCarritos] = useState(0);
   const [compra, setCompra] = useState(null);
   // no prints loaded on detail view; only show stored card details
   const [cargando, setCargando] = useState(true);
@@ -24,6 +30,17 @@ export default function DetalleCarta({ onAgregar }) {
         .eq("id", Number(cartaId))
         .single();
       setCarta(data);
+
+      // Cuántas personas tienen esta carta guardada en su carrito
+      if (data) {
+        supabase
+          .from("carrito_conteo")
+          .select("total")
+          .eq("tipo", "carta")
+          .eq("item_id", data.id)
+          .maybeSingle()
+          .then(({ data: c }) => setEnCarritos(c?.total ?? 0));
+      }
 
       if (data) {
         // Otras cartas del mismo juego (para el carrusel de relacionadas)
@@ -81,6 +98,41 @@ export default function DetalleCarta({ onAgregar }) {
     cargar();
   }, [cartaId]);
 
+  // Saber si el usuario actual ya guardó esta carta
+  useEffect(() => {
+    if (!user || !carta) {
+      setEnWishlist(false);
+      return;
+    }
+    supabase
+      .from("wishlist")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("carta_id", carta.id)
+      .maybeSingle()
+      .then(({ data }) => setEnWishlist(!!data));
+  }, [user, carta]);
+
+  async function toggleWishlist() {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (enWishlist) {
+      const { error } = await supabase
+        .from("wishlist")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("carta_id", carta.id);
+      if (!error) setEnWishlist(false);
+    } else {
+      const { error } = await supabase
+        .from("wishlist")
+        .insert({ user_id: user.id, carta_id: carta.id });
+      if (!error) setEnWishlist(true);
+    }
+  }
+
   if (cargando) return <Cargando texto="Cargando carta…" />;
   if (!carta) return <p className="contenedor">Carta no encontrada.</p>;
 
@@ -95,7 +147,26 @@ export default function DetalleCarta({ onAgregar }) {
             <>
               <p className="detalle-precio">${carta.precio.toLocaleString("es-CO")} COP</p>
               <p className="detalle-stock">Stock: {carta.stock}</p>
-              <button onClick={onAgregar}>Agregar al carrito</button>
+              <div className="detalle-acciones">
+                <button onClick={() => onAgregar({ tipo: "carta", id: carta.id })}>Agregar al carrito</button>
+                <button
+                  type="button"
+                  className={`wishlist-btn ${enWishlist ? "activo" : ""}`}
+                  onClick={toggleWishlist}
+                  aria-label="Guardar en wishlist"
+                  title={enWishlist ? "Quitar de tu wishlist" : "Guardar en tu wishlist"}
+                >
+                  <Heart size={20} fill={enWishlist ? "currentColor" : "none"} />
+                </button>
+              </div>
+              {enCarritos >= 1 && (
+                <p className="wishlist-conteo carrito-conteo">
+                  <ShoppingCart size={13} />
+                  {enCarritos === 1
+                    ? "1 persona la tiene guardada en su carrito"
+                    : `${enCarritos} personas la tienen guardada en su carrito`}
+                </p>
+              )}
             </>
           ) : (
             <p className="detalle-suave">Carta de exhibición, no disponible para la venta.</p>

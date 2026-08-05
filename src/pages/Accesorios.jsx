@@ -47,7 +47,7 @@ export default function Accesorios({ onAgregar }) {
                 Stock: {a.stock ?? 0}
                 {a.estado && a.estado !== "activo" ? ` · ${a.estado}` : ""}
               </p>
-              <button onClick={onAgregar} disabled={a.estado === "agotado" || (a.stock ?? 0) <= 0}>
+              <button onClick={() => onAgregar({ tipo: "accesorio", id: a.id })} disabled={a.estado === "agotado" || (a.stock ?? 0) <= 0}>
                 {a.estado === "agotado" || (a.stock ?? 0) <= 0 ? "Agotado" : "Agregar al carrito"}
               </button>
             </div>
