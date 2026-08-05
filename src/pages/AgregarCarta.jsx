@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
 import { buscarCartaRiftbound, buscarPrintsRiftbound } from "../lib/riftbound.js";
 import {
@@ -9,7 +9,12 @@ import {
   buscarPromosFiltered,
 } from "../lib/onepiece.js";
 import { supabase } from "../lib/supabase.js";
-import { juegos } from "../data/juegos.js";
+import {
+  listarJuegos,
+  listarExpansiones,
+  crearJuego,
+  asegurarExpansion,
+} from "../lib/catalogos.js";
 import CarouselStore from "../components/CarouselStore.jsx";
 import AgregarAccesorio from "./AgregarAccesorio.jsx";
 
@@ -29,6 +34,47 @@ export default function AgregarCarta() {
   const [buscando, setBuscando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const isCarrusel = Number(juegoId) === 6;
+
+  // Catálogos dinámicos (juegos y expansiones desde Supabase)
+  const [juegosLista, setJuegosLista] = useState([]);
+  const [expansiones, setExpansiones] = useState([]);
+  const [expansionSel, setExpansionSel] = useState("");
+  const [expansionNueva, setExpansionNueva] = useState("");
+  const [expansionTouched, setExpansionTouched] = useState(false);
+  const [condicion, setCondicion] = useState("Near Mint");
+  const [nuevoJuegoNombre, setNuevoJuegoNombre] = useState("");
+  const [nuevoJuegoImagen, setNuevoJuegoImagen] = useState("");
+
+  useEffect(() => {
+    listarJuegos().then(setJuegosLista);
+  }, []);
+
+  // Expansiones del juego elegido
+  useEffect(() => {
+    if (isCarrusel || String(juegoId) === "__nuevo") {
+      setExpansiones([]);
+      return;
+    }
+    listarExpansiones(juegoId).then(setExpansiones);
+  }, [juegoId, isCarrusel]);
+
+  // Si la API trae la expansión (set), preseleccionarla automáticamente:
+  // la que coincida se elige; si no existe, queda lista para crearse.
+  useEffect(() => {
+    if (!datosApi?.set || expansionTouched) return;
+    const setApi = String(datosApi.set).trim();
+    if (!setApi) return;
+    const match = expansiones.find(
+      (e) => e.nombre.toLowerCase() === setApi.toLowerCase()
+    );
+    if (match) {
+      setExpansionSel(match.nombre);
+      setExpansionNueva("");
+    } else {
+      setExpansionSel("__nueva");
+      setExpansionNueva(setApi);
+    }
+  }, [datosApi, expansiones, expansionTouched]);
 
   async function buscar() {
     if (!nombre) return;
@@ -77,9 +123,39 @@ export default function AgregarCarta() {
       return null;
     }
 
-    const juegoToSave = userSelectedJuego
-      ? (isCarrusel ? 6 : Number(juegoId))
-      : (mapFuenteToJuego(fuente) ?? Number(juegoId));
+    let juegoToSave;
+    if (String(juegoId) === "__nuevo") {
+      if (!nuevoJuegoNombre.trim()) {
+        setMensaje("Escribe el nombre del nuevo juego.");
+        setGuardando(false);
+        return;
+      }
+      try {
+        const creado = await crearJuego(
+          nuevoJuegoNombre,
+          nuevoJuegoImagen.trim() || null
+        );
+        juegoToSave = creado.id;
+        setJuegosLista((prev) => [...prev, creado].sort((a, b) => a.id - b.id));
+      } catch (e) {
+        setMensaje("Error al crear el juego: " + e.message);
+        setGuardando(false);
+        return;
+      }
+    } else {
+      juegoToSave = userSelectedJuego
+        ? (isCarrusel ? 6 : Number(juegoId))
+        : (mapFuenteToJuego(fuente) ?? Number(juegoId));
+    }
+
+    // Expansión: la elegida de la lista o una nueva creada aquí mismo.
+    let expansionFinal = null;
+    if (!isCarrusel) {
+      const nombreExp = expansionSel === "__nueva" ? expansionNueva : expansionSel;
+      if (nombreExp?.trim()) {
+        expansionFinal = await asegurarExpansion(juegoToSave, nombreExp);
+      }
+    }
 
     const { error } = await supabase.from("cartas").insert({
       juego_id: Number(juegoToSave),
@@ -87,6 +163,8 @@ export default function AgregarCarta() {
       imagen: datosApi.imagen,
       precio: isCarrusel ? null : precio ? Number(precio) : null,
       stock: isCarrusel ? null : stock ? Number(stock) : null,
+      expansion: isCarrusel ? null : expansionFinal,
+      condicion: isCarrusel ? null : condicion,
     });
     setGuardando(false);
 
@@ -94,7 +172,7 @@ export default function AgregarCarta() {
       setMensaje("Error al guardar: " + error.message);
     } else {
       setMensaje(`¡"${datosApi.nombre}" guardada en tu tienda!`);
-    
+
       setNombre("");
       setDatosApi(null);
       setPrecio("");
@@ -102,6 +180,13 @@ export default function AgregarCarta() {
       setFuente(null);
       setUserSelectedJuego(false);
       setJuegoId(4);
+      setExpansionSel("");
+      setExpansionNueva("");
+      setExpansionTouched(false);
+      setCondicion("Near Mint");
+      setNuevoJuegoNombre("");
+      setNuevoJuegoImagen("");
+      if (expansionFinal) listarExpansiones(juegoToSave).then(setExpansiones);
     }
     }
 
@@ -280,14 +365,91 @@ export default function AgregarCarta() {
                       onChange={(e) => {
                         setUserSelectedJuego(true);
                         setJuegoId(e.target.value);
+                        setExpansionSel("");
+                        setExpansionNueva("");
+                        setExpansionTouched(false);
                       }}
                     >
-                      {juegos.map((j) => (
+                      {juegosLista.map((j) => (
                         <option key={j.id} value={j.id}>{j.nombre}</option>
                       ))}
                       <option value={6}>Carrusel</option>
+                      <option value="__nuevo">+ Crear nuevo juego…</option>
                     </select>
                   </label>
+
+                  {String(juegoId) === "__nuevo" && (
+                    <>
+                      <label>
+                        Nombre del nuevo juego
+                        <input
+                          type="text"
+                          placeholder="Ej: Yu-Gi-Oh!"
+                          value={nuevoJuegoNombre}
+                          onChange={(e) => setNuevoJuegoNombre(e.target.value)}
+                        />
+                      </label>
+                      <label>
+                        Imagen del juego (URL, opcional)
+                        <input
+                          type="text"
+                          placeholder="/img/nuevo_juego.png"
+                          value={nuevoJuegoImagen}
+                          onChange={(e) => setNuevoJuegoImagen(e.target.value)}
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  {!isCarrusel && (
+                    <>
+                      <label>
+                        Expansión
+                        <select
+                          value={expansionSel}
+                          onChange={(e) => {
+                            setExpansionSel(e.target.value);
+                            setExpansionTouched(true);
+                          }}
+                        >
+                          <option value="">Sin expansión</option>
+                          {expansiones.map((x) => (
+                            <option key={x.id} value={x.nombre}>{x.nombre}</option>
+                          ))}
+                          <option value="__nueva">+ Crear nueva expansión…</option>
+                        </select>
+                      </label>
+
+                      {expansionSel === "__nueva" && (
+                        <label>
+                          Nombre de la nueva expansión
+                          <input
+                            type="text"
+                            placeholder="Ej: Vendetta"
+                            value={expansionNueva}
+                            onChange={(e) => {
+                              setExpansionNueva(e.target.value);
+                              setExpansionTouched(true);
+                            }}
+                          />
+                        </label>
+                      )}
+
+                      <label>
+                        Condición
+                        <select
+                          value={condicion}
+                          onChange={(e) => setCondicion(e.target.value)}
+                        >
+                          <option>Near Mint</option>
+                          <option>Lightly Played</option>
+                          <option>Moderately Played</option>
+                          <option>Heavily Played</option>
+                          <option>Damaged</option>
+                        </select>
+                      </label>
+                    </>
+                  )}
 
                   {isCarrusel && (
                     <div style={{ marginTop: 12 }}>

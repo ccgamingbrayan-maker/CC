@@ -3,9 +3,16 @@ import BannerJuego from "../components/BannerJuego.jsx";
 import SeccionDestacada from "../components/SeccionDestacada.jsx";
 import CartasRecomendadas from "../components/CartasRecomendadas.jsx";
 import Footer from "../components/Footer.jsx";
-import { juegos } from "../data/juegos.js";
+import { useState, useEffect } from "react";
+import { listarJuegos } from "../lib/catalogos.js";
 
 export default function Home({ onAgregar }) {
+  const [juegos, setJuegos] = useState([]);
+
+  useEffect(() => {
+    listarJuegos().then(setJuegos);
+  }, []);
+
   return (
     <>
       {/* Banner hero de One Piece: primero en la pagina */}
