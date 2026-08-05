@@ -1,33 +1,37 @@
+import { ExternalLink } from "lucide-react";
 
 export default function BuyThisCard({ compra }) {
   if (!compra) return null;
 
   const tiendas = [
-    { nombre: "Buy on TCGplayer",   simbolo: "$", ...compra.tcgplayer },
-    { nombre: "Buy on Cardmarket",  simbolo: "€", ...compra.cardmarket },
-    { nombre: "Buy on Cardhoarder", simbolo: "",  ...compra.cardhoarder },
+    { nombre: "TCGplayer",   moneda: "USD", ...compra.tcgplayer },
+    { nombre: "Cardmarket",  moneda: "EUR", ...compra.cardmarket },
+    { nombre: "Cardhoarder", moneda: "TIX", ...compra.cardhoarder },
   ];
 
-  const hayPrecios = tiendas.some((t) => t.precio);
-  if (!hayPrecios) return null;
+  const disponibles = tiendas.filter((t) => t.precio != null && t.precio !== "");
+  if (disponibles.length === 0) return null;
 
   return (
     <div className="buy-card">
-      <h4>BUY THIS CARD</h4>
-      {tiendas.map((t) =>
-        t.precio ? (
+      <h4>Compra esta carta en</h4>
+      <div className="buy-lista">
+        {disponibles.map((t) => (
           <a
             key={t.nombre}
             className="buy-row"
-            href={t.url}
+            href={t.url ?? undefined}
             target="_blank"
             rel="noreferrer"
           >
-            <span>{t.nombre}</span>
-            <span>{t.simbolo}{t.precio}</span>
+            <span className="buy-tienda">{t.nombre}</span>
+            <span className="buy-precio">
+              {Number(t.precio).toFixed(2)} {t.moneda}
+              <ExternalLink size={14} />
+            </span>
           </a>
-        ) : null
-      )}
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
+import Cargando from "../components/Cargando.jsx";
 
 export default function DetalleAccesorio({ onAgregar }) {
   const { accesorioId } = useParams();
@@ -64,7 +65,7 @@ export default function DetalleAccesorio({ onAgregar }) {
     }
   }
 
-  if (cargando) return <p className="contenedor">Cargando accesorio…</p>;
+  if (cargando) return <Cargando texto="Cargando accesorio…" />;
   if (!accesorio) return <p className="contenedor">Accesorio no encontrado.</p>;
 
   return (
