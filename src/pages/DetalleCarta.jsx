@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 import { supabase } from "../lib/supabase.js";
 import { useAuth } from "../lib/AuthContext.jsx";
+import { useCart } from "../lib/CartContext.jsx";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
 import BuyThisCard from "../components/BuyThisCard.jsx";
 import Cargando from "../components/Cargando.jsx";
@@ -12,7 +13,9 @@ export default function DetalleCarta({ onAgregar }) {
   const { cartaId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { items } = useCart();
   const [carta, setCarta] = useState(null);
+  const [popKey, setPopKey] = useState(null);
   const [enWishlist, setEnWishlist] = useState(false);
   const [enCarritos, setEnCarritos] = useState(0);
   const [compra, setCompra] = useState(null);
@@ -136,6 +139,16 @@ export default function DetalleCarta({ onAgregar }) {
   if (cargando) return <Cargando texto="Cargando carta…" />;
   if (!carta) return <p className="contenedor">Carta no encontrada.</p>;
 
+  const enCarrito = items.find((i) => i.tipo === "carta" && i.item_id === carta.id);
+  const cantidadEnCarrito = enCarrito?.cantidad ?? 0;
+  const agotado = carta.stock != null && cantidadEnCarrito >= carta.stock;
+
+  function agregarConPop() {
+    if (agotado) return;
+    onAgregar({ tipo: "carta", id: carta.id });
+    setPopKey(Date.now());
+  }
+
   return (
     <section className="juegos">
       <div className="contenedor detalle-carta">
@@ -148,7 +161,16 @@ export default function DetalleCarta({ onAgregar }) {
               <p className="detalle-precio">${carta.precio.toLocaleString("es-CO")} COP</p>
               <p className="detalle-stock">Stock: {carta.stock}</p>
               <div className="detalle-acciones">
-                <button onClick={() => onAgregar({ tipo: "carta", id: carta.id })}>Agregar al carrito</button>
+                <span className="btn-pop-wrap">
+                  <button onClick={agregarConPop} disabled={agotado}>
+                    {agotado ? "Sin stock disponible" : "Agregar al carrito"}
+                  </button>
+                  {popKey && (
+                    <span key={popKey} className="mas-uno" onAnimationEnd={() => setPopKey(null)}>
+                      +1
+                    </span>
+                  )}
+                </span>
                 <button
                   type="button"
                   className={`wishlist-btn ${enWishlist ? "activo" : ""}`}
@@ -159,6 +181,12 @@ export default function DetalleCarta({ onAgregar }) {
                   <Heart size={20} fill={enWishlist ? "currentColor" : "none"} />
                 </button>
               </div>
+              {cantidadEnCarrito > 0 && (
+                <p className="detalle-suave">
+                  Ya tienes {cantidadEnCarrito} en tu carrito
+                  {carta.stock != null ? ` (máx. ${carta.stock})` : ""}
+                </p>
+              )}
               {enCarritos >= 1 && (
                 <p className="wishlist-conteo carrito-conteo">
                   <ShoppingCart size={13} />
