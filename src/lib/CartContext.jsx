@@ -146,8 +146,16 @@ export function CartProvider({ children }) {
   // delta puede ser +1, -1, etc. Nunca supera el stock disponible.
   async function cambiarCantidad(tipo, itemId, delta) {
     if (user) {
-      // Con sesión: la BD manda. Relee stock y cantidad antes de escribir.
-      await escribirEnDB(user.id, tipo, itemId, delta);
+      // Con sesión: la BD manda de forma ATÓMICA (evita race conditions).
+      // La función bloquea la fila del producto, verifica el stock y escribe,
+      // todo en una sola operación. Si la función aún no existe en Supabase,
+      // caemos al método de releer-antes-de-escribir.
+      const { error } = await supabase.rpc("agregar_al_carrito", {
+        p_tipo: tipo,
+        p_item_id: itemId,
+        p_delta: delta,
+      });
+      if (error) await escribirEnDB(user.id, tipo, itemId, delta);
     } else {
       // Sin sesión: se guarda en localStorage, usando el stock que ya trae el item.
       const actual = items.find((i) => i.tipo === tipo && i.item_id === itemId);
