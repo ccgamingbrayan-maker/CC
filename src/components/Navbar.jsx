@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Minus, Plus, ShoppingCart, Trash2, User } from "lucide-react";
+import { Minus, Moon, Plus, ShoppingCart, Sun, Trash2, User } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useCart } from "../lib/CartContext.jsx";
 import BuscadorNav from "./BuscadorNav.jsx";
@@ -13,6 +13,9 @@ export default function Navbar() {
   const menuRef = useRef(null);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const carritoRef = useRef(null);
+  const [tema, setTema] = useState(() =>
+    document.documentElement.getAttribute("data-tema") === "claro" ? "claro" : "oscuro"
+  );
 
   useEffect(() => {
     function cerrarAlClickFuera(e) {
@@ -26,6 +29,13 @@ export default function Navbar() {
     document.addEventListener("mousedown", cerrarAlClickFuera);
     return () => document.removeEventListener("mousedown", cerrarAlClickFuera);
   }, []);
+
+  function alternarTema() {
+    const nuevo = tema === "claro" ? "oscuro" : "claro";
+    setTema(nuevo);
+    document.documentElement.setAttribute("data-tema", nuevo);
+    try { localStorage.setItem("ccg_tema", nuevo); } catch {}
+  }
 
   async function salir() {
     await logout();
@@ -46,6 +56,16 @@ export default function Navbar() {
 
         {/* Sección usuario/carrito */}
         <div className="navbar-iconos">
+          <button
+            type="button"
+            className="icono-btn tema-btn"
+            onClick={alternarTema}
+            aria-label={tema === "claro" ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
+            title={tema === "claro" ? "Tema oscuro" : "Tema claro"}
+          >
+            {tema === "claro" ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
+
           {user && (
             <span className="bienvenida">
               Bienvenido de nuevo,{" "}

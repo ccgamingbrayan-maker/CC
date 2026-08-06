@@ -6,19 +6,51 @@
 
 :root {
 
-  --fondo:        #16162E;  /* fondo general, azul-noche */
+  /* ===== Tema oscuro (por defecto) ===== */
 
-  --fondo-panel:  #1E1B45;  /* seccion "Juegos Disponibles" */
+  --fondo:        #111827;  /* color5: fondo general */
 
-  --nav:          #241F4E;  /* barra superior */
+  --fondo-panel:  #1F2937;  /* color4: paneles y tarjetas */
 
-  --footer:       #2A2456;  /* bloque "Quienes Somos" */
+  --nav:          #1F2937;  /* barra superior */
 
-  --acento:       #5B3FD1;  /* botones "Ver Catalogo" */
+  --footer:       #1F2937;  /* bloque "Quienes Somos" */
 
-  --texto:        #FFFFFF;
+  --acento:       #5B3FD1;  /* botones principales */
 
-  --texto-suave:  #C9C4E8;  /* parrafo del footer */
+  --sobre-acento: #FFFFFF;  /* texto sobre fondos de acento (igual en ambos temas) */
+
+  --texto:        #EDEDED;  /* color1: texto principal */
+
+  --texto-suave:  #9CA3AF;  /* color2: texto secundario */
+
+  --borde:        #4B5563;  /* color3: bordes */
+
+  --img-fondo:    rgba(0, 0, 0, 0.25);  /* fondo detrás de imágenes de producto */
+
+  /* Tintas de superficie: veladuras del color de texto sobre el fondo */
+
+  --t03: rgba(237, 237, 237, 0.03);
+
+  --t04: rgba(237, 237, 237, 0.04);
+
+  --t05: rgba(237, 237, 237, 0.05);
+
+  --t06: rgba(237, 237, 237, 0.06);
+
+  --t07: rgba(237, 237, 237, 0.07);
+
+  --t08: rgba(237, 237, 237, 0.08);
+
+  --t10: rgba(237, 237, 237, 0.10);
+
+  --t12: rgba(237, 237, 237, 0.12);
+
+  --t14: rgba(237, 237, 237, 0.14);
+
+  --t15: rgba(237, 237, 237, 0.15);
+
+  --t20: rgba(237, 237, 237, 0.20);
 
   --radio:        8px;      /* esquinas de imagenes y botones */
 
@@ -26,41 +58,41 @@
 
   --ancho-max:    1200px;
 
-  --background:        oklch(1 0 0);
+  --background:        #111827;
 
-  --foreground:        oklch(0.145 0 0);
+  --foreground:        #EDEDED;
 
-  --card:        oklch(1 0 0);
+  --card:        #1F2937;
 
-  --card-foreground:        oklch(0.145 0 0);
+  --card-foreground:        #EDEDED;
 
-  --popover:        oklch(1 0 0);
+  --popover:        #1F2937;
 
-  --popover-foreground:        oklch(0.145 0 0);
+  --popover-foreground:        #EDEDED;
 
-  --primary:        oklch(0.205 0 0);
+  --primary:        #5B3FD1;
 
-  --primary-foreground:        oklch(0.985 0 0);
+  --primary-foreground:        #FFFFFF;
 
-  --secondary:        oklch(0.97 0 0);
+  --secondary:        #1F2937;
 
-  --secondary-foreground:        oklch(0.205 0 0);
+  --secondary-foreground:        #EDEDED;
 
-  --muted:        oklch(0.97 0 0);
+  --muted:        #1F2937;
 
-  --muted-foreground:        oklch(0.556 0 0);
+  --muted-foreground:        #9CA3AF;
 
-  --accent:        oklch(0.97 0 0);
+  --accent:        #374151;
 
-  --accent-foreground:        oklch(0.205 0 0);
+  --accent-foreground:        #EDEDED;
 
   --destructive:        oklch(0.577 0.245 27.325);
 
-  --border:        oklch(0.922 0 0);
+  --border:        #4B5563;
 
-  --input:        oklch(0.922 0 0);
+  --input:        #4B5563;
 
-  --ring:        oklch(0.708 0 0);
+  --ring:        #5B3FD1;
 
   --chart-1:        oklch(0.87 0 0);
 
@@ -74,21 +106,107 @@
 
   --radius:        0.625rem;
 
-  --sidebar:        oklch(0.985 0 0);
+  --sidebar:        #1F2937;
 
-  --sidebar-foreground:        oklch(0.145 0 0);
+  --sidebar-foreground:        #EDEDED;
 
-  --sidebar-primary:        oklch(0.205 0 0);
+  --sidebar-primary:        #5B3FD1;
 
-  --sidebar-primary-foreground:        oklch(0.985 0 0);
+  --sidebar-primary-foreground:        #FFFFFF;
 
-  --sidebar-accent:        oklch(0.97 0 0);
+  --sidebar-accent:        #374151;
 
-  --sidebar-accent-foreground:        oklch(0.205 0 0);
+  --sidebar-accent-foreground:        #EDEDED;
 
-  --sidebar-border:        oklch(0.922 0 0);
+  --sidebar-border:        #4B5563;
 
-  --sidebar-ring:        oklch(0.708 0 0);
+  --sidebar-ring:        #5B3FD1;
+
+  color-scheme: dark;
+
+}
+
+/* ===== Tema claro ===== */
+
+:root[data-tema="claro"] {
+
+  --fondo:        #F5EEEE;  /* color1 */
+
+  --fondo-panel:  #F2E9EE;  /* color2 */
+
+  --nav:          #E9DCE0;  /* color4 */
+
+  --footer:       #ECE6EC;  /* color3 */
+
+  --texto:        #1F2937;
+
+  --texto-suave:  #4B5563;
+
+  --borde:        #D3C6DA;  /* color5 */
+
+  --img-fondo:    rgba(31, 41, 55, 0.05);
+
+  --t03: rgba(31, 41, 55, 0.03);
+
+  --t04: rgba(31, 41, 55, 0.04);
+
+  --t05: rgba(31, 41, 55, 0.05);
+
+  --t06: rgba(31, 41, 55, 0.06);
+
+  --t07: rgba(31, 41, 55, 0.07);
+
+  --t08: rgba(31, 41, 55, 0.08);
+
+  --t10: rgba(31, 41, 55, 0.10);
+
+  --t12: rgba(31, 41, 55, 0.12);
+
+  --t14: rgba(31, 41, 55, 0.14);
+
+  --t15: rgba(31, 41, 55, 0.15);
+
+  --t20: rgba(31, 41, 55, 0.20);
+
+  --background:        #F5EEEE;
+
+  --foreground:        #1F2937;
+
+  --card:        #FFFFFF;
+
+  --card-foreground:        #1F2937;
+
+  --popover:        #FFFFFF;
+
+  --popover-foreground:        #1F2937;
+
+  --secondary:        #ECE6EC;
+
+  --secondary-foreground:        #1F2937;
+
+  --muted:        #ECE6EC;
+
+  --muted-foreground:        #4B5563;
+
+  --accent:        #E9DCE0;
+
+  --accent-foreground:        #1F2937;
+
+  --border:        #D3C6DA;
+
+  --input:        #D3C6DA;
+
+  --sidebar:        #F2E9EE;
+
+  --sidebar-foreground:        #1F2937;
+
+  --sidebar-accent:        #ECE6EC;
+
+  --sidebar-accent-foreground:        #1F2937;
+
+  --sidebar-border:        #D3C6DA;
+
+  color-scheme: light;
 
 }
 
@@ -99,6 +217,8 @@ body {
   background: var(--fondo);
 
   color: var(--texto);
+
+  transition: background-color 0.25s ease, color 0.25s ease;
 
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
@@ -170,7 +290,7 @@ img { display: block; max-width: 100%; }
 
 .navbar .navbar-subfila {
 
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--t06);
 
   padding: 8px 32px;
 
@@ -258,9 +378,9 @@ img { display: block; max-width: 100%; }
 
   width: 100%;
 
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--t06);
 
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--t12);
 
   border-radius: 999px;
 
@@ -294,7 +414,7 @@ img { display: block; max-width: 100%; }
 
   background: var(--nav);
 
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--t12);
 
   border-radius: var(--radio);
 
@@ -324,7 +444,7 @@ img { display: block; max-width: 100%; }
 
 }
 
-.buscador-item:hover { background: rgba(255, 255, 255, 0.06); }
+.buscador-item:hover { background: var(--t06); }
 
 .buscador-item img,
 
@@ -338,7 +458,7 @@ img { display: block; max-width: 100%; }
 
   border-radius: 4px;
 
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--img-fondo);
 
   flex: 0 0 auto;
 
@@ -408,9 +528,9 @@ img { display: block; max-width: 100%; }
 
   border-radius: 50%;
 
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--t14);
 
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--t05);
 
   color: var(--texto);
 
@@ -426,7 +546,12 @@ img { display: block; max-width: 100%; }
 
   border-color: var(--acento);
 
+  color: var(--sobre-acento);
+
 }
+
+.tema-btn svg { transition: transform 0.35s ease, opacity 0.2s ease; }
+.tema-btn:active svg { transform: rotate(40deg) scale(0.9); }
 
 .carrito-badge {
 
@@ -474,7 +599,7 @@ img { display: block; max-width: 100%; }
 
   background: var(--nav);
 
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--t12);
 
   border-radius: var(--radio);
 
@@ -516,7 +641,7 @@ img { display: block; max-width: 100%; }
 
 .usuario-menu a:hover,
 
-.usuario-menu button:hover { background: rgba(255, 255, 255, 0.06); }
+.usuario-menu button:hover { background: var(--t06); }
 
 .usuario-nombre {
 
@@ -540,7 +665,7 @@ img { display: block; max-width: 100%; }
 
   color: var(--texto-suave);
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--t08);
 
   word-break: break-all;
 
@@ -566,7 +691,7 @@ img { display: block; max-width: 100%; }
 
   background: var(--nav);
 
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--t10);
 
   border-radius: 16px;
 
@@ -624,9 +749,9 @@ img { display: block; max-width: 100%; }
 
   margin-bottom: 24px;
 
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--t05);
 
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--t08);
 
   border-radius: 999px;
 
@@ -702,11 +827,11 @@ img { display: block; max-width: 100%; }
 
 .auth-form input {
 
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--t06);
 
   color: var(--texto);
 
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--t12);
 
   border-radius: 10px;
 
@@ -826,7 +951,7 @@ img { display: block; max-width: 100%; }
 .catalogo .game-card img {
   aspect-ratio: 5 / 7;      /* proporcion real de una carta TCG */
   object-fit: contain;      /* muestra la carta completa, sin recortar el borde */
-  background: #0f0f22;      /* relleno detras de la carta */
+  background: var(--img-fondo);      /* relleno detras de la carta */
   display: block;
 }
 .catalogo .game-card a { text-decoration: none; color: inherit; }
@@ -846,7 +971,7 @@ img { display: block; max-width: 100%; }
 
 .catalogo-sidebar {
   background: var(--nav);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--t08);
   border-radius: var(--radio);
   padding: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
@@ -865,7 +990,7 @@ img { display: block; max-width: 100%; }
 .catalogo .game-card img {
   aspect-ratio: 5 / 7;
   object-fit: contain;
-  background: #0f0f22;
+  background: var(--img-fondo);
   display: block;
 }
 .catalogo .game-card a {
@@ -875,8 +1000,8 @@ img { display: block; max-width: 100%; }
 }
 
 .catalogo .game-card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--t06);
+  border: 1px solid var(--t10);
   border-radius: var(--radio);
   overflow: hidden;
   display: flex;
@@ -944,8 +1069,8 @@ img { display: block; max-width: 100%; }
   align-items: flex-start;
   flex-wrap: wrap;
   padding: 32px 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--t03);
+  border: 1px solid var(--t08);
   border-radius: var(--radio);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
 }
@@ -953,7 +1078,7 @@ img { display: block; max-width: 100%; }
   width: 320px;
   max-width: 100%;
   border-radius: var(--radio);
-  background: #0f0f22;
+  background: var(--img-fondo);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 .detalle-info {
@@ -978,8 +1103,8 @@ img { display: block; max-width: 100%; }
   width: fit-content;
   padding: 5px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--t06);
+  border: 1px solid var(--t10);
   font-size: 13px;
 }
 .detalle-info p {
@@ -1019,7 +1144,7 @@ img { display: block; max-width: 100%; }
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.10);
+  border: 4px solid var(--t10);
   border-top-color: var(--acento);
   animation: girar 0.8s linear infinite;
 }
@@ -1044,8 +1169,8 @@ img { display: block; max-width: 100%; }
   padding: 0;
   margin: 12px 0;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--t14);
+  background: var(--t05);
   color: var(--texto-suave);
   display: inline-flex;
   align-items: center;
@@ -1125,9 +1250,9 @@ img { display: block; max-width: 100%; }
   font-size: 12px;
   color: var(--texto-suave);
   padding: 4px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--t10);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--t04);
 }
 .perfil-tabs { max-width: 440px; margin-bottom: 28px; }
 .perfil-tabs button {
@@ -1138,7 +1263,7 @@ img { display: block; max-width: 100%; }
 }
 .perfil-panel {
   background: var(--nav);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--t10);
   border-radius: 16px;
   padding: 28px;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
@@ -1159,9 +1284,9 @@ img { display: block; max-width: 100%; }
   color: var(--texto-suave);
 }
 .perfil-form input {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--t06);
   color: var(--texto);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--t12);
   border-radius: 10px;
   padding: 11px 14px;
   font-size: 14px;
@@ -1195,8 +1320,8 @@ img { display: block; max-width: 100%; }
   display: block;
   text-decoration: none;
   color: var(--texto);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--t04);
+  border: 1px solid var(--t08);
   border-radius: var(--radio);
   padding: 10px;
   transition: border-color 0.15s, transform 0.15s;
@@ -1224,9 +1349,9 @@ img { display: block; max-width: 100%; }
 
 /* Pedidos del perfil */
 .pedido {
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--t10);
   border-radius: var(--radio);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--t03);
   padding: 16px 18px;
 }
 .pedido + .pedido { margin-top: 14px; }
@@ -1271,14 +1396,14 @@ img { display: block; max-width: 100%; }
   margin: 18px 0 26px;
   padding: 14px;
   background: var(--nav);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--t10);
   border-radius: var(--radio);
 }
 .filtros-catalogo input,
 .filtros-catalogo select {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--t06);
   color: var(--texto);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--t12);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 14px;
@@ -1317,7 +1442,7 @@ img { display: block; max-width: 100%; }
   height: 5px;
   transform: translateY(-50%);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--t12);
 }
 .filtro-slider-relleno {
   position: absolute;
@@ -1370,7 +1495,7 @@ img { display: block; max-width: 100%; }
 }
 .filtro-limpiar {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--t14);
   color: var(--texto-suave);
   border-radius: 999px;
   padding: 9px 18px;
@@ -1390,7 +1515,7 @@ img { display: block; max-width: 100%; }
   right: 0;
   width: 320px;
   background: var(--nav);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--t12);
   border-radius: var(--radio);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
   z-index: 60;
@@ -1415,14 +1540,14 @@ img { display: block; max-width: 100%; }
   color: var(--texto);
   font-size: 13px;
 }
-.mini-item:hover { background: rgba(255, 255, 255, 0.06); }
+.mini-item:hover { background: var(--t06); }
 .mini-item-img img,
 .mini-sin-img {
   width: 34px;
   height: 46px;
   object-fit: contain;
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--img-fondo);
   display: block;
 }
 .mini-item-img { flex: 0 0 auto; }
@@ -1445,8 +1570,8 @@ img { display: block; max-width: 100%; }
   gap: 6px;
 }
 .mini-controles button {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--t06);
+  border: 1px solid var(--t12);
   color: var(--texto);
   width: 20px;
   height: 20px;
@@ -1460,6 +1585,7 @@ img { display: block; max-width: 100%; }
 .mini-controles button:hover:not(:disabled) {
   background: var(--acento);
   border-color: var(--acento);
+  color: var(--sobre-acento);
 }
 .mini-controles button:disabled { opacity: 0.35; cursor: not-allowed; }
 .mini-controles span {
@@ -1481,7 +1607,7 @@ img { display: block; max-width: 100%; }
   justify-content: space-between;
   margin: 10px 4px 0;
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-top: 1px solid var(--t10);
   font-size: 13px;
   color: var(--texto-suave);
 }
@@ -1533,7 +1659,7 @@ img { display: block; max-width: 100%; }
   align-items: center;
   gap: 16px;
   background: var(--nav);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--t10);
   border-radius: var(--radio);
   padding: 12px 16px;
 }
@@ -1543,7 +1669,7 @@ img { display: block; max-width: 100%; }
   height: 70px;
   object-fit: contain;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--img-fondo);
   display: block;
 }
 .carrito-item-info {
@@ -1566,8 +1692,8 @@ img { display: block; max-width: 100%; }
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--t06);
+  border: 1px solid var(--t12);
   border-radius: 999px;
   padding: 4px 8px;
 }
@@ -1580,7 +1706,7 @@ img { display: block; max-width: 100%; }
   padding: 4px;
   border-radius: 50%;
 }
-.carrito-cantidad button:hover { background: var(--acento); }
+.carrito-cantidad button:hover { background: var(--acento); color: var(--sobre-acento); }
 .carrito-cantidad span {
   min-width: 20px;
   text-align: center;
@@ -1600,7 +1726,7 @@ img { display: block; max-width: 100%; }
 .carrito-vaciar {
   align-self: flex-start;
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--t14);
   color: var(--texto-suave);
   border-radius: 999px;
   padding: 8px 18px;
@@ -1610,7 +1736,7 @@ img { display: block; max-width: 100%; }
 .carrito-vaciar:hover { color: #ff5c8a; border-color: #ff5c8a; }
 .carrito-resumen {
   background: var(--nav);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--t10);
   border-radius: var(--radio);
   padding: 20px;
   position: sticky;
@@ -1626,7 +1752,7 @@ img { display: block; max-width: 100%; }
 }
 .carrito-resumen-fila strong { color: var(--texto); }
 .carrito-total {
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-top: 1px solid var(--t10);
   padding-top: 12px;
   margin-top: 12px;
   font-size: 16px;
@@ -1654,9 +1780,9 @@ img { display: block; max-width: 100%; }
 /* ---------- Compra externa (marketplaces) ---------- */
 .buy-card {
   margin-top: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--t10);
   border-radius: var(--radio);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--t04);
   padding: 16px 18px;
 }
 .buy-card h4 {
@@ -1676,11 +1802,11 @@ img { display: block; max-width: 100%; }
   text-decoration: none;
   color: var(--texto);
   font-size: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--t07);
   transition: background 0.15s;
 }
 .buy-row:last-child { border-bottom: none; }
-.buy-row:hover { background: rgba(255, 255, 255, 0.04); }
+.buy-row:hover { background: var(--t04); }
 .buy-tienda { font-weight: 600; }
 .buy-precio {
   display: inline-flex;
@@ -1696,7 +1822,7 @@ img { display: block; max-width: 100%; }
 .filtro-bloque + .filtro-bloque {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid var(--t12);
 }
 
 .filtro-bloque label {
@@ -1712,9 +1838,9 @@ img { display: block; max-width: 100%; }
 }
 
 .filtro-select {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--t08);
   color: var(--texto);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--t12);
   border-radius: 8px;
   padding: 10px 12px;
 }
@@ -1763,8 +1889,8 @@ img { display: block; max-width: 100%; }
 
 .sin-resultados {
   grid-column: 1 / -1;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  background: var(--t06);
+  border: 1px dashed var(--t20);
   border-radius: var(--radio);
   padding: 24px;
   text-align: center;
@@ -1791,7 +1917,7 @@ img { display: block; max-width: 100%; }
 
   overflow: hidden;
 
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-top: 1px solid var(--t10);
 
   display: flex;
 
@@ -1835,7 +1961,7 @@ img { display: block; max-width: 100%; }
 
   background: var(--acento);
 
-  color: var(--texto);
+  color: var(--sobre-acento);
 
   border: none;
 
@@ -2051,7 +2177,7 @@ img { display: block; max-width: 100%; }
 
   background: var(--acento);
 
-  color: var(--texto);
+  color: var(--sobre-acento);
 
   display: inline-block;
 
@@ -2287,7 +2413,7 @@ img { display: block; max-width: 100%; }
 .agregar-carta textarea {
   background: var(--nav);
   color: var(--texto);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--t15);
   border-radius: var(--radio);
   padding: 10px 12px;
   font-size: 14px;
@@ -2296,7 +2422,7 @@ img { display: block; max-width: 100%; }
 }
 .agregar-carta button {
   background: var(--acento);
-  color: var(--texto);
+  color: var(--sobre-acento);
   border: none;
   border-radius: var(--radio);
   padding: 10px 18px;
@@ -2336,8 +2462,8 @@ img { display: block; max-width: 100%; }
   flex-direction: column;
   gap: 16px;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--t05);
+  border: 1px solid var(--t08);
   border-radius: var(--radio);
 }
 
@@ -2373,7 +2499,7 @@ img { display: block; max-width: 100%; }
   display: flex;
   gap: 8px;
   margin: 12px 0 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--t10);
 }
 
 .admin-tab {
@@ -2411,8 +2537,8 @@ img { display: block; max-width: 100%; }
 /* Paneles con aspecto de tarjeta */
 .agregar-panel .agregar-accesorio,
 .admin-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--t04);
+  border: 1px solid var(--t08);
   border-radius: var(--radio);
   padding: 20px;
 }
@@ -2422,7 +2548,7 @@ img { display: block; max-width: 100%; }
 /* Botón secundario "fantasma" */
 .agregar-carta .btn-ghost {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--t20);
   color: var(--texto-suave);
   padding: 6px 12px;
   font-size: 13px;
@@ -2443,8 +2569,8 @@ img { display: block; max-width: 100%; }
   gap: 4px;
   padding: 4px;
   margin-bottom: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--t05);
+  border: 1px solid var(--t08);
   border-radius: 999px;
 }
 .admin-subtab {
@@ -2468,7 +2594,7 @@ img { display: block; max-width: 100%; }
 .agregar-accesorio textarea {
   background: var(--nav);
   color: var(--texto);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--t15);
   border-radius: var(--radio);
   padding: 10px 12px;
   font-size: 14px;
@@ -2477,7 +2603,7 @@ img { display: block; max-width: 100%; }
 }
 .agregar-accesorio button:not(.btn-ghost) {
   background: var(--acento);
-  color: var(--texto);
+  color: var(--sobre-acento);
   border: none;
   border-radius: var(--radio);
   padding: 10px 18px;
@@ -2489,7 +2615,7 @@ img { display: block; max-width: 100%; }
 /* Botón fantasma como utilidad global */
 .btn-ghost {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--t20);
   color: var(--texto-suave);
   padding: 6px 12px;
   font-size: 13px;
@@ -2512,7 +2638,7 @@ img { display: block; max-width: 100%; }
   justify-content: space-between;
   gap: 16px;
   padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--t08);
   font-size: 14px;
 }
 .detalle-specs li span { color: var(--texto-suave); }
@@ -2544,15 +2670,15 @@ img { display: block; max-width: 100%; }
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--t15);
+  background: var(--t05);
   color: var(--texto);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.carrusel-rel-nav button:hover { background: var(--acento); border-color: var(--acento); }
+.carrusel-rel-nav button:hover { background: var(--acento); border-color: var(--acento); color: var(--sobre-acento); }
 
 .carrusel-rel-track {
   display: flex;
@@ -2566,8 +2692,8 @@ img { display: block; max-width: 100%; }
   flex: 0 0 auto;
   width: 170px;
   scroll-snap-align: start;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--t04);
+  border: 1px solid var(--t08);
   border-radius: var(--radio);
   padding: 10px;
   text-decoration: none;
@@ -2583,7 +2709,7 @@ img { display: block; max-width: 100%; }
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: contain;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--img-fondo);
   border-radius: calc(var(--radio) - 4px);
 }
 .carrusel-rel-nombre {
@@ -2623,9 +2749,9 @@ img { display: block; max-width: 100%; }
 /* ---------- Cards del catálogo de la API (admin) ---------- */
 .agregar-print-list .grid { gap: 16px; }
 .agregar-print-list .game-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--t04);
+  border: 1px solid var(--t08);
+  border-top: 1px solid var(--t08);
   border-radius: var(--radio);
   padding: 12px;
   cursor: pointer;
@@ -2633,7 +2759,7 @@ img { display: block; max-width: 100%; }
 }
 .agregar-print-list .game-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--t20);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 /* Las fundas / deck boxes vienen en proporciones distintas: mostrar completa,
@@ -2641,7 +2767,7 @@ img { display: block; max-width: 100%; }
 .agregar-print-list .game-card img {
   aspect-ratio: 3 / 4;
   object-fit: contain;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--img-fondo);
   border-radius: calc(var(--radio) - 4px);
   padding: 8px;
 }
@@ -2674,12 +2800,12 @@ img { display: block; max-width: 100%; }
 
 /* ---------- Vista previa (carga manual) ---------- */
 .preview-card { max-width: 240px; padding: 12px; }
-.preview-card img { object-fit: contain; background: rgba(0,0,0,0.25); border-radius: calc(var(--radio) - 4px); }
+.preview-card img { object-fit: contain; background: var(--img-fondo); border-radius: calc(var(--radio) - 4px); }
 .preview-placeholder {
   display: grid;
   place-items: center;
   aspect-ratio: 3 / 4;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border: 1px dashed var(--t20);
   border-radius: var(--radio);
   color: var(--texto-suave);
   font-size: 13px;
