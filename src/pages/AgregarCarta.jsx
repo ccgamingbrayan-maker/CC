@@ -8,6 +8,7 @@ import {
   buscarDonFiltered,
   buscarPromosFiltered,
 } from "../lib/onepiece.js";
+import { buscarPrintsPokemon } from "../lib/pokemon.js";
 import { supabase } from "../lib/supabase.js";
 import {
   listarJuegos,
@@ -331,6 +332,44 @@ export default function AgregarCarta() {
                 >
                   Buscar en One Piece
                 </button>
+                <button
+                  onClick={async () => {
+                    if (!nombre) return;
+                    setBuscando(true);
+                    setMensaje("");
+                    try {
+                      const versiones = await buscarPrintsPokemon(nombre);
+                      if (!versiones || versiones.length === 0) {
+                        setDatosApi(null);
+                        setPrints([]);
+                        setMensaje("No se encontraron resultados en Pokémon para esa búsqueda.");
+                      } else {
+                        setPrints(versiones);
+                        setSeleccionada(null);
+                        setFuente("pokemon");
+                        setUserSelectedJuego(false);
+                        setJuegoId(3);
+                        const primera = versiones[0];
+                        setDatosApi({
+                          nombre: primera.nombre,
+                          imagen: primera.imagen,
+                          set: primera.set,
+                          precios: primera.precios,
+                        });
+                        setPrecioReferencia(primera.precios?.usd ?? null);
+                      }
+                    } catch (error) {
+                      setDatosApi(null);
+                      setPrints([]);
+                      setMensaje("Error al buscar en Pokémon. Intenta otra búsqueda.");
+                      console.error(error);
+                    } finally {
+                      setBuscando(false);
+                    }
+                  }}
+                >
+                  Buscar en Pokémon
+                </button>
               </div>
             </div>
 
@@ -518,7 +557,7 @@ export default function AgregarCarta() {
                       if (p.source) {
                         setFuente(p.source);
                         setUserSelectedJuego(false);
-                        const mapped = p.source.startsWith("onepiece") ? 1 : p.source === "riftbound" ? 2 : p.source === "scryfall" ? 4 : juegoId;
+                        const mapped = p.source.startsWith("onepiece") ? 1 : p.source === "riftbound" ? 2 : p.source === "pokemon" ? 3 : p.source === "scryfall" ? 4 : juegoId;
                         if (mapped) setJuegoId(mapped);
                       }
                       const usdRef = p.precios?.usd ?? null;

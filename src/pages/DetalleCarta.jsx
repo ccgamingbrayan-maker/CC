@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase.js";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useCart } from "../lib/CartContext.jsx";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
+import { buscarPrintsPokemon } from "../lib/pokemon.js";
 import BuyThisCard from "../components/BuyThisCard.jsx";
 import Cargando from "../components/Cargando.jsx";
 import CarruselRelacionados from "../components/CarruselRelacionados.jsx";
@@ -69,8 +70,19 @@ export default function DetalleCarta({ onAgregar }) {
       }
 
       if (data) {
-        // Try to find the exact print matching the stored image and show its market prices
+        // Precios de "otros portales" para el cuadrito de compra.
         setCompra(null);
+        if (Number(data.juego_id) === 3) {
+          // Pokémon: TCGplayer y Cardmarket desde la Pokémon TCG API.
+          try {
+            const versiones = await buscarPrintsPokemon(data.nombre);
+            const match =
+              versiones.find((p) => p.imagen === data.imagen) ?? versiones[0];
+            if (match?.compra) setCompra(match.compra);
+          } catch (e) {
+            console.error("Error buscando print Pokémon para detalle:", e);
+          }
+        } else {
         try {
           const info = await buscarCartaScryfall(data.nombre);
           if (info?.printsSearchUri) {
@@ -93,6 +105,7 @@ export default function DetalleCarta({ onAgregar }) {
         } catch (e) {
           // ignore fetch errors — detail view still shows stored price
           console.error("Error buscando print para detalle:", e);
+        }
         }
       }
 
