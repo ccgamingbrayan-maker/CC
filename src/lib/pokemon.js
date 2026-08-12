@@ -53,17 +53,42 @@ function formatPokemonCard(card) {
   };
 }
 
-async function fetchPokemonJson(url) {
-  const res = await fetch(url, { headers: headers() });
-  if (!res.ok) return null;
-  return res.json();
+// La API de pokemontcg.io es inestable: alterna respuestas 200 con 500 y
+// timeouts de forma intermitente (no es la key ni la query). Por eso pedimos
+// con timeout por intento y REINTENTAMOS varias veces antes de rendirnos.
+async function fetchPokemonJson(url, { intentos = 4, timeoutMs = 9000 } = {}) {
+  for (let i = 0; i < intentos; i++) {
+    const controlador = new AbortController();
+    const t = setTimeout(() => controlador.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { headers: headers(), signal: controlador.signal });
+      clearTimeout(t);
+      if (res.ok) return res.json();
+      // 500/502/503 → error transitorio del servidor: reintentar.
+    } catch {
+      clearTimeout(t);
+      // timeout o error de red → reintentar.
+    }
+    // Pequeña espera creciente entre intentos (300ms, 600ms, 900ms…).
+    if (i < intentos - 1) {
+      await new Promise((r) => setTimeout(r, 300 * (i + 1)));
+    }
+  }
+  return null;
 }
 
-// Todas las versiones (prints) que coincidan con el nombre. Usa comodín *nombre*
-// para permitir búsquedas parciales, y ordena por lanzamiento más reciente.
-export async function buscarPrintsPokemon(query, pageSize = 60) {
+// Arma la query de búsqueda. Una sola palabra → comodín al final (prefijo,
+// rápido). Varias palabras → frase exacta entre comillas (evita queries lentas
+// que hacen fallar al servidor).
+function construirQuery(query) {
+  const t = query.trim().replace(/"/g, "");
+  return t.includes(" ") ? `name:"${t}"` : `name:${t}*`;
+}
+
+// Todas las versiones (prints) que coincidan con el nombre, más recientes primero.
+export async function buscarPrintsPokemon(query, pageSize = 40) {
   if (!query) return [];
-  const q = encodeURIComponent(`name:*${query}*`);
+  const q = encodeURIComponent(construirQuery(query));
   const url = `${BASE}/cards?q=${q}&pageSize=${pageSize}&orderBy=-set.releaseDate`;
   const json = await fetchPokemonJson(url);
   if (!json || !Array.isArray(json.data)) return [];
