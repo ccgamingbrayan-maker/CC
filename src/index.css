@@ -28,6 +28,10 @@
 
   --img-fondo:    rgba(0, 0, 0, 0.25);  /* fondo detrás de imágenes de producto */
 
+  --btn-fondo:    #EDEDED;  /* color1: fondo de botones */
+
+  --btn-texto:    #111827;  /* color5: texto de botones */
+
   /* Tintas de superficie: veladuras del color de texto sobre el fondo */
 
   --t03: rgba(237, 237, 237, 0.03);
@@ -145,6 +149,10 @@
   --borde:        #D3C6DA;  /* color5 */
 
   --img-fondo:    rgba(31, 41, 55, 0.05);
+
+  --btn-fondo:    #D3C6DA;  /* color5: fondo de botones */
+
+  --btn-texto:    #1F2937;  /* texto de botones */
 
   --t03: rgba(31, 41, 55, 0.03);
 
@@ -542,11 +550,11 @@ img { display: block; max-width: 100%; }
 
 .icono-btn:hover {
 
-  background: var(--acento);
+  background: var(--btn-fondo);
 
-  border-color: var(--acento);
+  border-color: var(--btn-fondo);
 
-  color: var(--sobre-acento);
+  color: var(--btn-texto);
 
 }
 
@@ -571,7 +579,7 @@ img { display: block; max-width: 100%; }
 
   background: #E8A33D;
 
-  color: #16162E;
+  color: #111827;
 
   font-size: 12px;
 
@@ -719,11 +727,11 @@ img { display: block; max-width: 100%; }
 
   justify-content: center;
 
-  color: #fff;
+  color: var(--btn-texto);
 
-  background: linear-gradient(135deg, #6d4eff 0%, #4c2cc8 100%);
+  background: var(--btn-fondo);
 
-  box-shadow: 0 10px 24px rgba(91, 63, 209, 0.40);
+  box-shadow: 0 10px 24px var(--t20);
 
 }
 
@@ -783,7 +791,7 @@ img { display: block; max-width: 100%; }
 
 .auth-tabs button:hover { color: var(--texto); }
 
-.auth-tabs button.active { background: var(--acento); color: #fff; }
+.auth-tabs button.active { background: var(--btn-fondo); color: var(--btn-texto); }
 
 .auth-form {
 
@@ -859,9 +867,9 @@ img { display: block; max-width: 100%; }
 
   margin-top: 8px;
 
-  background: linear-gradient(135deg, #6d4eff 0%, #4c2cc8 100%);
+  background: var(--btn-fondo);
 
-  color: #fff;
+  color: var(--btn-texto);
 
   border: none;
 
@@ -885,7 +893,7 @@ img { display: block; max-width: 100%; }
 
   transform: translateY(-1px);
 
-  box-shadow: 0 12px 24px rgba(91, 63, 209, 0.30);
+  box-shadow: 0 12px 24px var(--t20);
 
 }
 
@@ -1043,8 +1051,8 @@ img { display: block; max-width: 100%; }
 .catalogo .game-card button {
   margin: 0 16px 20px;
   width: calc(100% - 32px);
-  background: linear-gradient(135deg, #6d4eff 0%, #4c2cc8 100%);
-  color: var(--texto);
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
   border: none;
   border-radius: 999px;
   padding: 14px 0;
@@ -1056,7 +1064,7 @@ img { display: block; max-width: 100%; }
 .catalogo .game-card button:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(91, 63, 209, 0.25);
+  box-shadow: 0 12px 24px var(--t20);
 }
 .catalogo .game-card a:hover h3 {
   color: var(--acento);
@@ -1112,8 +1120,8 @@ img { display: block; max-width: 100%; }
   margin: 0;
 }
 .detalle-info button {
-  background: linear-gradient(135deg, #6d4eff 0%, #4c2cc8 100%);
-  color: #fff;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
   border: none;
   border-radius: 999px;
   padding: 14px 22px;
@@ -1126,7 +1134,7 @@ img { display: block; max-width: 100%; }
 .detalle-info button:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(91, 63, 209, 0.30);
+  box-shadow: 0 10px 22px var(--t20);
 }
 
 /* ---------- Loader / spinner de carga ---------- */
@@ -1205,8 +1213,8 @@ img { display: block; max-width: 100%; }
   position: absolute;
   top: -8px;
   right: -6px;
-  background: var(--acento);
-  color: #fff;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
   font-weight: 700;
   font-size: 13px;
   line-height: 1;
@@ -1234,14 +1242,14 @@ img { display: block; max-width: 100%; }
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6d4eff 0%, #4c2cc8 100%);
+  background: var(--btn-fondo);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 30px;
   font-weight: 800;
-  color: #fff;
-  box-shadow: 0 12px 28px rgba(91, 63, 209, 0.35);
+  color: var(--btn-texto);
+  box-shadow: 0 12px 28px var(--t20);
   flex: 0 0 auto;
 }
 .perfil-cabecera h2 { margin: 0 0 4px; font-size: 26px; }
@@ -1450,7 +1458,7 @@ img { display: block; max-width: 100%; }
   height: 5px;
   transform: translateY(-50%);
   border-radius: 999px;
-  background: var(--acento);
+  background: var(--btn-fondo);
   pointer-events: none;
 }
 .filtros-catalogo input[type="range"] {
@@ -1477,8 +1485,8 @@ img { display: block; max-width: 100%; }
   height: 16px;
   margin-top: 3px;
   border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--acento);
+  background: var(--btn-fondo);
+  border: 3px solid var(--btn-texto);
   cursor: grab;
 }
 .filtros-catalogo input[type="range"]::-moz-range-thumb {
@@ -1486,8 +1494,8 @@ img { display: block; max-width: 100%; }
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--acento);
+  background: var(--btn-fondo);
+  border: 3px solid var(--btn-texto);
   cursor: grab;
 }
 .filtros-catalogo input[type="range"]::-moz-range-track {
@@ -1583,9 +1591,9 @@ img { display: block; max-width: 100%; }
   padding: 0;
 }
 .mini-controles button:hover:not(:disabled) {
-  background: var(--acento);
-  border-color: var(--acento);
-  color: var(--sobre-acento);
+  background: var(--btn-fondo);
+  border-color: var(--btn-fondo);
+  color: var(--btn-texto);
 }
 .mini-controles button:disabled { opacity: 0.35; cursor: not-allowed; }
 .mini-controles span {
@@ -1616,8 +1624,8 @@ img { display: block; max-width: 100%; }
   margin-top: 10px;
   text-align: center;
   text-decoration: none;
-  background: var(--acento);
-  color: #fff;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
   font-size: 14px;
   font-weight: 700;
   padding: 10px;
@@ -1636,8 +1644,8 @@ img { display: block; max-width: 100%; }
   color: var(--texto-suave);
 }
 .carrito-vacio a {
-  color: #fff;
-  background: var(--acento);
+  color: var(--btn-texto);
+  background: var(--btn-fondo);
   text-decoration: none;
   padding: 10px 22px;
   border-radius: 999px;
@@ -1706,7 +1714,7 @@ img { display: block; max-width: 100%; }
   padding: 4px;
   border-radius: 50%;
 }
-.carrito-cantidad button:hover { background: var(--acento); color: var(--sobre-acento); }
+.carrito-cantidad button:hover { background: var(--btn-fondo); color: var(--btn-texto); }
 .carrito-cantidad span {
   min-width: 20px;
   text-align: center;
@@ -1760,8 +1768,8 @@ img { display: block; max-width: 100%; }
 .carrito-pagar {
   width: 100%;
   margin-top: 14px;
-  background: var(--acento);
-  color: #fff;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
   border: none;
   border-radius: 10px;
   padding: 12px;
@@ -1959,9 +1967,9 @@ img { display: block; max-width: 100%; }
 
   margin: 12px;
 
-  background: var(--acento);
+  background: var(--btn-fondo);
 
-  color: var(--sobre-acento);
+  color: var(--btn-texto);
 
   border: none;
 
@@ -2061,9 +2069,9 @@ img { display: block; max-width: 100%; }
 
   margin-top: 18px;
 
-  background: linear-gradient(135deg, #6d4eff 0%, #4c2cc8 100%);
+  background: var(--btn-fondo);
 
-  color: var(--texto);
+  color: var(--btn-texto);
 
   text-decoration: none;
 
@@ -2087,7 +2095,7 @@ img { display: block; max-width: 100%; }
 
   transform: translateY(-1px);
 
-  box-shadow: 0 12px 26px rgba(91, 63, 209, 0.4);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
 
 }
 
@@ -2175,9 +2183,9 @@ img { display: block; max-width: 100%; }
 
   margin-top: 12px;
 
-  background: var(--acento);
+  background: var(--btn-fondo);
 
-  color: var(--sobre-acento);
+  color: var(--btn-texto);
 
   display: inline-block;
 
@@ -2406,8 +2414,43 @@ img { display: block; max-width: 100%; }
   flex-direction: column;
   gap: 20px;
 }
-.agregar-buscador { display: flex; gap: 10px; margin: 16px 0; flex-wrap: wrap; }
-.agregar-buscador input { flex: 1; min-width: 220px; }
+.agregar-buscador { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+.agregar-buscador input { width: 100%; }
+
+/* Botones de fuentes (APIs) en grilla pareja y ordenada */
+.buscador-fuentes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+.agregar-carta .buscador-fuentes .btn-fuente {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--nav);
+  color: var(--texto);
+  border: 1px solid var(--t15);
+  font-weight: 600;
+  transition: border-color 0.15s, background 0.15s;
+}
+.agregar-carta .buscador-fuentes .btn-fuente:hover:not(:disabled) {
+  border-color: var(--acento);
+  background: var(--t10);
+}
+.agregar-carta .buscador-fuentes .btn-fuente:disabled { opacity: 0.55; }
+
+/* Mini-spinner dentro de un botón */
+.spinner-btn {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--t15);
+  border-top-color: var(--acento);
+  animation: girar 0.8s linear infinite;
+  display: inline-block;
+  flex: 0 0 auto;
+}
 .agregar-carta input,
 .agregar-carta select,
 .agregar-carta textarea {
@@ -2421,8 +2464,8 @@ img { display: block; max-width: 100%; }
   resize: vertical;
 }
 .agregar-carta button {
-  background: var(--acento);
-  color: var(--sobre-acento);
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
   border: none;
   border-radius: var(--radio);
   padding: 10px 18px;
@@ -2585,7 +2628,7 @@ img { display: block; max-width: 100%; }
   transition: background 0.15s, color 0.15s;
 }
 .admin-subtab:hover { color: var(--texto); }
-.admin-subtab.active { background: var(--acento); color: #fff; }
+.admin-subtab.active { background: var(--btn-fondo); color: var(--btn-texto); }
 
 /* Form de accesorios reutilizable (sirve también fuera de .agregar-carta,
    p.ej. en el detalle del accesorio) */
@@ -2602,8 +2645,8 @@ img { display: block; max-width: 100%; }
   resize: vertical;
 }
 .agregar-accesorio button:not(.btn-ghost) {
-  background: var(--acento);
-  color: var(--sobre-acento);
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
   border: none;
   border-radius: var(--radio);
   padding: 10px 18px;
@@ -2678,7 +2721,7 @@ img { display: block; max-width: 100%; }
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.carrusel-rel-nav button:hover { background: var(--acento); border-color: var(--acento); color: var(--sobre-acento); }
+.carrusel-rel-nav button:hover { background: var(--btn-fondo); border-color: var(--btn-fondo); color: var(--btn-texto); }
 
 .carrusel-rel-track {
   display: flex;

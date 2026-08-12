@@ -17,7 +17,21 @@ import {
   asegurarExpansion,
 } from "../lib/catalogos.js";
 import CarouselStore from "../components/CarouselStore.jsx";
+import Cargando from "../components/Cargando.jsx";
 import AgregarAccesorio from "./AgregarAccesorio.jsx";
+
+// Etiqueta de un botón de fuente: muestra spinner + "Buscando…" cuando esa
+// fuente es la que está cargando; si no, muestra su texto normal.
+function LabelFuente({ activo, children }) {
+  if (activo) {
+    return (
+      <>
+        <span className="spinner-btn" aria-hidden="true" /> Buscando…
+      </>
+    );
+  }
+  return children;
+}
 
 export default function AgregarCarta() {
   const [pestana, setPestana] = useState("cartas");
@@ -33,6 +47,7 @@ export default function AgregarCarta() {
   const [stock, setStock] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [buscando, setBuscando] = useState(false);
+  const [fuenteBuscando, setFuenteBuscando] = useState(null); // qué API está cargando
   const [guardando, setGuardando] = useState(false);
   const isCarrusel = Number(juegoId) === 6;
 
@@ -80,6 +95,7 @@ export default function AgregarCarta() {
   async function buscar() {
     if (!nombre) return;
     setBuscando(true);
+    setFuenteBuscando("scryfall");
     setMensaje("");
     const carta = await buscarCartaScryfall(nombre);
     if (!carta) {
@@ -100,6 +116,7 @@ export default function AgregarCarta() {
       }
     }
     setBuscando(false);
+    setFuenteBuscando(null);
   }
 
   async function guardar() {
@@ -228,14 +245,17 @@ export default function AgregarCarta() {
                 onChange={(e) => setNombre(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && buscar()}
               />
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button onClick={buscar} disabled={buscando}>
-                  {buscando ? "Buscando…" : "Buscar en Scryfall"}
+              <div className="buscador-fuentes">
+                <button className="btn-fuente" onClick={buscar} disabled={buscando}>
+                  <LabelFuente activo={fuenteBuscando === "scryfall"}>Buscar en Scryfall</LabelFuente>
                 </button>
                 <button
+                  className="btn-fuente"
+                  disabled={buscando}
                   onClick={async () => {
                     if (!nombre) return;
                     setBuscando(true);
+                    setFuenteBuscando("riftbound");
                     setMensaje("");
                     try {
                       const carta = await buscarCartaRiftbound(nombre);
@@ -260,15 +280,19 @@ export default function AgregarCarta() {
                       console.error(error);
                     } finally {
                       setBuscando(false);
+                      setFuenteBuscando(null);
                     }
                   }}
                 >
-                  Buscar en Riftbound
+                  <LabelFuente activo={fuenteBuscando === "riftbound"}>Buscar en Riftbound</LabelFuente>
                 </button>
                 <button
+                  className="btn-fuente"
+                  disabled={buscando}
                   onClick={async () => {
                     if (!nombre) return;
                     setBuscando(true);
+                    setFuenteBuscando("onepiece");
                     setMensaje("");
                     try {
                       // buscar en varios endpoints de One Piece y combinar resultados
@@ -327,15 +351,19 @@ export default function AgregarCarta() {
                       console.error(error);
                     } finally {
                       setBuscando(false);
+                      setFuenteBuscando(null);
                     }
                   }}
                 >
-                  Buscar en One Piece
+                  <LabelFuente activo={fuenteBuscando === "onepiece"}>Buscar en One Piece</LabelFuente>
                 </button>
                 <button
+                  className="btn-fuente"
+                  disabled={buscando}
                   onClick={async () => {
                     if (!nombre) return;
                     setBuscando(true);
+                    setFuenteBuscando("pokemon");
                     setMensaje("");
                     try {
                       const versiones = await buscarPrintsPokemon(nombre);
@@ -365,10 +393,11 @@ export default function AgregarCarta() {
                       console.error(error);
                     } finally {
                       setBuscando(false);
+                      setFuenteBuscando(null);
                     }
                   }}
                 >
-                  Buscar en Pokémon
+                  <LabelFuente activo={fuenteBuscando === "pokemon"}>Buscar en Pokémon</LabelFuente>
                 </button>
               </div>
             </div>
@@ -536,7 +565,13 @@ export default function AgregarCarta() {
             {mensaje && <p className="agregar-mensaje">{mensaje}</p>}
           </div>
 
-          {prints && prints.length > 0 && (
+          {buscando && (
+            <div className="agregar-print-list">
+              <Cargando texto="Buscando cartas…" />
+            </div>
+          )}
+
+          {!buscando && prints && prints.length > 0 && (
             <div className="agregar-print-list">
               <h3>Selecciona la versión que quieres agregar</h3>
               <div className="grid">
