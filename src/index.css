@@ -953,15 +953,6 @@ img { display: block; max-width: 100%; }
 
 
 
-.catalogo .grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-.catalogo .game-card img {
-  aspect-ratio: 5 / 7;      /* proporcion real de una carta TCG */
-  object-fit: contain;      /* muestra la carta completa, sin recortar el borde */
-  background: var(--img-fondo);      /* relleno detras de la carta */
-  display: block;
-}
 .catalogo .game-card a { text-decoration: none; color: inherit; }
 
 
@@ -993,13 +984,21 @@ img { display: block; max-width: 100%; }
 }
 
 .catalogo .grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* auto-fill (no auto-fit): con pocos items las columnas vacias conservan
+     su ancho y las tarjetas no se estiran a todo el contenedor */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 }
 .catalogo .game-card img {
   aspect-ratio: 5 / 7;
   object-fit: contain;
   background: var(--img-fondo);
   display: block;
+}
+/* Los accesorios (playmats, deckboxes) no son verticales como una carta:
+   caja más panorámica para que la imagen no quede gigante ni con bandas. */
+.catalogo-accesorios .game-card img {
+  aspect-ratio: 4 / 3;
+  padding: 10px;
 }
 .catalogo .game-card a {
   display: block;
