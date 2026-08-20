@@ -11,6 +11,8 @@ export default function Login() {
   const [modo, setModo] = useState(
     location.state?.modo === "registro" ? "registro" : "login"
   );
+  // A donde volver tras iniciar sesión (ej: "/checkout" si venía de pagar).
+  const redirect = location.state?.redirect;
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
@@ -23,8 +25,8 @@ export default function Login() {
   // Si ya hay sesión: el admin va al panel y el usuario normal al home.
   useEffect(() => {
     if (cargando || !user) return;
-    navigate(esAdmin ? "/admin/agregar" : "/", { replace: true });
-  }, [cargando, user, esAdmin, navigate]);
+    navigate(esAdmin ? "/admin/agregar" : redirect || "/", { replace: true });
+  }, [cargando, user, esAdmin, redirect, navigate]);
 
   function cambiarModo(nuevo) {
     setModo(nuevo);
@@ -81,9 +83,11 @@ export default function Login() {
         </div>
         <h2>{esRegistro ? "Crear cuenta" : "Bienvenido de nuevo"}</h2>
         <p className="auth-subtitulo">
-          {esRegistro
-            ? "Regístrate para comprar cartas y accesorios."
-            : "Ingresa con tu cuenta de CapsuleCorp Gaming."}
+          {redirect
+            ? "Ya casi. Crea tu cuenta o inicia sesión para completar tu compra."
+            : esRegistro
+              ? "Regístrate para comprar cartas y accesorios."
+              : "Ingresa con tu cuenta de CapsuleCorp Gaming."}
         </p>
 
         <div className="auth-tabs">

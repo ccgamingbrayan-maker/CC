@@ -1,12 +1,23 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import { useCart } from "../lib/CartContext.jsx";
+import { useAuth } from "../lib/AuthContext.jsx";
 import Cargando from "../components/Cargando.jsx";
 
 export default function Carrito() {
   const { items, cargando, total, subtotal, cambiarCantidad, quitar, vaciar } = useCart();
-  const [mensaje, setMensaje] = useState("");
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  function irAPagar() {
+    // El carrito de invitado ya vive en localStorage y se fusiona solo con
+    // la cuenta al iniciar sesión (ver CartContext), así que no se pierde nada.
+    if (!user) {
+      navigate("/login", { state: { modo: "registro", redirect: "/checkout" } });
+      return;
+    }
+    navigate("/checkout");
+  }
 
   if (cargando) return <Cargando texto="Cargando tu carrito…" />;
 
@@ -92,16 +103,14 @@ export default function Carrito() {
                 <span>Total</span>
                 <strong>${subtotal.toLocaleString("es-CO")} COP</strong>
               </p>
-              <button
-                type="button"
-                className="carrito-pagar"
-                onClick={() =>
-                  setMensaje("La pasarela de pago estará disponible muy pronto.")
-                }
-              >
+              <button type="button" className="carrito-pagar" onClick={irAPagar}>
                 Proceder al pago
               </button>
-              {mensaje && <p className="carrito-mensaje">{mensaje}</p>}
+              {!user && (
+                <p className="carrito-mensaje">
+                  Necesitas una cuenta para pagar, pero tu carrito no se pierde.
+                </p>
+              )}
             </aside>
           </div>
         )}

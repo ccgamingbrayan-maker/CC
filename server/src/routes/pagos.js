@@ -137,21 +137,14 @@ router.post("/confirmacion", async (req, res) => {
       .eq("id", pedidoId);
 
     if (nuevoEstado === "pagado") {
-      // Nota: como el pedido solo se procesa una vez (guard de arriba),
-      // un simple leer-y-restar es suficiente aqui. Si en el futuro hay
-      // muchas ventas simultaneas del mismo producto, conviene mover esto
-      // a una funcion RPC atomica en Supabase (igual que "agregar_al_carrito").
+   
       for (const item of pedido.items) {
         const tabla = item.tipo === "carta" ? "cartas" : "accesorios";
-        const { data: producto } = await supabaseAdmin
-          .from(tabla)
-          .select("stock")
-          .eq("id", item.item_id)
-          .maybeSingle();
-        if (producto?.stock != null) {
-          const nuevoStock = Math.max(0, producto.stock - item.cantidad);
-          await supabaseAdmin.from(tabla).update({ stock: nuevoStock }).eq("id", item.item_id);
-        }
+        await supabaseAdmin.rpc("descontar_stock", {
+          p_tabla: tabla,
+          p_id: item.item_id,
+          p_cantidad: item.cantidad,
+        });
       }
       await supabaseAdmin.from("carrito").delete().eq("user_id", pedido.user_id);
     }
