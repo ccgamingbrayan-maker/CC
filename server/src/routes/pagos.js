@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { supabaseAdmin } from "../lib/supabaseAdmin.js";
 import { crearSesionPago, firmaEsValida } from "../lib/epayco.js";
+import { enviarCorreoConfirmacionPedido, enviarCorreoPrueba } from "../lib/mailer.js";
 
 const router = Router();
 
@@ -137,7 +138,6 @@ router.post("/confirmacion", async (req, res) => {
       .eq("id", pedidoId);
 
     if (nuevoEstado === "pagado") {
-   
       for (const item of pedido.items) {
         const tabla = item.tipo === "carta" ? "cartas" : "accesorios";
         await supabaseAdmin.rpc("descontar_stock", {
@@ -147,12 +147,48 @@ router.post("/confirmacion", async (req, res) => {
         });
       }
       await supabaseAdmin.from("carrito").delete().eq("user_id", pedido.user_id);
+
+      // Enviar correo de confirmación con diseño profesional y pie de página de Brayan Arenas
+      try {
+        const { data: usuarioAuth } = await supabaseAdmin.auth.admin.getUserById(pedido.user_id);
+        const emailCliente = usuarioAuth?.user?.email;
+        const nombreCliente =
+          usuarioAuth?.user?.user_metadata?.nombre ||
+          usuarioAuth?.user?.email?.split("@")[0] ||
+          "Coleccionista";
+
+        if (emailCliente) {
+          await enviarCorreoConfirmacionPedido({
+            pedido: { ...pedido, referencia_epayco: datos.x_ref_payco },
+            emailDestinatario: emailCliente,
+            nombreCliente,
+          });
+        }
+      } catch (errEmail) {
+        console.error("Error al despachar correo de confirmación:", errEmail);
+      }
     }
 
     res.status(200).send("OK");
   } catch (err) {
     console.error("Error procesando webhook de ePayco:", err);
     res.status(500).send("Internal Server Error");
+  }
+});
+
+// Ruta para probar el diseño del correo directamente
+router.all("/probar-correo", async (req, res) => {
+  try {
+    const destinatario = req.body?.email || req.query?.email || process.env.EMAIL_USER;
+    const info = await enviarCorreoPrueba(destinatario);
+    res.json({
+      ok: true,
+      mensaje: `¡Correo de prueba enviado con éxito a ${destinatario || "tu correo"}!`,
+      messageId: info.messageId,
+    });
+  } catch (err) {
+    console.error("Error en correo de prueba:", err);
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
