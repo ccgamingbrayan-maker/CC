@@ -4,7 +4,15 @@ import { LogIn, UserPlus, Mail, Lock, User, Phone } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 
 export default function Login() {
-  const { user, esAdmin, cargando, login, registro } = useAuth();
+  const {
+    user,
+    esAdmin,
+    cargando,
+    recuperacionPassword,
+    login,
+    registro,
+    recuperarPassword,
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,9 +32,9 @@ export default function Login() {
 
   // Si ya hay sesión: el admin va al panel y el usuario normal al home.
   useEffect(() => {
-    if (cargando || !user) return;
+    if (cargando || recuperacionPassword || !user) return;
     navigate(esAdmin ? "/admin/agregar" : redirect || "/", { replace: true });
-  }, [cargando, user, esAdmin, redirect, navigate]);
+  }, [cargando, recuperacionPassword, user, esAdmin, redirect, navigate]);
 
   function cambiarModo(nuevo) {
     setModo(nuevo);
@@ -38,6 +46,25 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setMensaje("");
+
+    if (modo === "recuperar") {
+      setEnviando(true);
+      try {
+        const { error } = await recuperarPassword(email.trim());
+        if (error) {
+          setError("No se pudo enviar el enlace. " + error.message);
+        } else {
+          setMensaje(
+            "Si existe una cuenta con ese correo, recibirás un enlace para cambiar la contraseña."
+          );
+        }
+      } catch (err) {
+        setError("No se pudo enviar el enlace. " + err.message);
+      } finally {
+        setEnviando(false);
+      }
+      return;
+    }
 
     if (modo === "registro") {
       if (nombre.trim().length < 3) {
@@ -74,6 +101,7 @@ export default function Login() {
   }
 
   const esRegistro = modo === "registro";
+  const esRecuperacion = modo === "recuperar";
 
   return (
     <section className="auth">
@@ -81,31 +109,41 @@ export default function Login() {
         <div className="auth-icono">
           {esRegistro ? <UserPlus size={26} /> : <LogIn size={26} />}
         </div>
-        <h2>{esRegistro ? "Crear cuenta" : "Bienvenido de nuevo"}</h2>
+        <h2>
+          {esRegistro
+            ? "Crear cuenta"
+            : esRecuperacion
+              ? "Recuperar contraseña"
+              : "Bienvenido de nuevo"}
+        </h2>
         <p className="auth-subtitulo">
-          {redirect
-            ? "Ya casi. Crea tu cuenta o inicia sesión para completar tu compra."
-            : esRegistro
-              ? "Regístrate para comprar cartas y accesorios."
-              : "Ingresa con tu cuenta de CapsuleCorp Gaming."}
+          {esRecuperacion
+            ? "Te enviaremos un enlace para crear una contraseña nueva."
+            : redirect
+              ? "Ya casi. Crea tu cuenta o inicia sesión para completar tu compra."
+              : esRegistro
+                ? "Regístrate para comprar cartas y accesorios."
+                : "Ingresa con tu cuenta de CapsuleCorp Gaming."}
         </p>
 
-        <div className="auth-tabs">
-          <button
-            type="button"
-            className={!esRegistro ? "active" : ""}
-            onClick={() => cambiarModo("login")}
-          >
-            Iniciar sesión
-          </button>
-          <button
-            type="button"
-            className={esRegistro ? "active" : ""}
-            onClick={() => cambiarModo("registro")}
-          >
-            Crear cuenta
-          </button>
-        </div>
+        {!esRecuperacion && (
+          <div className="auth-tabs">
+            <button
+              type="button"
+              className={!esRegistro ? "active" : ""}
+              onClick={() => cambiarModo("login")}
+            >
+              Iniciar sesión
+            </button>
+            <button
+              type="button"
+              className={esRegistro ? "active" : ""}
+              onClick={() => cambiarModo("registro")}
+            >
+              Crear cuenta
+            </button>
+          </div>
+        )}
 
         <form onSubmit={onSubmit} className="auth-form">
           {esRegistro && (
@@ -147,18 +185,20 @@ export default function Login() {
             />
           </label>
 
-          <label>
-            <Lock size={16} />
-            Contraseña
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              minLength={6}
-              required
-            />
-          </label>
+          {!esRecuperacion && (
+            <label>
+              <Lock size={16} />
+              Contraseña
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+                required
+              />
+            </label>
+          )}
 
           {esRegistro && (
             <label>
@@ -178,12 +218,32 @@ export default function Login() {
           <button type="submit" className="auth-boton" disabled={enviando}>
             {enviando
               ? "Un momento…"
-              : esRegistro
-                ? "Registrarme"
-                : "Entrar"}
+              : esRecuperacion
+                ? "Enviar enlace"
+                : esRegistro
+                  ? "Registrarme"
+                  : "Entrar"}
           </button>
         </form>
 
+        {modo === "login" && (
+          <button
+            type="button"
+            className="auth-enlace"
+            onClick={() => cambiarModo("recuperar")}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+        )}
+        {esRecuperacion && (
+          <button
+            type="button"
+            className="auth-enlace"
+            onClick={() => cambiarModo("login")}
+          >
+            Volver a iniciar sesión
+          </button>
+        )}
         {error && <p className="auth-mensaje auth-error">{error}</p>}
         {mensaje && <p className="auth-mensaje auth-exito">{mensaje}</p>}
       </div>
