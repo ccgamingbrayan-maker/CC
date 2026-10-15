@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
+import { Search, Grid2X2, LayoutGrid, Maximize2, Check, X } from "lucide-react";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
 import { buscarCartaRiftbound, buscarPrintsRiftbound } from "../lib/riftbound.js";
 import {
-  buscarCartaOnePiece,
   buscarPrintsOnePiece,
   buscarDecksFiltered,
   buscarDonFiltered,
@@ -51,6 +51,11 @@ export default function AgregarCarta() {
   const [guardando, setGuardando] = useState(false);
   const isCarrusel = Number(juegoId) === 6;
 
+  // Filtros y vista para la galería de cartas
+  const [filtroPrints, setFiltroPrints] = useState("");
+  const [ordenPrints, setOrdenPrints] = useState("default");
+  const [densidad, setDensidad] = useState("compacto"); // "compacto" | "medio" | "grande"
+
   // Catálogos dinámicos (juegos y expansiones desde Supabase)
   const [juegosLista, setJuegosLista] = useState([]);
   const [expansiones, setExpansiones] = useState([]);
@@ -92,27 +97,85 @@ export default function AgregarCarta() {
     }
   }, [datosApi, expansiones, expansionTouched]);
 
+  function getCardTag(p) {
+    const n = (p.nombre || "").toLowerCase();
+    const s = (p.source || "").toLowerCase();
+    if (n.includes("parallel")) return { text: "Parallel", type: "parallel" };
+    if (n.includes("alt art") || n.includes("alternate")) return { text: "Alt Art", type: "parallel" };
+    if (n.includes("sp card") || n.includes("(sp)")) return { text: "SP", type: "parallel" };
+    if (n.includes("manga")) return { text: "Manga", type: "parallel" };
+    if (s === "onepiece-promo" || n.includes("promo")) return { text: "Promo", type: "promo" };
+    if (s === "onepiece-deck") return { text: "Deck", type: "deck" };
+    if (s === "onepiece-don" || n.includes("don!!") || n.includes("don!")) return { text: "DON!!", type: "don" };
+    return null;
+  }
+
+  function seleccionarVersion(p) {
+    const info = {
+      nombre: p.nombre,
+      imagen: p.imagen,
+      set: p.set,
+      numero: p.numero,
+      precios: p.precios,
+    };
+    setDatosApi(info);
+    setSeleccionada(p);
+    if (p.source) {
+      setFuente(p.source);
+      setUserSelectedJuego(false);
+      const mapped = p.source.startsWith("onepiece")
+        ? 1
+        : p.source === "riftbound"
+        ? 2
+        : p.source === "pokemon"
+        ? 3
+        : p.source === "scryfall"
+        ? 4
+        : juegoId;
+      if (mapped) setJuegoId(mapped);
+    }
+    const usdRef = p.precios?.usd ?? null;
+    setPrecioReferencia(usdRef);
+    if (usdRef && (!precio || precio === "")) {
+      const tasa = 3500;
+      const sugerido = Math.round(Number(usdRef) * tasa);
+      setPrecio(String(sugerido));
+    }
+  }
+
   async function buscar() {
     if (!nombre) return;
     setBuscando(true);
     setFuenteBuscando("scryfall");
     setMensaje("");
+    setFiltroPrints("");
     const carta = await buscarCartaScryfall(nombre);
     if (!carta) {
       setDatosApi(null);
+      setPrints([]);
+      setSeleccionada(null);
       setMensaje("No se encontró esa carta en Scryfall.");
     } else {
       setDatosApi(carta);
       setFuente("scryfall");
-      setSeleccionada(null);
       setUserSelectedJuego(false);
       setJuegoId(4);
+      const usdRef = carta.precios?.usd ?? null;
+      setPrecioReferencia(usdRef);
+      if (usdRef && (!precio || precio === "")) {
+        const tasa = 3500;
+        const sugerido = Math.round(Number(usdRef) * tasa);
+        setPrecio(String(sugerido));
+      }
       // Obtener todas las prints para permitir selección manual
       if (carta.printsSearchUri) {
         const versiones = await buscarPrintsDesdeUri(carta.printsSearchUri);
-        setPrints((versiones || []).map((v) => ({ ...v, source: "scryfall" })));
+        const mapped = (versiones || []).map((v) => ({ ...v, source: "scryfall" }));
+        setPrints(mapped);
+        setSeleccionada(mapped[0] || carta);
       } else {
-        setPrints([]);
+        setPrints([carta]);
+        setSeleccionada(carta);
       }
     }
     setBuscando(false);
@@ -206,7 +269,37 @@ export default function AgregarCarta() {
       setNuevoJuegoImagen("");
       if (expansionFinal) listarExpansiones(juegoToSave).then(setExpansiones);
     }
-    }
+  }
+
+  // Filtrado y ordenamiento de las versiones disponibles
+  const printsFiltrados = prints
+    .filter((p) => {
+      if (!filtroPrints.trim()) return true;
+      const q = filtroPrints.toLowerCase().trim();
+      const n = (p.nombre || "").toLowerCase();
+      const s = (p.set || "").toLowerCase();
+      const num = (p.numero || "").toLowerCase();
+      return n.includes(q) || s.includes(q) || num.includes(q);
+    })
+    .sort((a, b) => {
+      if (ordenPrints === "precio-asc") {
+        const pa = a.precios?.usd != null ? a.precios.usd : 999999;
+        const pb = b.precios?.usd != null ? b.precios.usd : 999999;
+        return pa - pb;
+      }
+      if (ordenPrints === "precio-desc") {
+        const pa = a.precios?.usd != null ? a.precios.usd : -1;
+        const pb = b.precios?.usd != null ? b.precios.usd : -1;
+        return pb - pa;
+      }
+      if (ordenPrints === "nombre") {
+        return (a.nombre || "").localeCompare(b.nombre || "");
+      }
+      if (ordenPrints === "set") {
+        return (a.set || "").localeCompare(b.set || "");
+      }
+      return 0;
+    });
 
   return (
     <section className="juegos">
@@ -232,15 +325,15 @@ export default function AgregarCarta() {
           <AgregarAccesorio />
         ) : (
         <>
-        <p style={{ color: "var(--texto-suave)" }}>
-          Busca por nombre en Scryfall, pon tu precio y stock, y se guarda en Supabase.
+        <p style={{ color: "var(--texto-suave)", margin: "0 0 16px" }}>
+          Busca por nombre en las APIs oficiales, selecciona la versión exacta y guárdala con tu precio y stock.
         </p>
 
         <div className="agregar-carta-grid">
           <div className="agregar-panel">
             <div className="agregar-buscador">
               <input
-                placeholder="Nombre de la carta (ej: Sol Ring)"
+                placeholder="Nombre de la carta (ej: Bonney, Sol Ring, Pikachu...)"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && buscar()}
@@ -257,25 +350,29 @@ export default function AgregarCarta() {
                     setBuscando(true);
                     setFuenteBuscando("riftbound");
                     setMensaje("");
+                    setFiltroPrints("");
                     try {
                       const carta = await buscarCartaRiftbound(nombre);
                       if (!carta) {
                         setDatosApi(null);
                         setPrints([]);
+                        setSeleccionada(null);
                         setMensaje("No se encontró esa carta en Riftbound.");
                       } else {
                         setDatosApi(carta);
                         setFuente("riftbound");
-                        setSeleccionada(null);
                         setUserSelectedJuego(false);
                         setJuegoId(2);
                         const versiones = await buscarPrintsRiftbound(nombre);
-                        setPrints((versiones || []).map((v) => ({ ...v, source: "riftbound" })));
+                        const mapped = (versiones || []).map((v) => ({ ...v, source: "riftbound" }));
+                        setPrints(mapped);
+                        setSeleccionada(mapped[0] || carta);
                         setPrecioReferencia(null);
                       }
                     } catch (error) {
                       setDatosApi(null);
                       setPrints([]);
+                      setSeleccionada(null);
                       setMensaje("Error al buscar en Riftbound. Intenta otra búsqueda.");
                       console.error(error);
                     } finally {
@@ -294,6 +391,7 @@ export default function AgregarCarta() {
                     setBuscando(true);
                     setFuenteBuscando("onepiece");
                     setMensaje("");
+                    setFiltroPrints("");
                     try {
                       // buscar en varios endpoints de One Piece y combinar resultados
                       const [printsMain, decks, dons, promos] = await Promise.all([
@@ -318,9 +416,10 @@ export default function AgregarCarta() {
                       if (!merged || merged.length === 0) {
                         setDatosApi(null);
                         setPrints([]);
+                        setSeleccionada(null);
                         setMensaje("No se encontraron resultados en One Piece para esa búsqueda.");
                       } else {
-                        // opcional: deduplicar por id/imágen
+                        // deduplicar por id/imágen
                         const seen = new Set();
                         const dedup = [];
                         for (const p of merged) {
@@ -331,7 +430,7 @@ export default function AgregarCarta() {
                           }
                         }
                         setPrints(dedup);
-                        setSeleccionada(null);
+                        setSeleccionada(dedup[0]);
                         setFuente("onepiece");
                         setUserSelectedJuego(false);
                         setJuegoId(1);
@@ -340,13 +439,21 @@ export default function AgregarCarta() {
                           nombre: primera.nombre,
                           imagen: primera.imagen,
                           set: primera.set,
+                          numero: primera.numero,
                           precios: primera.precios,
                         });
-                        setPrecioReferencia(primera.precios?.usd ?? null);
+                        const usdRef = primera.precios?.usd ?? null;
+                        setPrecioReferencia(usdRef);
+                        if (usdRef && (!precio || precio === "")) {
+                          const tasa = 3500;
+                          const sugerido = Math.round(Number(usdRef) * tasa);
+                          setPrecio(String(sugerido));
+                        }
                       }
                     } catch (error) {
                       setDatosApi(null);
                       setPrints([]);
+                      setSeleccionada(null);
                       setMensaje("Error al buscar en One Piece. Intenta otra búsqueda.");
                       console.error(error);
                     } finally {
@@ -365,15 +472,17 @@ export default function AgregarCarta() {
                     setBuscando(true);
                     setFuenteBuscando("pokemon");
                     setMensaje("");
+                    setFiltroPrints("");
                     try {
                       const versiones = await buscarPrintsPokemon(nombre);
                       if (!versiones || versiones.length === 0) {
                         setDatosApi(null);
                         setPrints([]);
+                        setSeleccionada(null);
                         setMensaje("No se encontraron resultados en Pokémon para esa búsqueda.");
                       } else {
                         setPrints(versiones);
-                        setSeleccionada(null);
+                        setSeleccionada(versiones[0]);
                         setFuente("pokemon");
                         setUserSelectedJuego(false);
                         setJuegoId(3);
@@ -382,13 +491,21 @@ export default function AgregarCarta() {
                           nombre: primera.nombre,
                           imagen: primera.imagen,
                           set: primera.set,
+                          numero: primera.numero,
                           precios: primera.precios,
                         });
-                        setPrecioReferencia(primera.precios?.usd ?? null);
+                        const usdRef = primera.precios?.usd ?? null;
+                        setPrecioReferencia(usdRef);
+                        if (usdRef && (!precio || precio === "")) {
+                          const tasa = 3500;
+                          const sugerido = Math.round(Number(usdRef) * tasa);
+                          setPrecio(String(sugerido));
+                        }
                       }
                     } catch (error) {
                       setDatosApi(null);
                       setPrints([]);
+                      setSeleccionada(null);
                       setMensaje("Error al buscar en Pokémon. Intenta otra búsqueda.");
                       console.error(error);
                     } finally {
@@ -404,28 +521,41 @@ export default function AgregarCarta() {
 
             {datosApi && (
               <div className="agregar-preview">
-                <img src={datosApi.imagen} alt={datosApi.nombre} />
-
-                <div className="agregar-form">
-                  <h3>{datosApi.nombre}</h3>
-                  <p style={{ color: "var(--texto-suave)" }}>{datosApi.set}</p>
-
-                  {precioReferencia && (
-                    <p style={{ color: "var(--texto-suave)", marginTop: 6 }}>
-                      Precio referencia: <strong>{precioReferencia} USD</strong>
-                      <button
-                        style={{ marginLeft: 10 }}
-                        onClick={() => {
-                          const tasa = 3500;
-                          const sugerido = Math.round(Number(precioReferencia) * tasa);
-                          setPrecio(String(sugerido));
-                        }}
-                      >
-                        Usar referencia (USD → COP)
-                      </button>
-                    </p>
+                <div className="agregar-preview-hero">
+                  {datosApi.imagen ? (
+                    <img src={datosApi.imagen} alt={datosApi.nombre} />
+                  ) : (
+                    <div className="preview-placeholder">Sin imagen</div>
                   )}
 
+                  <div className="agregar-preview-details">
+                    <span className="preview-badge-status">Seleccionada</span>
+                    <h3>{datosApi.nombre}</h3>
+                    <p className="preview-set">
+                      {datosApi.set || "Sin expansión"} {datosApi.numero ? `#${datosApi.numero}` : ""}
+                    </p>
+
+                    {precioReferencia != null && (
+                      <div className="preview-ref-box">
+                        <span>Ref: <strong>${precioReferencia} USD</strong></span>
+                        <button
+                          type="button"
+                          className="btn-usar-ref"
+                          onClick={() => {
+                            const tasa = 3500;
+                            const sugerido = Math.round(Number(precioReferencia) * tasa);
+                            setPrecio(String(sugerido));
+                          }}
+                          title="Convertir referencia a COP (~$3.500 por USD)"
+                        >
+                          Usar ref (${Math.round(Number(precioReferencia) * 3500).toLocaleString("es-CO")} COP)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="agregar-form">
                   <label>
                     Juego
                     <select
@@ -555,7 +685,7 @@ export default function AgregarCarta() {
                     </>
                   )}
 
-                  <button onClick={guardar} disabled={guardando}>
+                  <button className="btn-guardar-tienda" onClick={guardar} disabled={guardando}>
                     {guardando ? "Guardando…" : "Guardar en mi tienda"}
                   </button>
                 </div>
@@ -573,45 +703,145 @@ export default function AgregarCarta() {
 
           {!buscando && prints && prints.length > 0 && (
             <div className="agregar-print-list">
-              <h3>Selecciona la versión que quieres agregar</h3>
-              <div className="grid">
-                {prints.map((p) => (
-                  <div
-                    key={p.id}
-                    className={`game-card ${seleccionada?.id === p.id ? "selected" : ""}`}
-                    onClick={() => {
-                      const info = {
-                        nombre: p.nombre,
-                        imagen: p.imagen,
-                        set: p.set,
-                        numero: p.numero,
-                        precios: p.precios,
-                      };
-                      setDatosApi(info);
-                      setSeleccionada(p);
-                      if (p.source) {
-                        setFuente(p.source);
-                        setUserSelectedJuego(false);
-                        const mapped = p.source.startsWith("onepiece") ? 1 : p.source === "riftbound" ? 2 : p.source === "pokemon" ? 3 : p.source === "scryfall" ? 4 : juegoId;
-                        if (mapped) setJuegoId(mapped);
-                      }
-                      const usdRef = p.precios?.usd ?? null;
-                      setPrecioReferencia(usdRef);
-                      if (usdRef && (!precio || precio === "")) {
-                        const tasa = 3500;
-                        const sugerido = Math.round(Number(usdRef) * tasa);
-                        setPrecio(String(sugerido));
-                      }
-                    }}
-                  >
-                    {p.imagen && <img src={p.imagen} alt={p.nombre} />}
-                    <h3>{p.nombre}</h3>
-                    <p>{p.set} #{p.numero}</p>
-                    <p style={{ fontSize: 14 }}>{p.precios?.usd ? `$${p.precios.usd}` : "-"}</p>
+              <div className="print-list-header">
+                <div className="print-list-title-wrap">
+                  <h3>Versiones disponibles</h3>
+                  <span className="print-count-badge">
+                    {printsFiltrados.length} {printsFiltrados.length === 1 ? "versión" : "versiones"}
+                  </span>
+                </div>
+
+                <div className="print-list-controls">
+                  <div className="print-filter-box">
+                    <Search size={14} className="filter-icon" />
+                    <input
+                      type="text"
+                      placeholder="Filtrar por set, código, arte..."
+                      value={filtroPrints}
+                      onChange={(e) => setFiltroPrints(e.target.value)}
+                    />
+                    {filtroPrints && (
+                      <button
+                        type="button"
+                        className="btn-clear-filter"
+                        onClick={() => setFiltroPrints("")}
+                        title="Limpiar filtro"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
                   </div>
-                ))}
+
+                  <select
+                    className="print-sort-select"
+                    value={ordenPrints}
+                    onChange={(e) => setOrdenPrints(e.target.value)}
+                    title="Ordenar versiones"
+                  >
+                    <option value="default">Orden original</option>
+                    <option value="precio-asc">Precio: Menor a mayor</option>
+                    <option value="precio-desc">Precio: Mayor a menor</option>
+                    <option value="nombre">Nombre (A-Z)</option>
+                    <option value="set">Set / Expansión</option>
+                  </select>
+
+                  <div className="densidad-selector" title="Tamaño de las cartas en pantalla">
+                    <button
+                      type="button"
+                      className={`btn-densidad ${densidad === "compacto" ? "active" : ""}`}
+                      onClick={() => setDensidad("compacto")}
+                      title="Compacto (6 a 8 cartas por fila)"
+                    >
+                      <Grid2X2 size={13} /> Compacto
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-densidad ${densidad === "medio" ? "active" : ""}`}
+                      onClick={() => setDensidad("medio")}
+                      title="Medio (4 a 6 cartas por fila)"
+                    >
+                      <LayoutGrid size={13} /> Medio
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-densidad ${densidad === "grande" ? "active" : ""}`}
+                      onClick={() => setDensidad("grande")}
+                      title="Grande (3 a 4 cartas por fila)"
+                    >
+                      <Maximize2 size={13} /> Grande
+                    </button>
+                  </div>
+                </div>
               </div>
-              <p style={{ color: "var(--texto-suave)" }}>Haz clic en la carta que quieres agregar.</p>
+
+              {printsFiltrados.length === 0 ? (
+                <div className="print-list-empty">
+                  <p>No se encontraron cartas que coincidan con "<strong>{filtroPrints}</strong>"</p>
+                  <button type="button" onClick={() => setFiltroPrints("")}>
+                    Restablecer filtro
+                  </button>
+                </div>
+              ) : (
+                <div className={`grid densidad-${densidad}`}>
+                  {printsFiltrados.map((p, index) => {
+                    const tag = getCardTag(p);
+                    const esSeleccionada =
+                      seleccionada &&
+                      (seleccionada === p ||
+                        (seleccionada.id && p.id && seleccionada.id === p.id && seleccionada.imagen === p.imagen) ||
+                        (seleccionada.imagen && seleccionada.imagen === p.imagen));
+
+                    return (
+                      <div
+                        key={p.id ? `${p.id}-${index}` : index}
+                        className={`game-card ${esSeleccionada ? "selected" : ""}`}
+                        onClick={() => seleccionarVersion(p)}
+                        title={`${p.nombre}\n${p.set || ""} ${p.numero ? `#${p.numero}` : ""}\n${p.precios?.usd ? `$${p.precios.usd} USD` : "Sin precio"}`}
+                      >
+                        {esSeleccionada && (
+                          <span className="card-badge-selected">
+                            <Check size={11} strokeWidth={3} /> Elegida
+                          </span>
+                        )}
+                        {tag && (
+                          <span className={`card-badge-tag ${tag.type}`}>
+                            {tag.text}
+                          </span>
+                        )}
+
+                        {p.imagen ? (
+                          <img src={p.imagen} alt={p.nombre} loading="lazy" />
+                        ) : (
+                          <div className="preview-placeholder">Sin imagen</div>
+                        )}
+
+                        <div className="card-info-wrap">
+                          <h3 title={p.nombre}>{p.nombre}</h3>
+                          <p className="card-meta" title={`${p.set || ""} ${p.numero ? `#${p.numero}` : ""}`}>
+                            {p.set || "—"} {p.numero ? `#${p.numero}` : ""}
+                          </p>
+                          <span className="card-price-pill">
+                            {p.precios?.usd != null ? `$${p.precios.usd} USD` : "—"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <p style={{ color: "var(--texto-suave)", fontSize: 13, marginTop: 4 }}>
+                Haz clic en la carta que quieres agregar a tu tienda.
+              </p>
+            </div>
+          )}
+
+          {!buscando && prints && prints.length === 0 && (
+            <div className="agregar-empty-hero">
+              <div className="empty-hero-icon">🃏</div>
+              <h3>Catálogo de búsqueda</h3>
+              <p>
+                Escribe el nombre de una carta a la izquierda y pulsa una de las fuentes (One Piece, Scryfall, Pokémon o Riftbound) para ver todas sus versiones y arte alterno.
+              </p>
             </div>
           )}
         </div>
@@ -621,7 +851,3 @@ export default function AgregarCarta() {
     </section>
   );
 }
-
-
-
-

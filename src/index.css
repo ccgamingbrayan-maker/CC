@@ -2396,31 +2396,44 @@ img { display: block; max-width: 100%; }
 }
 
 /* ---------- Agregar carta (admin) ---------- */
-.agregar-carta { padding: 32px 20px; }
+.agregar-carta { padding: 24px 28px; }
 .agregar-carta-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-  gap: 32px;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 24px;
   align-items: start;
 }
 .agregar-panel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.agregar-panel::-webkit-scrollbar {
+  width: 6px;
+}
+.agregar-panel::-webkit-scrollbar-thumb {
+  background: var(--t15);
+  border-radius: 999px;
 }
 .agregar-print-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
+  min-width: 0;
 }
-.agregar-buscador { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+.agregar-buscador { display: flex; flex-direction: column; gap: 12px; margin: 12px 0 4px; }
 .agregar-buscador input { width: 100%; }
 
 /* Botones de fuentes (APIs) en grilla pareja y ordenada */
 .buscador-fuentes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
 }
 .agregar-carta .buscador-fuentes .btn-fuente {
   display: inline-flex;
@@ -2472,30 +2485,135 @@ img { display: block; max-width: 100%; }
   font-size: 14px;
 }
 .agregar-carta button:disabled { opacity: 0.6; cursor: default; }
+
+/* Tarjeta preview de la carta seleccionada en el panel lateral */
 .agregar-preview {
   display: flex;
-  gap: 28px;
-  flex-wrap: wrap;
-  margin-top: 20px;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--t04);
+  border: 1px solid var(--t08);
+  border-radius: var(--radio);
+  padding: 14px;
 }
-.agregar-preview > img { width: 240px; max-width: 100%; border-radius: var(--radio); }
-.agregar-form { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
+.agregar-preview-hero {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.agregar-preview-hero img,
+.agregar-preview-hero .preview-placeholder {
+  width: 90px;
+  aspect-ratio: 5 / 7;
+  object-fit: contain;
+  background: var(--img-fondo);
+  border-radius: calc(var(--radio) - 4px);
+  border: 1px solid var(--t10);
+  flex-shrink: 0;
+}
+.agregar-preview-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.preview-badge-status {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--acento, #6c8cff);
+  background: var(--t08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.agregar-preview-details h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--texto);
+  word-break: break-word;
+}
+.preview-set {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--texto-suave);
+}
+.preview-ref-box {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+.btn-usar-ref {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--t08) !important;
+  color: var(--texto) !important;
+  border: 1px solid var(--t15) !important;
+  padding: 5px 8px !important;
+  font-size: 11.5px !important;
+  font-weight: 600;
+  border-radius: 6px !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+.btn-usar-ref:hover {
+  background: var(--t15) !important;
+  border-color: var(--acento, #6c8cff) !important;
+  color: var(--acento, #6c8cff) !important;
+}
+.agregar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .agregar-form label {
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
   color: var(--texto-suave);
+  font-weight: 500;
 }
-.agregar-prints .grid,
-.agregar-print-list .grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+.agregar-form input,
+.agregar-form select {
+  width: 100%;
 }
-.agregar-mensaje { margin-top: 16px; font-weight: 600; }
+.btn-guardar-tienda {
+  margin-top: 6px;
+  background: var(--btn-fondo) !important;
+  color: var(--btn-texto) !important;
+  font-weight: 700 !important;
+  padding: 11px 18px !important;
+  font-size: 14px !important;
+  box-shadow: 0 4px 14px rgba(108, 140, 255, 0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-guardar-tienda:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(108, 140, 255, 0.35);
+}
 
-@media (max-width: 900px) {
+.agregar-mensaje { margin-top: 14px; font-weight: 600; }
+
+@media (max-width: 960px) {
   .agregar-carta-grid {
     grid-template-columns: 1fr;
+  }
+  .agregar-panel {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
   }
 }
 
@@ -2567,7 +2685,7 @@ img { display: block; max-width: 100%; }
 }
 
 /* ---------- Layout general admin (más ordenado) ---------- */
-.agregar-carta { max-width: 1100px; margin: 0 auto; }
+.agregar-carta { max-width: 1680px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 .agregar-carta > h2 { margin-bottom: 4px; }
 .admin-intro {
   color: var(--texto-suave);
@@ -2788,56 +2906,309 @@ img { display: block; max-width: 100%; }
   to { transform: translateX(-50%); }
 }
 
-/* ---------- Cards del catálogo de la API (admin) ---------- */
-.agregar-print-list .grid { gap: 16px; }
-.agregar-print-list .game-card {
+/* ---------- Controles superiores de la lista de cartas (admin) ---------- */
+.print-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
   background: var(--t04);
   border: 1px solid var(--t08);
-  border-top: 1px solid var(--t08);
   border-radius: var(--radio);
-  padding: 12px;
+}
+.print-list-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.print-list-title-wrap h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+.print-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--t08);
+  color: var(--acento, #6c8cff);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.print-list-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.print-filter-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--nav);
+  border: 1px solid var(--t15);
+  border-radius: var(--radio);
+  padding: 5px 10px;
+  min-width: 200px;
+}
+.print-filter-box .filter-icon {
+  color: var(--texto-suave);
+  flex-shrink: 0;
+}
+.print-filter-box input {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+  color: var(--texto) !important;
+  outline: none !important;
+  width: 100%;
+}
+.print-filter-box .btn-clear-filter {
+  background: transparent !important;
+  border: none !important;
+  color: var(--texto-suave) !important;
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  padding: 0 2px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.print-filter-box .btn-clear-filter:hover {
+  color: var(--texto) !important;
+}
+.print-sort-select {
+  background: var(--nav) !important;
+  color: var(--texto) !important;
+  border: 1px solid var(--t15) !important;
+  border-radius: var(--radio) !important;
+  padding: 5px 8px !important;
+  font-size: 12px !important;
+  cursor: pointer;
+}
+.densidad-selector {
+  display: inline-flex;
+  background: var(--nav);
+  border: 1px solid var(--t15);
+  border-radius: var(--radio);
+  padding: 2px;
+  gap: 2px;
+}
+.btn-densidad {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent !important;
+  color: var(--texto-suave) !important;
+  border: none !important;
+  border-radius: calc(var(--radio) - 2px) !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-densidad:hover {
+  color: var(--texto) !important;
+  background: var(--t06) !important;
+}
+.btn-densidad.active {
+  background: var(--acento, #6c8cff) !important;
+  color: #fff !important;
+}
+
+/* Grilla con densidades de cartas */
+.agregar-print-list .grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+}
+.agregar-print-list .grid.densidad-compacto {
+  grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+  gap: 10px;
+}
+.agregar-print-list .grid.densidad-medio {
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 12px;
+}
+.agregar-print-list .grid.densidad-grande {
+  grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+  gap: 14px;
+}
+
+/* Tarjeta individual en el catálogo de versiones */
+.agregar-print-list .game-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--t04);
+  border: 1px solid var(--t08);
+  border-radius: var(--radio);
+  padding: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  overflow: hidden;
+  user-select: none;
 }
 .agregar-print-list .game-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--t20);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  transform: translateY(-4px);
+  border-color: var(--t25);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+  background: var(--t06);
 }
-/* Las fundas / deck boxes vienen en proporciones distintas: mostrar completa,
-   no recortada, sobre un fondo suave. */
+.agregar-print-list .game-card.selected {
+  border-color: var(--acento, #6c8cff);
+  background: rgba(108, 140, 255, 0.08);
+  box-shadow: 0 0 0 2px var(--acento, #6c8cff), 0 8px 24px rgba(108, 140, 255, 0.25);
+  transform: translateY(-2px);
+}
+.card-badge-selected {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  background: var(--acento, #6c8cff);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.card-badge-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  background: rgba(20, 20, 30, 0.88);
+  backdrop-filter: blur(4px);
+  color: #ffcc00;
+  border: 1px solid rgba(255, 204, 0, 0.3);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.card-badge-tag.parallel {
+  color: #e096ff;
+  border-color: rgba(224, 150, 255, 0.4);
+}
+.card-badge-tag.promo {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.4);
+}
+.card-badge-tag.deck {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+.card-badge-tag.don {
+  color: #fb923c;
+  border-color: rgba(251, 146, 60, 0.4);
+}
 .agregar-print-list .game-card img {
-  aspect-ratio: 3 / 4;
+  width: 100%;
+  aspect-ratio: 5 / 7;
   object-fit: contain;
   background: var(--img-fondo);
   border-radius: calc(var(--radio) - 4px);
-  padding: 8px;
+  padding: 2px;
+  display: block;
+  transition: transform 0.2s ease;
+}
+.agregar-print-list .game-card:hover img {
+  transform: scale(1.02);
+}
+.agregar-print-list .game-card .card-info-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  text-align: center;
 }
 .agregar-print-list .game-card h3 {
-  font-size: 14px;
-  padding: 10px 4px 0;
-  line-height: 1.35;
-  min-height: 38px;
-  display: -webkit-box;
-  line-clamp: 2;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.agregar-print-list .game-card p {
-  padding: 2px 4px;
-  text-align: center;
-  color: var(--texto-suave);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0;
   margin: 0;
-}
-.agregar-print-list .game-card p:last-child {
+  line-height: 1.25;
   color: var(--texto);
-  font-weight: 700;
+  min-height: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.agregar-print-list .game-card.selected {
-  border-color: var(--acento);
-  box-shadow: 0 0 0 2px var(--acento);
+.agregar-print-list .game-card p.card-meta {
+  padding: 0;
+  margin: 0;
+  font-size: 11px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.agregar-print-list .game-card .card-price-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: var(--t08);
+  color: var(--acento, #6c8cff);
+}
+.print-list-empty {
+  text-align: center;
+  padding: 36px 16px;
+  background: var(--t03);
+  border: 1px dashed var(--t15);
+  border-radius: var(--radio);
+  color: var(--texto-suave);
+}
+.print-list-empty button {
+  margin-top: 10px;
+  font-size: 12px !important;
+  padding: 6px 14px !important;
+}
+.agregar-empty-hero {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--t03);
+  border: 1px dashed var(--t15);
+  border-radius: var(--radio);
+  color: var(--texto-suave);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.agregar-empty-hero .empty-hero-icon {
+  font-size: 40px;
+}
+.agregar-empty-hero h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--texto);
+}
+.agregar-empty-hero p {
+  margin: 0;
+  max-width: 440px;
+  line-height: 1.5;
+  font-size: 13.5px;
 }
 
 /* ---------- Vista previa (carga manual) ---------- */
