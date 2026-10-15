@@ -11,6 +11,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [recuperacionPassword, setRecuperacionPassword] = useState(false);
 
   useEffect(() => {
     // Sesión inicial (si ya había login guardado)
@@ -20,8 +21,10 @@ export function AuthProvider({ children }) {
     });
 
     // Escuchar cambios (login / logout)
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
+      if (event === "PASSWORD_RECOVERY") setRecuperacionPassword(true);
+      if (event === "SIGNED_OUT") setRecuperacionPassword(false);
     });
 
     return () => sub.subscription.unsubscribe();
@@ -35,8 +38,22 @@ export function AuthProvider({ children }) {
     user,
     esAdmin,
     cargando,
+    recuperacionPassword,
     login(email, password) {
       return supabase.auth.signInWithPassword({ email, password });
+    },
+    recuperarPassword(email) {
+      const redirectTo = new URL(
+        "/restablecer-clave",
+        window.location.origin
+      ).toString();
+      return supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    },
+    actualizarPassword(password) {
+      return supabase.auth.updateUser({ password });
+    },
+    finalizarRecuperacionPassword() {
+      setRecuperacionPassword(false);
     },
     registro(email, password, datos = {}) {
       return supabase.auth.signUp({ email, password, options: { data: datos } });

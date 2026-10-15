@@ -899,6 +899,32 @@ img { display: block; max-width: 100%; }
 
 .auth-boton:disabled { opacity: 0.6; cursor: default; }
 
+.auth-enlace {
+
+  display: inline-block;
+
+  margin-top: 18px;
+
+  padding: 0;
+
+  background: none;
+
+  border: none;
+
+  color: var(--acento);
+
+  font: inherit;
+
+  font-size: 14px;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+}
+
+.auth-enlace:hover { text-decoration: underline; }
+
 .auth-mensaje {
 
   margin: 16px 0 0;
@@ -2852,7 +2878,6 @@ img { display: block; max-width: 100%; }
   color: var(--texto-suave);
   font-size: 13px;
 }
-
 
 
 
