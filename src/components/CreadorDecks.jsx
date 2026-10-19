@@ -239,38 +239,22 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
   canvas.height = height;
   const ctx = canvas.getContext("2d");
 
-  // Fondo degradado carbón / azul marino oscuro
-  const grad = ctx.createLinearGradient(0, 0, width, height);
-  grad.addColorStop(0, "#0f172a");
-  grad.addColorStop(0.5, "#1e1b4b");
-  grad.addColorStop(1, "#020617");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, width, height);
+  // Cargar imagen de fondo del mapa (con fallback)
+  const cargarFondo = () => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        const fallback = new Image();
+        fallback.onload = () => resolve(fallback);
+        fallback.onerror = () => resolve(null);
+        fallback.src = "/img/one-piece-map.jpg";
+      };
+      img.src = "/img/deck-bg.jpg";
+    });
+  };
 
-  // Borde temático dorado TCG
-  ctx.strokeStyle = "rgba(234, 179, 8, 0.4)";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(8, 8, width - 16, height - 16);
-
-  // Cabecera
-  ctx.fillStyle = "#eab308";
-  ctx.font = "bold 12px system-ui, sans-serif";
-  ctx.fillText("🏴‍☠️ CAPSULE CORP GAMING • ONE PIECE TCG", padding, 38);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 22px system-ui, sans-serif";
-  ctx.fillText(`Cartas que me faltan: ${deck.nombre}`, padding, 68);
-
-  const totalFaltan = cartasFaltantes.reduce((acc, c) => acc + c.faltan, 0);
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = "13px system-ui, sans-serif";
-  ctx.fillText(
-    `Total: ${totalFaltan} copias en ${cartasFaltantes.length} cartas distintas • ¿Alguien las tiene para venta o cambio?`,
-    padding,
-    92
-  );
-
-  const cargarImagen = (url) => {
+  const cargarImagenCarta = (url) => {
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -285,8 +269,57 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
     });
   };
 
-  const imagenesCargadas = await Promise.all(
-    cartasFaltantes.map((c) => cargarImagen(c.imagenActiva || c.imagen))
+  const [fondoImg, ...imagenesCargadas] = await Promise.all([
+    cargarFondo(),
+    ...cartasFaltantes.map((c) => cargarImagenCarta(c.imagenActiva || c.imagen)),
+  ]);
+
+  // 1. Fondo base oscuro
+  ctx.fillStyle = "#090d16";
+  ctx.fillRect(0, 0, width, height);
+
+  // 2. Fondo con textura de mapa One Piece y overlay opaco
+  if (fondoImg) {
+    const scale = Math.max(width / fondoImg.width, height / fondoImg.height);
+    const nw = fondoImg.width * scale;
+    const nh = fondoImg.height * scale;
+    const nx = (width - nw) / 2;
+    const ny = (height - nh) / 2;
+    ctx.drawImage(fondoImg, nx, ny, nw, nh);
+
+    // Capa oscura opaca para dar contraste a las cartas
+    ctx.fillStyle = "rgba(9, 13, 22, 0.88)";
+    ctx.fillRect(0, 0, width, height);
+  } else {
+    const grad = ctx.createLinearGradient(0, 0, width, height);
+    grad.addColorStop(0, "#0f172a");
+    grad.addColorStop(0.5, "#1e1b4b");
+    grad.addColorStop(1, "#020617");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  // 3. Borde temático dorado refinado
+  ctx.strokeStyle = "rgba(212, 175, 55, 0.35)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, width - 20, height - 20);
+
+  // Cabecera limpia
+  ctx.fillStyle = "#eab308";
+  ctx.font = "bold 12px system-ui, sans-serif";
+  ctx.fillText("CAPSULE CORP GAMING • ONE PIECE TCG", padding, 38);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 22px system-ui, sans-serif";
+  ctx.fillText(`Cartas que me faltan: ${deck.nombre}`, padding, 68);
+
+  const totalFaltan = cartasFaltantes.reduce((acc, c) => acc + c.faltan, 0);
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "13px system-ui, sans-serif";
+  ctx.fillText(
+    `Total: ${totalFaltan} copias en ${cartasFaltantes.length} cartas distintas • ¿Alguien las tiene para venta o cambio?`,
+    padding,
+    92
   );
 
   // Dibujar cartas en cuadrícula
@@ -299,6 +332,7 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
     const x = padding + col * (cardWidth + gap);
     const y = headerHeight + row * (cardHeight + 42);
 
+    // Recorte redondeado para la carta
     ctx.save();
     const radius = 8;
     ctx.beginPath();
@@ -322,28 +356,75 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
     }
     ctx.restore();
 
-    // Franja roja "FALTAN X" sobre la carta
-    ctx.fillStyle = "rgba(220, 38, 38, 0.92)";
-    const bH = 24;
-    ctx.fillRect(x, y + cardHeight - bH, cardWidth, bH);
+    // Borde sutil alrededor de la carta
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + cardWidth - radius, y);
+    ctx.quadraticCurveTo(x + cardWidth, y, x + cardWidth, y + radius);
+    ctx.lineTo(x + cardWidth, y + cardHeight - radius);
+    ctx.quadraticCurveTo(x + cardWidth, y + cardHeight, x + cardWidth - radius, y + cardHeight);
+    ctx.lineTo(x + radius, y + cardHeight);
+    ctx.quadraticCurveTo(x, y + cardHeight, x, y + cardHeight - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    // Chip pill discreto en la esquina superior izquierda sobre la carta (sin tapar el arte)
+    ctx.save();
+    const pillW = 44;
+    const pillH = 20;
+    const pillX = x + 8;
+    const pillY = y + 8;
+    const pr = 5;
+    ctx.beginPath();
+    ctx.moveTo(pillX + pr, pillY);
+    ctx.lineTo(pillX + pillW - pr, pillY);
+    ctx.quadraticCurveTo(pillX + pillW, pillY, pillX + pillW, pillY + pr);
+    ctx.lineTo(pillX + pillW, pillY + pillH - pr);
+    ctx.quadraticCurveTo(pillX + pillW, pillY + pillH, pillX + pillW - pr, pillY + pillH);
+    ctx.lineTo(pillX + pr, pillY + pillH);
+    ctx.quadraticCurveTo(pillX, pillY + pillH, pillX, pillY + pillH - pr);
+    ctx.lineTo(pillX, pillY + pr);
+    ctx.quadraticCurveTo(pillX, pillY, pillX + pr, pillY);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(10, 14, 26, 0.85)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 12px system-ui, sans-serif";
+    ctx.font = "bold 11px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`FALTAN ${carta.faltan} COPIAS`, x + cardWidth / 2, y + cardHeight - 7);
+    ctx.fillText(`-${carta.faltan}`, pillX + pillW / 2, pillY + 14);
+    ctx.restore();
 
-    // Texto al pie de carta: Código y Nombre
+    // Texto al pie de carta (fuera de la imagen, sin tapar la carta)
+    // Línea 1: Código a la izquierda y estado de faltantes a la derecha
     ctx.textAlign = "left";
     ctx.fillStyle = "#38bdf8";
-    ctx.font = "bold 11px monospace";
-    ctx.fillText(carta.codigo, x, y + cardHeight + 16);
+    ctx.font = "bold 12px monospace";
+    ctx.fillText(carta.codigo, x, y + cardHeight + 17);
 
-    ctx.fillStyle = "#e2e8f0";
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#f87171";
+    ctx.font = "bold 12px system-ui, sans-serif";
+    const txtFalta = carta.faltan === 1 ? "Falta 1" : `Faltan ${carta.faltan}`;
+    ctx.fillText(txtFalta, x + cardWidth, y + cardHeight + 17);
+
+    // Línea 2: Nombre de la carta
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#cbd5e1";
     ctx.font = "11px system-ui, sans-serif";
-    const nom = (carta.nombreActivo || carta.nombre).length > 20
-      ? (carta.nombreActivo || carta.nombre).slice(0, 19) + "…"
+    const nom = (carta.nombreActivo || carta.nombre).length > 22
+      ? (carta.nombreActivo || carta.nombre).slice(0, 21) + "…"
       : (carta.nombreActivo || carta.nombre);
-    ctx.fillText(nom, x, y + cardHeight + 30);
+    ctx.fillText(nom, x, y + cardHeight + 32);
   }
 
   // Footer Capsule Corp
@@ -1063,7 +1144,7 @@ export default function CreadorDecks({ user }) {
     const lineas = cartasFaltantes.map(
       (c) => `${c.faltan}x ${c.codigo} - ${c.nombreActivo || c.nombre} (${c.expansion})`
     );
-    const texto = `🏴‍☠️ Cartas que me faltan para: ${deckSeleccionado?.nombre}\n\n${lineas.join("\n")}\n\nCapsule Corp Gaming (www.onepiececc.shop)`;
+    const texto = `Cartas que me faltan para: ${deckSeleccionado?.nombre}\n\n${lineas.join("\n")}\n\nCapsule Corp Gaming (www.onepiececc.shop)`;
     navigator.clipboard.writeText(texto);
     setCopiadoFaltantesTxt(true);
     setTimeout(() => setCopiadoFaltantesTxt(false), 2000);
