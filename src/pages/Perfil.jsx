@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Heart, Package, Save, HeartOff, KeyRound } from "lucide-react";
+import { User, Heart, Package, Save, HeartOff, KeyRound, Layers } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { supabase } from "../lib/supabase.js";
 import Cargando from "../components/Cargando.jsx";
+import ColeccionFisica from "../components/ColeccionFisica.jsx";
 
 export default function Perfil() {
   const { user, cargando } = useAuth();
@@ -50,6 +51,13 @@ export default function Perfil() {
           </button>
           <button
             type="button"
+            className={tab === "coleccion" ? "active" : ""}
+            onClick={() => setTab("coleccion")}
+          >
+            <Layers size={15} /> Mi Colección
+          </button>
+          <button
+            type="button"
             className={tab === "wishlist" ? "active" : ""}
             onClick={() => setTab("wishlist")}
           >
@@ -70,6 +78,7 @@ export default function Perfil() {
             <CambiarPassword />
           </>
         )}
+        {tab === "coleccion" && <ColeccionFisica user={user} />}
         {tab === "wishlist" && <Wishlist user={user} />}
         {tab === "pedidos" && <Pedidos user={user} />}
       </div>

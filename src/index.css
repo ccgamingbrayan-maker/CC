@@ -3250,5 +3250,462 @@ img { display: block; max-width: 100%; }
   font-size: 13px;
 }
 
+/* ========================================================
+   COLECCIÓN FÍSICA MINIMALISTA (PERFIL)
+   ======================================================== */
+.coleccion-contenedor {
+  padding: 24px;
+}
+.coleccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.coleccion-btn-agregar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+/* Métricas / Stats */
+.coleccion-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--t04);
+  border: 1px solid var(--t08);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-numero {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--texto);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Filtros y búsqueda */
+.coleccion-filtros {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.coleccion-search-box {
+  flex: 1;
+  min-width: 240px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--t06);
+  border: 1px solid var(--t12);
+  border-radius: 10px;
+  padding: 0 12px;
+}
+.coleccion-search-box input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--texto);
+  padding: 10px 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.coleccion-search-box input:focus {
+  outline: none;
+}
+.btn-limpiar-search {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+  display: flex;
+  padding: 4px;
+}
+.coleccion-select-expansion {
+  background: var(--t06);
+  color: var(--texto);
+  border: 1px solid var(--t12);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+}
+
+/* Secciones por expansión */
+.coleccion-expansiones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.coleccion-expansion-seccion {
+  background: var(--t02);
+  border: 1px solid var(--t08);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.coleccion-expansion-seccion:hover {
+  border-color: var(--t15, rgba(255, 255, 255, 0.15));
+}
+.expansion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--t04);
+  cursor: pointer;
+  user-select: none;
+}
+.expansion-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.expansion-icono {
+  font-size: 16px;
+}
+.expansion-titulo {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+.expansion-badge-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  background: var(--t06);
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+.btn-toggle-colapso {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+
+/* Grid de cartas minimalista */
+.coleccion-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+  padding: 18px;
+}
+.coleccion-card-item {
+  display: flex;
+  flex-direction: column;
+  background: var(--t04);
+  border: 1px solid var(--t08);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.coleccion-card-item:hover {
+  transform: translateY(-3px);
+  border-color: var(--acento, #a855f7);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+.card-img-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.card-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.card-img-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--texto-suave);
+  font-size: 12px;
+  font-weight: 600;
+}
+.card-badge-cant {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(15, 15, 20, 0.88);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+.card-acciones-hover {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  background: rgba(10, 10, 15, 0.9);
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid var(--t15);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  backdrop-filter: blur(4px);
+}
+.coleccion-card-item:hover .card-acciones-hover {
+  opacity: 1;
+}
+.btn-acc {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--t08);
+  color: var(--texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-acc:hover {
+  background: var(--acento, #a855f7);
+  color: #fff;
+}
+.btn-acc.btn-trash:hover {
+  background: #ef4444;
+  color: #fff;
+}
+.card-detalles {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-nombre {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.card-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.tag-codigo {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--texto-suave);
+}
+.tag-rareza {
+  background: rgba(168, 85, 247, 0.18);
+  color: #c084fc;
+}
+.tag-condicion {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+/* Modal agregar carta */
+.coleccion-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 16px;
+}
+.coleccion-modal-content {
+  background: var(--nav, #18181b);
+  border: 1px solid var(--t15, rgba(255, 255, 255, 0.15));
+  border-radius: 18px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  padding: 24px;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--t08);
+}
+.btn-cerrar-modal {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+  display: flex;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.btn-cerrar-modal:hover {
+  color: var(--texto);
+}
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-campo label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+}
+.opcional-hint {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--texto-suave);
+  margin-left: 6px;
+}
+.form-campo input,
+.form-campo select {
+  background: var(--t06);
+  color: var(--texto);
+  border: 1px solid var(--t12);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.form-campo input:focus,
+.form-campo select:focus {
+  outline: none;
+  border-color: var(--acento, #a855f7);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+}
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--t08);
+}
+.btn-cancelar {
+  background: transparent;
+  border: 1px solid var(--t12);
+  color: var(--texto-suave);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-cancelar:hover {
+  background: var(--t06);
+  color: var(--texto);
+}
+
+/* Sugerencias dropdown tienda */
+.sugerencias-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #18181b;
+  border: 1px solid var(--t15);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+.sugerencias-header {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  background: rgba(0, 0, 0, 0.2);
+}
+.sugerencia-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--t04);
+  transition: background 0.15s;
+}
+.sugerencia-item:hover {
+  background: rgba(168, 85, 247, 0.15);
+}
+.sug-mini-img {
+  width: 28px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.sug-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+}
+.sug-sub {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+
 
 
