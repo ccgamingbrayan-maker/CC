@@ -4052,216 +4052,313 @@ img { display: block; max-width: 100%; }
 }
 
 /* ========================================================
-   CREADOR Y GESTOR DE DECKS (PERFIL)
+   CREADOR Y GESTOR DE DECKS (ESTILO TCGPLAYER PRO)
    ======================================================== */
-.decks-contenedor {
+.tcg-deckbuilder-root {
   padding: 24px;
+  max-width: 1300px;
+  margin: 0 auto;
 }
 
-.btn-link-ejemplo {
-  background: transparent;
-  border: none;
+/* CABECERA VISTA LISTADO DE DECKS */
+.tcg-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.tcg-badge-sub {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: #f59e0b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.tcg-page-title {
+  margin: 0 0 6px 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.5px;
+}
+
+.tcg-icon-sparkle {
   color: var(--acento, #a855f7);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  transition: opacity 0.15s;
-}
-.btn-link-ejemplo:hover {
-  text-decoration: underline;
-  opacity: 0.85;
 }
 
-.decklist-textarea {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid var(--t15);
+.tcg-page-desc {
+  margin: 0;
+  font-size: 13.5px;
+  color: #94a3b8;
+  max-width: 620px;
+  line-height: 1.5;
+}
+
+.tcg-btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
   border-radius: 10px;
-  padding: 12px 14px;
-  color: var(--texto);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 13px;
-  line-height: 1.6;
-  resize: vertical;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-sizing: border-box;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.decklist-textarea:focus {
-  border-color: var(--acento, #a855f7);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+.tcg-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  filter: brightness(1.05);
 }
 
-.decks-grid {
+/* ESTADO VACÍO */
+.tcg-empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  margin-top: 16px;
+}
+.tcg-empty-icon {
+  opacity: 0.4;
+  margin-bottom: 14px;
+  color: #a855f7;
+}
+.tcg-empty-state h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #fff;
+}
+.tcg-empty-state p {
+  max-width: 480px;
+  margin: 0 auto 24px auto;
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+.tcg-empty-state code {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #38bdf8;
+  font-family: monospace;
+}
+
+/* GRILLA DE DECKS GUARDADOS */
+.tcg-decks-showcase-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
   margin-top: 20px;
 }
 
-.deck-card-item {
-  background: var(--nav);
-  border: 1px solid var(--t12);
-  border-radius: 14px;
+.tcg-deck-item-card {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
-.deck-card-item:hover {
-  transform: translateY(-2px);
-  border-color: var(--t20);
-  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.5);
+.tcg-deck-item-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 16px rgba(168, 85, 247, 0.2);
 }
 
-.deck-card-banner {
-  height: 140px;
+.tcg-deck-banner-wrap {
+  height: 155px;
   width: 100%;
   position: relative;
-  background: #18181b;
+  background: #020617;
   overflow: hidden;
 }
-.deck-card-banner img {
+.tcg-deck-banner-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 20%;
-  transition: transform 0.3s ease;
+  object-position: center 25%;
+  transition: transform 0.35s ease;
 }
-.deck-card-item:hover .deck-card-banner img {
-  transform: scale(1.04);
+.tcg-deck-item-card:hover .tcg-deck-banner-img {
+  transform: scale(1.06);
 }
 
-.deck-banner-placeholder {
+.tcg-deck-banner-empty {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--texto-suave);
-  opacity: 0.4;
+  color: #64748b;
 }
 
-.deck-card-cant-badge {
+.tcg-deck-chip-total {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(15, 23, 42, 0.88);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #38bdf8;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+.tcg-deck-chip-lider {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #fef08a;
   font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
-}
-
-.deck-card-content {
-  padding: 14px 16px 16px 16px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.deck-card-title {
-  margin: 0 0 4px 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--texto);
+  max-width: 85%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.deck-card-fecha {
-  margin: 0 0 14px 0;
-  font-size: 12px;
-  color: var(--texto-suave);
+.tcg-deck-item-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-.deck-card-acciones {
+.tcg-deck-item-title {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tcg-deck-item-date {
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.tcg-deck-item-actions {
   margin-top: auto;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.btn-ver-deck {
+.tcg-btn-view-deck {
   flex: 1;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #e9d5ff;
   padding: 8px 12px;
+  border-radius: 8px;
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tcg-btn-view-deck:hover {
+  background: #a855f7;
+  color: #fff;
+  border-color: #a855f7;
 }
 
-.btn-deck-icon {
+.tcg-btn-action-icon {
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  background: var(--t08);
-  border: 1px solid var(--t12);
-  color: var(--texto-suave);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: all 0.15s ease;
   flex-shrink: 0;
 }
-.btn-deck-icon:hover {
-  background: var(--t15);
-  color: var(--texto);
+.tcg-btn-action-icon:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
-.btn-deck-icon.btn-trash:hover {
+.tcg-btn-action-icon.tcg-btn-delete:hover {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-/* VISTA DETALLE DEL DECK */
-.deck-detalle-vista {
+/* ========================================================
+   VISTA 2: SPOTLIGHT & ANÁLISIS DETALLADO DEL DECK (TCGPLAYER HERO)
+   ======================================================== */
+.tcg-deck-detail-container {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.deck-detalle-topbar {
+.tcg-top-nav-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--t12);
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.btn-volver-decks {
+.tcg-btn-back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background: transparent;
   border: none;
-  color: var(--texto-suave);
+  color: #94a3b8;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   padding: 6px 0;
   transition: color 0.15s;
 }
-.btn-volver-decks:hover {
-  color: var(--acento, #a855f7);
+.tcg-btn-back:hover {
+  color: #a855f7;
 }
 
-.topbar-acciones {
+.tcg-top-actions-cluster {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.btn-accion-top {
+.tcg-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -4269,841 +4366,1190 @@ img { display: block; max-width: 100%; }
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 600;
-  background: var(--t08);
-  border: 1px solid var(--t15);
-  color: var(--texto);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: all 0.15s ease;
 }
-.btn-accion-top:hover {
-  background: var(--t15);
+.tcg-action-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
-.btn-accion-top.btn-danger:hover {
+.tcg-action-btn.tcg-btn-add-card {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  font-weight: 700;
+}
+.tcg-action-btn.tcg-btn-add-card:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+}
+.tcg-action-btn.tcg-btn-share-missing {
+  background: rgba(234, 179, 8, 0.12);
+  color: #fbbf24;
+  border-color: rgba(234, 179, 8, 0.35);
+}
+.tcg-action-btn.tcg-btn-share-missing:hover {
+  background: rgba(234, 179, 8, 0.22);
+  color: #fef08a;
+}
+.tcg-action-btn.tcg-btn-danger:hover {
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.4);
   background: rgba(239, 68, 68, 0.12);
 }
 
-.deck-stats-panel {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(24, 24, 27, 0.8) 100%);
-  border: 1px solid var(--t15);
-  border-radius: 16px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+/* ========================================================
+   TCGPLAYER HERO DECK SPOTLIGHT
+   ======================================================== */
+.tcgplayer-hero-card {
+  background: linear-gradient(135deg, #090e1a 0%, #0f172a 50%, #1e1b4b 100%);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 20px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 24px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
-.deck-stats-main {
+.tcgplayer-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(234, 179, 8, 0.6), rgba(168, 85, 247, 0.6), transparent);
+}
+
+/* LÍDER SPOTLIGHT FRAME */
+.tcg-leader-frame {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tcg-leader-card-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.5 / 3.5;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(234, 179, 8, 0.25);
+  border: 2px solid rgba(234, 179, 8, 0.5);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.tcg-leader-card-wrapper:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.9), 0 0 28px rgba(234, 179, 8, 0.45);
+  border-color: #fde047;
+}
+
+.tcg-leader-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tcg-leader-ribbon {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  color: #000;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.tcg-leader-stats-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.tcg-leader-placeholder {
+  width: 100%;
+  aspect-ratio: 2.5 / 3.5;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
+}
+
+/* DETALLES DEL DECK Y ESTADÍSTICAS */
+.tcg-deck-hero-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   gap: 16px;
 }
 
-.deck-tag-onepiece {
+.tcg-format-tag {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
   color: #f59e0b;
-  text-transform: uppercase;
-  display: inline-block;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.deck-detalle-nombre {
-  margin: 0 0 6px 0;
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--texto);
+.tcg-deck-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.deck-detalle-desc {
+.tcg-deck-main-title {
   margin: 0;
-  font-size: 13px;
-  color: var(--texto-suave);
-  max-width: 520px;
+  font-size: 26px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
-.btn-comprar-faltantes {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  color: #fff !important;
-  border: none !important;
-  padding: 10px 18px !important;
-  border-radius: 10px !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  cursor: pointer !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
-  transition: transform 0.15s, box-shadow 0.15s !important;
+.tcg-btn-rename-deck {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
-.btn-comprar-faltantes:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+.tcg-btn-rename-deck:hover {
+  background: rgba(168, 85, 247, 0.2);
+  color: #fff;
+  border-color: #a855f7;
 }
 
-.deck-progreso-seccion {
+/* CHIPS DE DESGLOSE DE CARTAS (TCGPLAYER STYLE) */
+.tcg-stats-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tcg-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+.tcg-stat-chip .chip-label {
+  color: #94a3b8;
+  font-weight: 600;
+}
+.tcg-stat-chip .chip-num {
+  color: #fff;
+  font-weight: 800;
+}
+.tcg-stat-chip.chip-total {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+.tcg-stat-chip.chip-total .chip-num {
+  color: #38bdf8;
+}
+.tcg-stat-chip.chip-leader {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.3);
+}
+.tcg-stat-chip.chip-leader .chip-num {
+  color: #fef08a;
+}
+
+/* BARRA DE PROGRESO DE LA COLECCIÓN */
+.tcg-collection-progress-card {
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 14px 18px;
-  border-radius: 12px;
-  border: 1px solid var(--t10);
 }
 
-.progreso-header {
+.tcg-progress-labels {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 13px;
-  color: var(--texto-suave);
+  color: #94a3b8;
   flex-wrap: wrap;
   gap: 8px;
 }
-.progreso-header strong {
-  color: var(--texto);
+.tcg-progress-labels strong {
+  color: #fff;
+}
+.text-all-ready {
+  color: #10b981;
+  font-weight: 700;
 }
 
-.progreso-track {
+.tcg-progress-rail {
   height: 9px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   overflow: hidden;
 }
 
-.progreso-fill {
+.tcg-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #a855f7, #06b6d4, #10b981);
+  background: linear-gradient(90deg, #a855f7, #38bdf8, #10b981);
   border-radius: 999px;
   transition: width 0.4s ease;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
 
-.deck-filtros-bar {
+/* BANNER DE COMPRA RÁPIDA EN CAPSULE CORP */
+.tcg-store-quick-buy-box {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.18) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 12px;
+  padding: 12px 18px;
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
-.deck-tabs-filtro {
+.store-buy-info {
   display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.store-buy-icon {
+  color: #10b981;
+  flex-shrink: 0;
+}
+.store-buy-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.store-buy-price {
+  font-size: 12px;
+  color: #34d399;
+}
+
+.tcg-btn-cart-buy-all {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+  transition: all 0.2s ease;
+}
+.tcg-btn-cart-buy-all:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+  filter: brightness(1.06);
+}
+
+/* ========================================================
+   BARRA DE CONTROLES Y HERRAMIENTAS (TCGPLAYER CONTROL BAR)
+   ======================================================== */
+.tcg-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.tcg-filter-tabs {
+  display: flex;
+  align-items: center;
   gap: 6px;
   flex-wrap: wrap;
 }
 
-.deck-filtro-btn {
-  padding: 6px 14px;
-  border-radius: 999px;
+.tcg-filter-pill {
+  padding: 6px 13px;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 600;
-  background: var(--t08);
-  border: 1px solid var(--t12);
-  color: var(--texto-suave);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: all 0.15s ease;
 }
-.deck-filtro-btn:hover {
-  color: var(--texto);
-  background: var(--t15);
+.tcg-filter-pill:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
-.deck-filtro-btn.active {
+.tcg-filter-pill.active {
   background: var(--acento, #a855f7);
   color: #fff;
   border-color: transparent;
+  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.35);
+}
+.tcg-filter-pill.pill-alert.active {
+  background: #f59e0b;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
+}
+.tcg-filter-pill.pill-store.active {
+  background: #10b981;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
 }
 
-.deck-cards-lista {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.deck-card-row {
-  display: grid;
-  grid-template-columns: 60px 1.5fr 1.3fr 1.3fr;
+/* SELECTOR SEGMENTADO DE RAREZA (NORMAL VS AA) */
+.tcg-rarity-segmented-control {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
-  background: var(--nav);
-  border: 1px solid var(--t12);
-  border-radius: 12px;
-  padding: 10px 16px;
-  transition: border-color 0.15s, transform 0.15s;
-}
-.deck-card-row:hover {
-  border-color: var(--t20);
-}
-
-.deck-row-thumb {
-  position: relative;
-  width: 56px;
-  height: 78px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #18181b;
-  flex-shrink: 0;
-}
-.deck-row-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.deck-row-badge-cant {
-  position: absolute;
-  bottom: 3px;
-  right: 3px;
-  background: rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 1px 5px;
-  border-radius: 4px;
-}
-
-.deck-row-info {
-  min-width: 0;
-}
-
-.deck-row-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.deck-row-nombre {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--texto);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.deck-row-codigo {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--acento, #a855f7);
-  background: rgba(168, 85, 247, 0.12);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.deck-row-tags {
-  display: flex;
-  gap: 6px;
-  margin-top: 4px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.tag-set {
-  font-size: 11px;
-  color: var(--texto-suave);
-}
-
-.tag-rar {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.12);
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.deck-row-coleccion-status {
-  display: flex;
-  flex-direction: column;
   gap: 4px;
+  background: rgba(2, 6, 23, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 3px;
 }
 
-.col-status-label {
-  font-size: 11px;
-  color: var(--texto-suave);
+.rarity-control-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  padding: 0 6px 0 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
-  width: fit-content;
-}
-
-.status-completa {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-.status-parcial {
-  background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-
-.status-cero {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.deck-row-tienda-status {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.tienda-disponible-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  padding: 6px 10px;
+.tcg-segmented-btn {
+  padding: 6px 13px;
   border-radius: 8px;
-}
-
-.tienda-precio {
-  display: flex;
-  flex-direction: column;
-}
-
-.precio-val {
-  font-size: 12.5px;
-  font-weight: 800;
-  color: #10b981;
-}
-
-.stock-val {
-  font-size: 11px;
-  color: var(--texto-suave);
-}
-
-.btn-comprar-mini {
-  padding: 5px 10px !important;
-  font-size: 11.5px !important;
-  font-weight: 700 !important;
-  border-radius: 6px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-  background: var(--acento, #a855f7) !important;
-  color: #fff !important;
-  border: none !important;
-  cursor: pointer !important;
+  font-size: 12px;
+  font-weight: 700;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.18s ease;
   white-space: nowrap;
 }
-
-.status-no-tienda {
-  font-size: 12px;
-  color: var(--texto-suave);
-  font-style: italic;
+.tcg-segmented-btn:hover {
+  color: #fff;
+}
+.tcg-segmented-btn.active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(56, 189, 248, 0.25));
+  color: #fff;
+  border: 1px solid rgba(168, 85, 247, 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
-  .deck-card-row {
-    grid-template-columns: 60px 1fr;
-    gap: 12px;
-  }
-  .deck-row-coleccion-status,
-  .deck-row-tienda-status {
-    grid-column: 1 / -1;
-  }
+/* BUSCADOR DECK */
+.tcg-search-box-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  padding: 6px 12px;
+  min-width: 190px;
+  flex: 1;
+  max-width: 260px;
+}
+.tcg-search-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+.tcg-search-box-wrap input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 13px;
+  width: 100%;
+}
+.tcg-btn-clear-search {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
 }
 
-/* ========================================================
-   TABLERO VISUAL DEL DECK (CON MAPA NÁUTICO)
-   ======================================================== */
-.deck-tablero-visual {
-  background-image: 
-    linear-gradient(180deg, rgba(14, 12, 10, 0.78) 0%, rgba(14, 12, 10, 0.85) 100%),
-    url('/img/deck-bg.jpg');
-  background-position: center top;
-  background-size: cover;
-  background-repeat: no-repeat;
-  border-radius: 18px;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.65), 0 12px 36px rgba(0, 0, 0, 0.45);
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-}
-
-.deck-vista-switch {
+/* SELECTOR DE VISTA TABLERO VS LISTA */
+.tcg-view-switcher {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: var(--nav);
-  border: 1px solid var(--t15);
-  border-radius: 10px;
+  gap: 3px;
+  background: rgba(2, 6, 23, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
   padding: 3px;
-  margin-left: auto;
 }
-
-.btn-vista-toggle {
+.tcg-view-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 7px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   background: transparent;
   border: none;
-  color: var(--texto-suave);
+  color: #94a3b8;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.btn-vista-toggle:hover {
-  color: var(--texto);
-}
-.btn-vista-toggle.active {
-  background: var(--acento, #a855f7);
+.tcg-view-btn:hover {
   color: #fff;
-  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.35);
+}
+.tcg-view-btn.active {
+  background: #a855f7;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
 }
 
-.btn-destacado-faltantes {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.18) 0%, rgba(202, 138, 4, 0.28) 100%) !important;
-  color: #fbbf24 !important;
-  border-color: rgba(234, 179, 8, 0.4) !important;
-}
-.btn-destacado-faltantes:hover {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.45) 100%) !important;
-  color: #fef08a !important;
+/* ========================================================
+   VISTA 1: TABLERO VISUAL HIGH-END (TCGPLAYER CARDS BOARD)
+   ======================================================== */
+.tcgplayer-visual-board {
+  background-image: 
+    linear-gradient(180deg, rgba(10, 14, 26, 0.84) 0%, rgba(8, 12, 22, 0.92) 100%),
+    url('/img/deck-bg.jpg');
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.7), 0 16px 40px rgba(0, 0, 0, 0.5);
+  padding: 24px;
 }
 
-/* CUADRÍCULA DE CARTAS ESTILO SIMULADOR/OFICIAL (4 COLUMNAS) */
-.deck-grid-visual {
+.tcgplayer-cards-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 18px 16px;
+  gap: 20px 16px;
 }
 
-.deck-visual-card-item {
+.tcgplayer-card-card {
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
-.deck-visual-card-item:hover {
-  transform: translateY(-4px) scale(1.02);
+.tcgplayer-card-card:hover {
+  transform: translateY(-5px) scale(1.02);
 }
 
-.deck-visual-card-media {
+.tcg-card-media-wrapper {
   position: relative;
   width: 100%;
   aspect-ratio: 2.5 / 3.5;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
-  background: #18181b;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+  background: #020617;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition: all 0.2s ease;
 }
-.deck-visual-card-item:hover .deck-visual-card-media {
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75), 0 0 12px rgba(168, 85, 247, 0.3);
-  border-color: rgba(168, 85, 247, 0.5);
+.tcgplayer-card-card:hover .tcg-card-media-wrapper {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85), 0 0 16px rgba(168, 85, 247, 0.35);
+  border-color: rgba(168, 85, 247, 0.6);
 }
 
-.deck-visual-card-media img {
+.tcg-card-asset {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-/* OVERLAYS EN LA CARTA */
-.card-overlay-badge-coleccion {
+/* OVERLAYS SOBRE LA CARTA */
+.tcg-card-badge-topleft {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 7px;
+  left: 7px;
   z-index: 2;
 }
 
-.card-overlay-badge-tienda {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 2;
+.tcg-pill-col {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2.5px 7px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+}
+.tcg-pill-col.pill-done {
+  background: rgba(16, 185, 129, 0.92);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.tcg-pill-col.pill-warn {
+  background: rgba(245, 158, 11, 0.92);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.tcg-pill-col.pill-empty {
+  background: rgba(239, 68, 68, 0.88);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-.badge-pill {
+.tcg-card-badge-topright {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 2;
+}
+.tcg-pill-store-stock {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 10.5px;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 2.5px 7px;
   border-radius: 999px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-}
-
-.pill-completa {
-  background: rgba(16, 185, 129, 0.88);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.pill-parcial {
-  background: rgba(245, 158, 11, 0.9);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.pill-cero {
-  background: rgba(239, 68, 68, 0.9);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.pill-tienda {
   background: rgba(16, 185, 129, 0.95);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  animation: pulseTienda 2s infinite ease-in-out;
-}
-@keyframes pulseTienda {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
-/* PIE DE CARTA VISUAL (ESTILO x1, x4 DE ONE PIECE) */
-.deck-visual-card-footer {
+.tcg-card-badge-count {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  font-size: 14px;
+  font-weight: 900;
+  font-style: italic;
+  padding: 2px 8px;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.5px;
+}
+
+.tcg-card-badge-aa-toggle {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.tcg-mini-toggle-aa {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.tcg-mini-toggle-aa.is-normal {
+  background: rgba(15, 23, 42, 0.88);
+  color: #94a3b8;
+}
+.tcg-mini-toggle-aa.is-normal:hover {
+  background: #a855f7;
+  color: #fff;
+}
+.tcg-mini-toggle-aa.is-aa {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.95), rgba(202, 138, 4, 0.95));
+  color: #000;
+  border-color: #fde047;
+}
+
+/* PIE DE TARJETA CON INFORMACIÓN Y BOTÓN */
+.tcg-card-footer-info {
+  padding: 8px 4px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tcg-card-meta-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 6px 2px 0 2px;
   gap: 6px;
 }
 
-.deck-cant-label {
-  font-size: 15px;
+.tcg-code-badge {
+  font-size: 11px;
   font-weight: 800;
-  font-style: italic;
-  color: #38bdf8;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  font-family: monospace;
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
-.btn-comprar-card-visual {
+.tcg-rar-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tcg-card-name-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+
+.tcg-card-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.tcg-btn-card-buy {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #fff;
   border: none;
   border-radius: 6px;
   padding: 3px 8px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 800;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
-  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+  transition: all 0.15s ease;
 }
-.btn-comprar-card-visual:hover {
+.tcg-btn-card-buy:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.55);
 }
 
-.status-label-visual {
-  font-size: 11px;
+.tcg-status-text {
+  font-size: 11.5px;
   font-weight: 700;
 }
-.status-label-visual.text-completa {
+.tcg-status-text.is-complete {
   color: #10b981;
 }
-.status-label-visual.text-falta {
-  color: var(--texto-suave);
+.tcg-status-text.is-missing {
+  color: #64748b;
 }
 
-/* MODAL DE INSPECCIÓN DE CARTA */
-.card-inspector-modal {
-  padding: 22px;
-}
-
-.card-inspector-layout {
-  display: grid;
-  grid-template-columns: 200px 1fr;
+/* ========================================================
+   VISTA 2: LISTA DETALLADA TCGPLAYER (TABLA POR CATEGORÍA)
+   ======================================================== */
+.tcgplayer-list-view-container {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
-  margin-top: 16px;
 }
 
-.inspector-img-wrap {
-  width: 100%;
-  aspect-ratio: 2.5 / 3.5;
-  border-radius: 10px;
+.tcg-list-section {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--t15);
-  background: #18181b;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
-.inspector-img-wrap img {
+
+.tcg-section-header {
+  background: rgba(2, 6, 23, 0.7);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.tcg-section-icon {
+  font-size: 16px;
+}
+.tcg-section-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tcg-section-count {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.tcgplayer-table-wrap {
+  overflow-x: auto;
+}
+
+.tcgplayer-deck-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.tcgplayer-deck-table th {
+  padding: 10px 14px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tcg-table-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.tcg-table-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tcgplayer-deck-table td {
+  padding: 8px 14px;
+  vertical-align: middle;
+}
+
+.col-cant .tcg-count-pill {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 900;
+  color: #38bdf8;
+  font-style: italic;
+  font-family: monospace;
+}
+
+.tcg-table-thumb {
+  width: 36px;
+  height: 50px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #020617;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.tcg-table-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.inspector-details {
+.tcg-table-card-name {
+  font-weight: 700;
+  color: #fff;
+}
+.tcg-table-card-set {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.tcg-type-text {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.tcg-table-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.tcg-table-status-pill.status-ready {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.tcg-table-status-pill.status-partial {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.tcg-table-status-pill.status-none {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.tcg-table-store-info {
+  display: flex;
+  flex-direction: column;
+}
+.tcg-table-store-info .store-price {
+  font-weight: 800;
+  color: #10b981;
+}
+.tcg-table-store-info .store-stock {
+  font-size: 11px;
+  color: #64748b;
+}
+.tcg-no-stock {
+  font-size: 11.5px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.tcg-table-btn-buy {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tcg-table-btn-buy:hover {
+  transform: scale(1.08);
+}
+
+/* ========================================================
+   MODAL DE INSPECCIÓN DETALLADA DE CARTA
+   ======================================================== */
+.tcg-inspector-modal-box {
+  max-width: 660px !important;
+  padding: 24px !important;
+}
+
+.tcg-inspector-grid {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 22px;
+  margin-top: 16px;
+}
+
+.tcg-inspector-media {
+  width: 100%;
+  aspect-ratio: 2.5 / 3.5;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #020617;
+}
+.tcg-inspector-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tcg-inspector-info-pane {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.inspector-section {
+.tcg-modal-card-title {
+  margin: 0 0 8px 0;
+  font-size: 19px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.tcg-attributes-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tcg-attr-pill {
+  font-size: 11.5px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.tcg-attr-pill strong {
+  color: #fff;
+}
+
+.tcg-card-text-box {
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  white-space: pre-line;
+}
+
+.tcg-inspector-art-switch {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+.art-switch-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+.art-switch-buttons {
+  display: flex;
+  gap: 8px;
+}
+.btn-arte-switch {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-arte-switch:hover {
+  color: #fff;
+}
+.btn-arte-switch.active {
+  background: var(--acento, #a855f7);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.35);
+}
 
-.tienda-inspector-box {
+.tcg-inspector-status-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.inspector-sec-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tcg-status-callout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.tcg-status-callout.callout-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.tcg-status-callout.callout-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.tcg-status-callout.callout-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.tcg-store-purchase-pane {
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.store-price-big {
+  font-size: 16px;
+  font-weight: 900;
+  color: #10b981;
+}
+.store-stock-hint {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+.tcg-store-out-hint {
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
 }
 
-/* MODAL DE FALTANTES (PREVIEW CANVAS & ACCIONES) */
+/* ========================================================
+   MODAL DE FALTANTES & IMPORTACIÓN
+   ======================================================== */
 .modal-faltantes-box {
   padding: 24px;
 }
-
 .preview-canvas-wrap {
   max-height: 480px;
   overflow-y: auto;
   border-radius: 12px;
-  border: 1px solid var(--t15);
-  background: #09090b;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #020617;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 12px;
   margin-bottom: 18px;
 }
-
 .preview-canvas-img {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
   display: block;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
-
 .modal-faltantes-acciones {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.btn-action-faltantes {
-  flex: 1;
-  min-width: 160px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 11px 16px;
+.decklist-textarea {
+  width: 100%;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
+  padding: 12px 14px;
+  color: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+.decklist-textarea:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+}
+
+.btn-link-ejemplo {
+  background: transparent;
+  border: none;
+  color: #a855f7;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
-
-.btn-accion-secondary {
-  background: var(--nav);
-  color: var(--texto);
-  border: 1px solid var(--t15);
-  transition: background 0.15s, border-color 0.15s;
-}
-.btn-accion-secondary:hover {
-  background: var(--t15);
-  border-color: var(--t20);
+.btn-link-ejemplo:hover {
+  text-decoration: underline;
 }
 
-/* RESPONSIVE PARA EL TABLERO VISUAL */
-@media (max-width: 1024px) {
-  .deck-grid-visual {
+/* RESPONSIVE DESIGN */
+@media (max-width: 1100px) {
+  .tcgplayer-cards-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
-@media (max-width: 680px) {
-  .deck-grid-visual {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px 10px;
-  }
-  .card-inspector-layout {
+
+@media (max-width: 768px) {
+  .tcgplayer-hero-card {
     grid-template-columns: 1fr;
+    text-align: center;
   }
-  .inspector-img-wrap {
-    max-width: 220px;
+  .tcg-leader-card-wrapper {
+    max-width: 170px;
     margin: 0 auto;
   }
-  .deck-tablero-visual {
-    padding: 14px;
+  .tcg-stats-chips-bar {
+    justify-content: center;
+  }
+  .tcg-deck-title-group {
+    justify-content: center;
+  }
+  .tcg-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .tcg-filter-tabs {
+    justify-content: center;
+  }
+  .tcg-rarity-segmented-control {
+    justify-content: center;
+  }
+  .tcg-search-box-wrap {
+    max-width: 100%;
+  }
+  .tcgplayer-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 10px;
+  }
+  .tcg-inspector-grid {
+    grid-template-columns: 1fr;
+  }
+  .tcg-inspector-media {
+    max-width: 200px;
+    margin: 0 auto;
   }
 }
-
-/* FILTRO DE RAREZA EN BÚSQUEDAS (NORMAL VS ALTERNATE ART) */
-.api-rareza-filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 8px 12px;
-  background: var(--t08);
-  border: 1px solid var(--t12);
-  border-radius: 10px;
-  margin-bottom: 12px;
-}
-.api-rareza-filter-bar.mini-filter-bar {
-  margin-bottom: 0;
-  padding: 4px 8px;
-}
-.api-filter-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--texto-suave);
-}
-.api-filter-tabs {
-  display: inline-flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.api-filter-tab {
-  padding: 5px 12px;
-  border-radius: 8px;
-  background: var(--nav);
-  color: var(--texto-suave);
-  border: 1px solid var(--t15);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.api-filter-tab em {
-  font-size: 11px;
-  opacity: 0.8;
-  font-style: normal;
-  margin-left: 2px;
-}
-.api-filter-tab:hover {
-  background: var(--t15);
-  color: #fff;
-  border-color: var(--t20);
-}
-.api-filter-tab.active {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(59, 130, 246, 0.25));
-  color: #fff;
-  border-color: var(--acento, #a855f7);
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
-}
-.api-thumb-badge-arte {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  padding: 2px 5px;
-  border-radius: 4px;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  backdrop-filter: blur(4px);
-  z-index: 2;
-}
-.api-thumb-badge-arte.tag-normal {
-  background: rgba(39, 39, 42, 0.88);
-  color: #e4e4e7;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-.api-thumb-badge-arte.tag-aa {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.95), rgba(217, 119, 6, 0.95));
-  color: #000;
-  border: 1px solid rgba(254, 240, 138, 0.6);
-  box-shadow: 0 2px 6px rgba(234, 179, 8, 0.4);
-}
-.btn-switch-preview-arte {
-  margin-top: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--t08);
-  border: 1px dashed var(--acento, #a855f7);
-  color: var(--texto);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.btn-switch-preview-arte:hover {
-  background: rgba(168, 85, 247, 0.15);
-  border-style: solid;
-  color: #fff;
-}
-.deck-search-filter-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--nav);
-  border: 1px solid var(--t15);
-  border-radius: 10px;
-  padding: 6px 12px;
-  min-width: 200px;
-  flex: 1;
-  max-width: 300px;
-}
-.deck-search-filter-box input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--texto);
-  font-size: 13px;
-  width: 100%;
-}
-.btn-clear-search-deck {
-  background: transparent;
-  border: none;
-  color: var(--texto-suave);
-  cursor: pointer;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.btn-add-card-deck {
-  background: linear-gradient(135deg, #10b981, #059669) !important;
-  color: #fff !important;
-  border: none !important;
-  font-weight: 700 !important;
-}
-.btn-add-card-deck:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
-}
-
-
-
-
-
-
