@@ -40,6 +40,45 @@ const JUEGOS_TABS = [
   { id: "manual", label: "Entrada Manual", icono: "✍️" },
 ];
 
+// Detecta si una carta de One Piece es versión especial / alta rareza (Parallel, Alternate Art, Manga, SP)
+function esVersionEspecialOnePiece(c) {
+  const nom = (c.nombre || c.card_name || "").toUpperCase();
+  const img = (c.imagen || c.card_image || "").toUpperCase();
+  const id = (c.id || c.card_image_id || "").toUpperCase();
+  const rar = (c.rarity || c.rareza || "").toUpperCase();
+  return (
+    nom.includes("(PARALLEL)") ||
+    nom.includes("(ALTERNATE ART)") ||
+    nom.includes("(ALT ART)") ||
+    nom.includes("(MANGA)") ||
+    nom.includes("(SP)") ||
+    nom.includes("(SUPER ALTERNATE ART)") ||
+    nom.includes("(SUPER LEADER)") ||
+    id.includes("_P1") ||
+    id.includes("_P2") ||
+    id.includes("_P3") ||
+    id.includes("_P4") ||
+    id.includes("_P5") ||
+    id.includes("_P6") ||
+    id.includes("_P7") ||
+    id.includes("_P8") ||
+    id.includes("_R1") ||
+    id.includes("_R2") ||
+    img.includes("_P1") ||
+    img.includes("_P2") ||
+    img.includes("_P3") ||
+    img.includes("_P4") ||
+    img.includes("_P5") ||
+    img.includes("_P6") ||
+    img.includes("_P7") ||
+    img.includes("_P8") ||
+    img.includes("_R1") ||
+    img.includes("_R2") ||
+    rar === "SP" ||
+    rar === "MANGA"
+  );
+}
+
 export default function ColeccionFisica({ user }) {
   const [coleccion, setColeccion] = useState([]);
   const [cargandoColeccion, setCargandoColeccion] = useState(true);
@@ -55,6 +94,9 @@ export default function ColeccionFisica({ user }) {
   const [resultadosApi, setResultadosApi] = useState([]);
   const [buscandoApi, setBuscandoApi] = useState(false);
   const [cartaSeleccionada, setCartaSeleccionada] = useState(null);
+
+  // Filtro de rareza / arte: "normal" (menor rareza por default) | "aa" (Alternate Art) | "todas"
+  const [filtroRarezaApi, setFiltroRarezaApi] = useState("normal");
 
   // Campos para confirmación / adición
   const [formCantidad, setFormCantidad] = useState(1);
@@ -158,12 +200,22 @@ export default function ColeccionFisica({ user }) {
         const unicos = [];
         const idsVistos = new Set();
         for (const c of combinados) {
-          const key = c.numero || c.id || c.imagen;
+          // Preservar clave única por id/imagen para mantener la versión normal y la AA por separado
+          const key = c.id || c.imagen || `${c.numero}_${c.nombre}`;
           if (key && !idsVistos.has(key)) {
             idsVistos.add(key);
             unicos.push(c);
           }
         }
+
+        // Ordenar con menor rareza (normal/base) primero por defecto
+        unicos.sort((a, b) => {
+          const espA = esVersionEspecialOnePiece(a);
+          const espB = esVersionEspecialOnePiece(b);
+          if (espA !== espB) return espA ? 1 : -1;
+          return 0;
+        });
+
         setResultadosApi(unicos);
       } else if (juegoActivo === "pokemon") {
         const prints = await buscarPrintsPokemon(texto, 30);
@@ -183,6 +235,17 @@ export default function ColeccionFisica({ user }) {
       setBuscandoApi(false);
     }
   }
+
+  // Resultados filtrados según la preferencia de rareza: "normal" (menor rareza por default), "aa" o "todas"
+  const resultadosApiFiltrados = useMemo(() => {
+    return resultadosApi.filter((item) => {
+      if (juegoActivo !== "onepiece") return true;
+      const esEsp = esVersionEspecialOnePiece(item);
+      if (filtroRarezaApi === "normal") return !esEsp;
+      if (filtroRarezaApi === "aa") return esEsp;
+      return true;
+    });
+  }, [resultadosApi, filtroRarezaApi, juegoActivo]);
 
   // Al seleccionar una carta de los resultados de la API
   function seleccionarCartaApi(carta) {
@@ -698,12 +761,45 @@ export default function ColeccionFisica({ user }) {
                   </button>
                 </form>
 
+                {/* SELECTOR DE RAREZA EN BÚSQUEDA (ONE PIECE): MENOR RAREZA (NORMAL / BASE) POR DEFAULT VS AA */}
+                {juegoActivo === "onepiece" && (
+                  <div className="api-rareza-filter-bar">
+                    <span className="api-filter-label">Mostrar en resultados:</span>
+                    <div className="api-filter-tabs">
+                      <button
+                        type="button"
+                        className={`api-filter-tab ${filtroRarezaApi === "normal" ? "active" : ""}`}
+                        onClick={() => setFiltroRarezaApi("normal")}
+                        title="Mostrar versiones en su menor rareza (versión normal / base por defecto)"
+                      >
+                        📦 Menor rareza (Normal / Base) <em>[Por defecto]</em>
+                      </button>
+                      <button
+                        type="button"
+                        className={`api-filter-tab ${filtroRarezaApi === "aa" ? "active" : ""}`}
+                        onClick={() => setFiltroRarezaApi("aa")}
+                        title="Mostrar versiones Alternate Art (AA / Paralelas / Manga)"
+                      >
+                        ✨ Alternate Art (AA / Paralela)
+                      </button>
+                      <button
+                        type="button"
+                        className={`api-filter-tab ${filtroRarezaApi === "todas" ? "active" : ""}`}
+                        onClick={() => setFiltroRarezaApi("todas")}
+                        title="Mostrar todas las versiones disponibles"
+                      >
+                        🌐 Todas
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* VISTA DIVIDIDA: RESULTADOS Y PREVIEW */}
                 <div className="api-layout">
                   {/* LISTA DE RESULTADOS DE LA API */}
                   <div className="api-resultados-col">
                     <div className="api-resultados-header">
-                      <span>Resultados de la API ({resultadosApi.length}):</span>
+                      <span>Resultados de la API ({resultadosApiFiltrados.length}):</span>
                       {buscandoApi && <span className="api-cargando-tag">Consultando API...</span>}
                     </div>
 
@@ -712,17 +808,22 @@ export default function ColeccionFisica({ user }) {
                         <Loader2 size={32} className="spinner-icon" />
                         <p>Buscando cartas e imágenes oficiales...</p>
                       </div>
-                    ) : resultadosApi.length === 0 ? (
+                    ) : resultadosApiFiltrados.length === 0 ? (
                       <div className="api-estado-vacio">
                         <Search size={32} style={{ opacity: 0.3 }} />
-                        <p>Escribe el nombre de la carta o código y presiona "Buscar en API".</p>
+                        <p>
+                          {resultadosApi.length > 0
+                            ? `No hay cartas en categoría "${filtroRarezaApi === "aa" ? "Alternate Art" : "Normal"}". Puedes cambiar a "Todas" para ver las demás.`
+                            : 'Escribe el nombre de la carta o código y presiona "Buscar en API".'}
+                        </p>
                       </div>
                     ) : (
                       <div className="api-cards-grid">
-                        {resultadosApi.map((item, idx) => {
+                        {resultadosApiFiltrados.map((item, idx) => {
                           const isSel =
                             cartaSeleccionada?.codigo === (item.numero || item.id) &&
                             cartaSeleccionada?.nombre === item.nombre;
+                          const esAA = esVersionEspecialOnePiece(item);
 
                           return (
                             <div
@@ -738,6 +839,11 @@ export default function ColeccionFisica({ user }) {
                                 )}
                                 {item.rarity && (
                                   <span className="api-thumb-badge">{item.rarity}</span>
+                                )}
+                                {juegoActivo === "onepiece" && (
+                                  <span className={`api-thumb-badge-arte ${esAA ? "tag-aa" : "tag-normal"}`}>
+                                    {esAA ? "✨ AA" : "📦 Base"}
+                                  </span>
                                 )}
                               </div>
                               <div className="api-card-info">
@@ -787,7 +893,35 @@ export default function ColeccionFisica({ user }) {
                               {cartaSeleccionada.rareza && (
                                 <span className="tag-rar">⭐ {cartaSeleccionada.rareza}</span>
                               )}
+                              {juegoActivo === "onepiece" && (
+                                <span className={`tag-rar ${esVersionEspecialOnePiece(cartaSeleccionada) ? "tag-aa" : "tag-normal"}`}>
+                                  {esVersionEspecialOnePiece(cartaSeleccionada) ? "✨ Alternate Art (AA)" : "📦 Menor rareza (Normal)"}
+                                </span>
+                              )}
                             </div>
+
+                            {/* BOTÓN PARA ALTERNAR ENTRE VERSIÓN NORMAL Y AA SI EXISTE LA OTRA VERSIÓN */}
+                            {(() => {
+                              if (juegoActivo !== "onepiece") return null;
+                              const esActAA = esVersionEspecialOnePiece(cartaSeleccionada);
+                              const codLimpio = (cartaSeleccionada.codigo || "").split("_")[0];
+                              const alternativa = resultadosApi.find(
+                                (c) =>
+                                  (c.numero === cartaSeleccionada.codigo || (c.numero && codLimpio && c.numero.startsWith(codLimpio))) &&
+                                  esVersionEspecialOnePiece(c) !== esActAA
+                              );
+                              if (!alternativa) return null;
+                              return (
+                                <button
+                                  type="button"
+                                  className="btn-switch-preview-arte"
+                                  onClick={() => seleccionarCartaApi(alternativa)}
+                                  title="Cambiar entre versión Normal y Alternate Art de esta misma carta"
+                                >
+                                  {esActAA ? "📦 Cambiar a versión Normal (Menor rareza)" : "✨ Cambiar a versión Alternate Art (AA)"}
+                                </button>
+                              );
+                            })()}
 
                             {/* SELECTOR DE CONDICIÓN Y CANTIDAD */}
                             <div className="preview-opciones">

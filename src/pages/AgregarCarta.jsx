@@ -53,6 +53,7 @@ export default function AgregarCarta() {
 
   // Filtros y vista para la galería de cartas
   const [filtroPrints, setFiltroPrints] = useState("");
+  const [filtroRareza, setFiltroRareza] = useState("normal"); // "normal" (menor rareza por default) | "aa" | "todas"
   const [ordenPrints, setOrdenPrints] = useState("default");
   const [densidad, setDensidad] = useState("compacto"); // "compacto" | "medio" | "grande"
 
@@ -271,9 +272,32 @@ export default function AgregarCarta() {
     }
   }
 
-  // Filtrado y ordenamiento de las versiones disponibles
+  // Helper para saber si un print es versión alternativa / alta rareza
+  function esPrintAA(p) {
+    const n = (p.nombre || "").toLowerCase();
+    const img = (p.imagen || "").toLowerCase();
+    const id = (p.id || "").toLowerCase();
+    return (
+      n.includes("parallel") ||
+      n.includes("alternate") ||
+      n.includes("alt art") ||
+      n.includes("manga") ||
+      n.includes("(sp)") ||
+      img.includes("_p") ||
+      id.includes("_p")
+    );
+  }
+
+  // Filtrado y ordenamiento de las versiones disponibles (por default en menor rareza)
   const printsFiltrados = prints
     .filter((p) => {
+      // Filtro por rareza/arte si es One Piece
+      if (fuente?.startsWith("onepiece")) {
+        const esAA = esPrintAA(p);
+        if (filtroRareza === "normal" && esAA) return false;
+        if (filtroRareza === "aa" && !esAA) return false;
+      }
+
       if (!filtroPrints.trim()) return true;
       const q = filtroPrints.toLowerCase().trim();
       const n = (p.nombre || "").toLowerCase();
@@ -282,6 +306,12 @@ export default function AgregarCarta() {
       return n.includes(q) || s.includes(q) || num.includes(q);
     })
     .sort((a, b) => {
+      // Priorizar siempre menor rareza primero si no hay orden específico de precio/nombre
+      if (ordenPrints === "default" && fuente?.startsWith("onepiece")) {
+        const aaA = esPrintAA(a);
+        const aaB = esPrintAA(b);
+        if (aaA !== aaB) return aaA ? 1 : -1;
+      }
       if (ordenPrints === "precio-asc") {
         const pa = a.precios?.usd != null ? a.precios.usd : 999999;
         const pb = b.precios?.usd != null ? b.precios.usd : 999999;
@@ -712,6 +742,35 @@ export default function AgregarCarta() {
                 </div>
 
                 <div className="print-list-controls">
+                  {fuente?.startsWith("onepiece") && (
+                    <div className="api-rareza-filter-bar mini-filter-bar">
+                      <button
+                        type="button"
+                        className={`api-filter-tab ${filtroRareza === "normal" ? "active" : ""}`}
+                        onClick={() => setFiltroRareza("normal")}
+                        title="Mostrar versiones en menor rareza (normal/base por defecto)"
+                      >
+                        📦 Normal
+                      </button>
+                      <button
+                        type="button"
+                        className={`api-filter-tab ${filtroRareza === "aa" ? "active" : ""}`}
+                        onClick={() => setFiltroRareza("aa")}
+                        title="Mostrar versiones Alternate Art (AA / Paralelas)"
+                      >
+                        ✨ AA
+                      </button>
+                      <button
+                        type="button"
+                        className={`api-filter-tab ${filtroRareza === "todas" ? "active" : ""}`}
+                        onClick={() => setFiltroRareza("todas")}
+                        title="Mostrar todas las versiones"
+                      >
+                        🌐 Todas
+                      </button>
+                    </div>
+                  )}
+
                   <div className="print-filter-box">
                     <Search size={14} className="filter-icon" />
                     <input

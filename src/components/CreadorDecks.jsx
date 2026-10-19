@@ -22,6 +22,7 @@ import {
   Download,
   Image as ImageIcon,
   FileText,
+  Repeat,
 } from "lucide-react";
 import { supabase } from "../lib/supabase.js";
 import { useCart } from "../lib/CartContext.jsx";
@@ -52,8 +53,47 @@ async function obtenerSetOptcg(setOdeck) {
   return [];
 }
 
-// Resuelve la información oficial de una lista de códigos
-async function resolverCodigosOnePiece(itemsParseados) {
+// Detecta si una carta de la API es versión alternativa / alta rareza (Parallel, Alternate Art, Manga, SP)
+function esVersionEspecial(c) {
+  const nom = (c.card_name || c.nombre || "").toUpperCase();
+  const img = (c.card_image || c.imagen || "").toUpperCase();
+  const id = (c.card_image_id || c.id || "").toUpperCase();
+  const rar = (c.rarity || c.rareza || "").toUpperCase();
+  return (
+    nom.includes("(PARALLEL)") ||
+    nom.includes("(ALTERNATE ART)") ||
+    nom.includes("(ALT ART)") ||
+    nom.includes("(MANGA)") ||
+    nom.includes("(SP)") ||
+    nom.includes("(SUPER ALTERNATE ART)") ||
+    nom.includes("(SUPER LEADER)") ||
+    id.includes("_P1") ||
+    id.includes("_P2") ||
+    id.includes("_P3") ||
+    id.includes("_P4") ||
+    id.includes("_P5") ||
+    id.includes("_P6") ||
+    id.includes("_P7") ||
+    id.includes("_P8") ||
+    id.includes("_R1") ||
+    id.includes("_R2") ||
+    img.includes("_P1") ||
+    img.includes("_P2") ||
+    img.includes("_P3") ||
+    img.includes("_P4") ||
+    img.includes("_P5") ||
+    img.includes("_P6") ||
+    img.includes("_P7") ||
+    img.includes("_P8") ||
+    img.includes("_R1") ||
+    img.includes("_R2") ||
+    rar === "SP" ||
+    rar === "MANGA"
+  );
+}
+
+// Resuelve la información oficial agrupando versión Normal (menor rareza) y versión AA
+async function resolverCodigosOnePiece(itemsParseados, preferenciaRareza = "normal") {
   const setsRequeridos = new Set();
 
   itemsParseados.forEach((item) => {
@@ -81,31 +121,55 @@ async function resolverCodigosOnePiece(itemsParseados) {
   });
 
   // Consultar sets en paralelo
-  const cartasMap = new Map();
+  const cartasPorCodigo = new Map();
   await Promise.all(
     [...setsRequeridos].map(async (setId) => {
       const cartas = await obtenerSetOptcg(setId);
       cartas.forEach((c) => {
-        if (c.card_set_id) {
-          cartasMap.set(c.card_set_id.toUpperCase(), c);
-          cartasMap.set(c.card_set_id.toUpperCase().replace("-", ""), c);
-        }
-        if (c.card_image_id) {
-          cartasMap.set(c.card_image_id.toUpperCase(), c);
-          cartasMap.set(c.card_image_id.toUpperCase().replace("-", ""), c);
-        }
+        const rawCode = (c.card_set_id || c.card_image_id || "").toUpperCase();
+        if (!rawCode) return;
+
+        // Base code sin sufijo _P1 / _R1 para mapear al grupo común
+        const baseLimpio = rawCode.replace(/_P\d+$/i, "").replace(/_R\d+$/i, "");
+        const codigos = [rawCode, baseLimpio, baseLimpio.replace("-", "")];
+        codigos.forEach((cod) => {
+          if (!cod) return;
+          if (!cartasPorCodigo.has(cod)) {
+            cartasPorCodigo.set(cod, { normal: null, aa: null, todas: [] });
+          }
+          const grupo = cartasPorCodigo.get(cod);
+          grupo.todas.push(c);
+
+          const esp = esVersionEspecial(c);
+          if (!esp && !grupo.normal) {
+            grupo.normal = c;
+          } else if (esp && !grupo.aa) {
+            grupo.aa = c;
+          }
+        });
       });
     })
   );
 
-  // Mapear cada item con sus datos enriquecidos
+  // Mapear cada item con sus versiones separadas
   return itemsParseados.map((item) => {
     const rawCode = item.codigo.toUpperCase();
-    let optcg = cartasMap.get(rawCode) || cartasMap.get(rawCode.replace("-", ""));
+    const grupo =
+      cartasPorCodigo.get(rawCode) ||
+      cartasPorCodigo.get(rawCode.replace("-", ""));
 
-    // Fallbacks para cartas especiales o eventos (ej: Jamboule OP15-077, Mamaragan OP15-078)
-    if (!optcg && rawCode === "OP15-077") {
-      optcg = {
+    let normalCard =
+      grupo?.normal ||
+      (grupo?.todas && grupo.todas.find((c) => !esVersionEspecial(c))) ||
+      grupo?.todas?.[0];
+    let aaCard =
+      grupo?.aa ||
+      (grupo?.todas && grupo.todas.find(esVersionEspecial)) ||
+      null;
+
+    // Fallbacks para cartas especiales o eventos
+    if (!normalCard && rawCode === "OP15-077") {
+      normalCard = {
         card_name: "Jamboule",
         set_name: "One Piece TCG",
         rarity: "C",
@@ -114,8 +178,8 @@ async function resolverCodigosOnePiece(itemsParseados) {
         card_image: "https://www.optcgapi.com/media/static/Card_Images/OP15-077.jpg",
       };
     }
-    if (!optcg && rawCode === "OP15-078") {
-      optcg = {
+    if (!normalCard && rawCode === "OP15-078") {
+      normalCard = {
         card_name: "Mamaragan",
         set_name: "One Piece TCG",
         rarity: "C",
@@ -125,19 +189,41 @@ async function resolverCodigosOnePiece(itemsParseados) {
       };
     }
 
-    const imagen =
-      optcg?.card_image ||
-      `https://www.optcgapi.com/media/static/Card_Images/${rawCode}.jpg`;
+    // Imagen base limpia garantizada (menor rareza)
+    const baseImagen =
+      (normalCard?.card_image && !normalCard.card_image.includes("_p"))
+        ? normalCard.card_image
+        : `https://www.optcgapi.com/media/static/Card_Images/${rawCode}.jpg`;
+    const aaImagen = aaCard?.card_image || null;
+
+    // POR DEFAULT SIEMPRE EN SU MENOR RAREZA (NORMAL / BASE)
+    const imagenFinal = preferenciaRareza === "aa" && aaImagen ? aaImagen : baseImagen;
+    const nombreFinal = preferenciaRareza === "aa" && aaCard ? (aaCard.card_name || rawCode) : (normalCard?.card_name || rawCode);
 
     return {
       codigo: rawCode,
       cantidad: item.cantidad,
-      nombre: optcg?.card_name || rawCode,
-      expansion: optcg?.set_name || optcg?.set_id || "One Piece TCG",
-      rareza: optcg?.rarity || (optcg?.card_type === "Leader" ? "L" : "C"),
-      tipo: optcg?.card_type || "Character",
-      color: optcg?.card_color || "",
-      imagen,
+      nombre: nombreFinal,
+      expansion: normalCard?.set_name || normalCard?.set_id || "One Piece TCG",
+      rareza: normalCard?.rarity || (normalCard?.card_type === "Leader" ? "L" : "C"),
+      tipo: normalCard?.card_type || "Character",
+      color: normalCard?.card_color || "",
+      imagen: imagenFinal,
+      tieneAA: Boolean(aaCard),
+      versiones: {
+        normal: {
+          nombre: normalCard?.card_name || rawCode,
+          imagen: baseImagen,
+          rareza: normalCard?.rarity || "C",
+        },
+        aa: aaCard
+          ? {
+              nombre: aaCard.card_name || `${rawCode} (Alternate Art)`,
+              imagen: aaImagen,
+              rareza: aaCard.rarity || normalCard?.rarity || "C",
+            }
+          : null,
+      },
     };
   });
 }
@@ -146,7 +232,7 @@ async function resolverCodigosOnePiece(itemsParseados) {
 async function generarCanvasFaltantes(deck, cartasFaltantes) {
   const padding = 28;
   const cardWidth = 160;
-  const cardHeight = 224; // Proporción TCG estándar ~1:1.4
+  const cardHeight = 224;
   const gap = 16;
   const cols = Math.min(4, Math.max(2, cartasFaltantes.length));
   const rows = Math.ceil(cartasFaltantes.length / cols);
@@ -193,7 +279,6 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
     92
   );
 
-  // Carga de imágenes con proxy seguro para evitar CORS tainted canvas
   const cargarImagen = (url) => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -205,13 +290,12 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
         fallback.onerror = () => resolve(null);
         fallback.src = url;
       };
-      // images.weserv.nl habilita cabeceras CORS para dibujar en canvas sin error
       img.src = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=320&output=jpg`;
     });
   };
 
   const imagenesCargadas = await Promise.all(
-    cartasFaltantes.map((c) => cargarImagen(c.imagen))
+    cartasFaltantes.map((c) => cargarImagen(c.imagenActiva || c.imagen))
   );
 
   // Dibujar cartas en cuadrícula
@@ -225,7 +309,6 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
     const y = headerHeight + row * (cardHeight + 42);
 
     ctx.save();
-    // Bordes redondeados de la carta
     const radius = 8;
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -266,7 +349,9 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
 
     ctx.fillStyle = "#e4e4e7";
     ctx.font = "11px system-ui, sans-serif";
-    const nom = carta.nombre.length > 20 ? carta.nombre.slice(0, 19) + "…" : carta.nombre;
+    const nom = (carta.nombreActivo || carta.nombre).length > 20
+      ? (carta.nombreActivo || carta.nombre).slice(0, 19) + "…"
+      : (carta.nombreActivo || carta.nombre);
     ctx.fillText(nom, x, y + cardHeight + 30);
   }
 
@@ -289,6 +374,11 @@ export default function CreadorDecks({ user }) {
   // Modo de vista: "tablero" (cuadrícula visual con mapa de fondo) o "lista"
   const [vistaModo, setVistaModo] = useState("tablero");
 
+  // PREFERENCIA DE RAREZA / ARTE: "normal" (menor rareza por default) o "aa" (Alternate Art)
+  const [preferenciaRareza, setPreferenciaRareza] = useState("normal");
+  // Permite personalizar el arte de cartas específicas { [codigo]: "normal" | "aa" }
+  const [artesIndividuales, setArtesIndividuales] = useState({});
+
   // Inspección de carta individual
   const [cartaInspeccionada, setCartaInspeccionada] = useState(null);
 
@@ -310,8 +400,17 @@ export default function CreadorDecks({ user }) {
   // Formulario de creación
   const [nombreDeck, setNombreDeck] = useState("");
   const [textoDecklist, setTextoDecklist] = useState("");
-  const [procesando, setProcesando] = useState(false);
+  const [rarezaImport, setRarezaImport] = useState("normal"); // "normal" (default) | "aa"
   const [filtroDeck, setFiltroDeck] = useState("todas"); // "todas" | "faltantes" | "en_tienda"
+  const [busquedaDeck, setBusquedaDeck] = useState("");
+
+  // Modal para buscar y agregar una carta individual al deck
+  const [mostrarModalAgregarCarta, setMostrarModalAgregarCarta] = useState(false);
+  const [queryCartaDeck, setQueryCartaDeck] = useState("");
+  const [rarezaCartaDeck, setRarezaCartaDeck] = useState("normal"); // "normal" (menor rareza por default) | "aa"
+  const [resultadosCartaDeck, setResultadosCartaDeck] = useState([]);
+  const [buscandoCartaDeck, setBuscandoCartaDeck] = useState(false);
+  const [cantidadAgregar, setCantidadAgregar] = useState(1);
 
   // Cargar coleccion del usuario, productos de la tienda y decks guardados
   useEffect(() => {
@@ -320,7 +419,6 @@ export default function CreadorDecks({ user }) {
       setCargando(true);
 
       try {
-        // 1. Cargar colección física del usuario
         const { data: colData } = await supabase
           .from("coleccion_usuario")
           .select("*")
@@ -332,13 +430,11 @@ export default function CreadorDecks({ user }) {
             : user?.user_metadata?.coleccion || [];
         setColeccionFisica(coleccion);
 
-        // 2. Cargar cartas de la tienda para saber stock y precios
         const { data: tiendaData } = await supabase
           .from("cartas")
           .select("id, nombre, imagen, precio, stock, expansion");
         setCartasTienda(tiendaData || []);
 
-        // 3. Cargar decks guardados de Supabase o user_metadata
         const { data: decksData, error: errDecks } = await supabase
           .from("decks_usuario")
           .select("*")
@@ -380,7 +476,7 @@ export default function CreadorDecks({ user }) {
     return resultado;
   }
 
-  // Guardar un nuevo deck
+  // Guardar un nuevo deck (por defecto siempre en menor rareza)
   async function handleCrearDeck(e) {
     e.preventDefault();
     if (!nombreDeck.trim() || !textoDecklist.trim()) return;
@@ -395,7 +491,8 @@ export default function CreadorDecks({ user }) {
         return;
       }
 
-      const cartasResueltas = await resolverCodigosOnePiece(parseados);
+      // Por default siempre menor rareza "normal"
+      const cartasResueltas = await resolverCodigosOnePiece(parseados, rarezaImport);
 
       const nuevoDeck = {
         id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
@@ -426,6 +523,8 @@ export default function CreadorDecks({ user }) {
       setTextoDecklist("");
       setMostrarModalCrear(false);
       setDeckSeleccionado(deckFinal);
+      setPreferenciaRareza(rarezaImport);
+      setArtesIndividuales({});
     } catch (err) {
       console.error("Error creando deck:", err);
     } finally {
@@ -444,6 +543,123 @@ export default function CreadorDecks({ user }) {
     localStorage.setItem(`decks_${user.id}`, JSON.stringify(nuevos));
   }
 
+  // Alternar el arte de una carta específica entre Normal y AA
+  function toggleArteCarta(codigo) {
+    setArtesIndividuales((prev) => {
+      const actual = prev[codigo] || preferenciaRareza;
+      return {
+        ...prev,
+        [codigo]: actual === "aa" ? "normal" : "aa",
+      };
+    });
+  }
+
+  // Buscar cartas en la API de One Piece para agregar al deck
+  async function handleBuscarCartaParaDeck(e) {
+    if (e) e.preventDefault();
+    const q = queryCartaDeck.trim();
+    if (!q) return;
+    setBuscandoCartaDeck(true);
+    setResultadosCartaDeck([]);
+
+    try {
+      const [sets, decks, promos] = await Promise.all([
+        buscarPrintsOnePiece(q).catch(() => []),
+        buscarDecksFiltered(q).catch(() => []),
+        buscarPromosFiltered(q).catch(() => []),
+      ]);
+
+      const combinados = [...sets, ...decks, ...promos];
+      const unicos = [];
+      const vistos = new Set();
+      for (const c of combinados) {
+        const key = c.id || c.imagen || `${c.numero}_${c.nombre}`;
+        if (key && !vistos.has(key)) {
+          vistos.add(key);
+          unicos.push(c);
+        }
+      }
+
+      // Ordenar con menor rareza primero
+      unicos.sort((a, b) => {
+        const espA = esVersionEspecial(a);
+        const espB = esVersionEspecial(b);
+        if (espA !== espB) return espA ? 1 : -1;
+        return 0;
+      });
+
+      setResultadosCartaDeck(unicos);
+    } catch (err) {
+      console.error("Error buscando carta para deck:", err);
+    } finally {
+      setBuscandoCartaDeck(false);
+    }
+  }
+
+  // Agregar carta seleccionada de la búsqueda al deck
+  async function handleAgregarCartaADeck(carta) {
+    if (!deckSeleccionado) return;
+    const rawCode = (carta.numero || carta.id || "").toUpperCase().replace(/_P\d+$/i, "").replace(/_R\d+$/i, "");
+    if (!rawCode) return;
+
+    const esEsp = esVersionEspecial(carta);
+    const cantidad = Math.max(1, parseInt(cantidadAgregar) || 1);
+
+    const baseImg = (carta.imagen && !carta.imagen.includes("_p"))
+      ? carta.imagen
+      : `https://www.optcgapi.com/media/static/Card_Images/${rawCode}.jpg`;
+
+    const cartasActuales = [...(deckSeleccionado.cartas || [])];
+    const indexExistente = cartasActuales.findIndex((c) => c.codigo.toUpperCase() === rawCode);
+
+    if (indexExistente >= 0) {
+      cartasActuales[indexExistente] = {
+        ...cartasActuales[indexExistente],
+        cantidad: cartasActuales[indexExistente].cantidad + cantidad,
+      };
+    } else {
+      const nueva = {
+        codigo: rawCode,
+        cantidad,
+        nombre: carta.nombre || rawCode,
+        expansion: carta.set || "One Piece TCG",
+        rareza: carta.rarity || "C",
+        tipo: carta.tipo || "Character",
+        color: carta.color || "",
+        imagen: rarezaCartaDeck === "aa" && esEsp ? carta.imagen : baseImg,
+        tieneAA: esEsp,
+        versiones: {
+          normal: {
+            nombre: (carta.nombre || rawCode).replace(/\s*\((PARALLEL|ALTERNATE ART|ALT ART|MANGA|SP)\)/gi, "").trim(),
+            imagen: baseImg,
+            rareza: carta.rarity || "C",
+          },
+          aa: esEsp ? {
+            nombre: carta.nombre || `${rawCode} (Alternate Art)`,
+            imagen: carta.imagen,
+            rareza: carta.rarity || "C",
+          } : null,
+        },
+      };
+      cartasActuales.push(nueva);
+    }
+
+    const deckActualizado = {
+      ...deckSeleccionado,
+      cartas: cartasActuales,
+    };
+
+    setDeckSeleccionado(deckActualizado);
+    setDecks((prev) => prev.map((d) => (d.id === deckSeleccionado.id ? deckActualizado : d)));
+    localStorage.setItem(`decks_${user.id}`, JSON.stringify(decks.map((d) => (d.id === deckSeleccionado.id ? deckActualizado : d))));
+
+    await supabase.from("decks_usuario").update({ cartas: cartasActuales }).eq("id", deckSeleccionado.id);
+
+    setMostrarModalAgregarCarta(false);
+    setQueryCartaDeck("");
+    setResultadosCartaDeck([]);
+  }
+
   // Copiar decklist completo
   function copiarDecklist(deck) {
     const lineas = (deck.cartas || []).map((c) => `${c.cantidad}x${c.codigo}`);
@@ -452,7 +668,7 @@ export default function CreadorDecks({ user }) {
     setTimeout(() => setCopiadoDecklist(false), 2000);
   }
 
-  // Analizar el estado de cada carta en el deck seleccionado
+  // Analizar el estado de cada carta en el deck seleccionado respetando el arte seleccionado
   const analisisDeck = useMemo(() => {
     if (!deckSeleccionado || !deckSeleccionado.cartas) return null;
 
@@ -465,6 +681,34 @@ export default function CreadorDecks({ user }) {
 
     const listaAnalizada = deckSeleccionado.cartas.map((item) => {
       totalNecesarias += item.cantidad;
+
+      // Determinar si esta carta se está visualizando en Normal (menor rareza) o en AA
+      const modoCarta = artesIndividuales[item.codigo] || preferenciaRareza;
+      const tieneAAReal = Boolean(item.versiones?.aa) || Boolean(item.tieneAA) || (item.imagen && item.imagen.includes("_p"));
+      const esAA = modoCarta === "aa" && tieneAAReal;
+
+      // Imagen base / normal (menor rareza) garantizada:
+      const imagenNormalLimpia =
+        item.versiones?.normal?.imagen ||
+        (item.imagen ? item.imagen.replace(/_p\d+\./i, ".").replace(/_r\d+\./i, ".") : `https://www.optcgapi.com/media/static/Card_Images/${item.codigo}.jpg`);
+
+      const nombreNormalLimpio =
+        item.versiones?.normal?.nombre ||
+        (item.nombre || item.codigo).replace(/\s*\((PARALLEL|ALTERNATE ART|ALT ART|MANGA|SP|SUPER LEADER)\)/gi, "").trim();
+
+      const imagenAA =
+        item.versiones?.aa?.imagen ||
+        (item.imagen && item.imagen.includes("_p") ? item.imagen : null);
+
+      const nombreAA =
+        item.versiones?.aa?.nombre ||
+        (item.nombre && item.nombre.includes("Parallel") ? item.nombre : `${item.nombre || item.codigo} (Alternate Art)`);
+
+      const imagenActiva = esAA ? (imagenAA || imagenNormalLimpia) : imagenNormalLimpia;
+      const nombreActivo = esAA ? (nombreAA || nombreNormalLimpio) : nombreNormalLimpio;
+      const rarezaActiva = esAA
+        ? (item.versiones?.aa?.rareza || item.rareza)
+        : (item.versiones?.normal?.rareza || item.rareza || "C");
 
       // 1. Buscar en mi colección física
       const codItemClean = clean(item.codigo);
@@ -496,7 +740,7 @@ export default function CreadorDecks({ user }) {
       totalTienes += tienes;
       totalFaltantes += faltan;
 
-      // 2. Buscar en tienda con COTEJO RIGUROSO de código y tipo
+      // 2. Buscar en tienda con COTEJO RIGUROSO de código, tipo y rareza
       const isItemDon =
         (item.tipo || "").toUpperCase().includes("DON") ||
         item.codigo.toUpperCase().startsWith("DON");
@@ -514,15 +758,26 @@ export default function CreadorDecks({ user }) {
           nomTienda.includes("DON CARD") ||
           imgTienda.includes("DON_CARD");
 
-        // Regla estricta: si uno es DON y el otro no, NUNCA coinciden
-        // (Evita que el personaje Yamato OP17-074 coincida con un DON!! Card de Yamato)
+        // Si uno es DON y el otro no, NUNCA coinciden
         if (isItemDon !== isStoreDon) return false;
 
-        // Coincidencia exacta por código completo
-        if (imgTienda.includes(rawCode) || (cleanCode && clean(imgTienda).includes(cleanCode))) return true;
-        if (nomTienda.includes(rawCode) || (cleanCode && clean(nomTienda).includes(cleanCode))) return true;
+        const isStoreAA =
+          nomTienda.includes("(PARALLEL)") ||
+          nomTienda.includes("(ALTERNATE ART)") ||
+          nomTienda.includes("(MANGA)") ||
+          nomTienda.includes("(SP)") ||
+          imgTienda.includes("_P1") ||
+          imgTienda.includes("_P2");
 
-        // Coincidencia por número de set específico (ej: OP07-051 coincide si tiene (051) y nombre)
+        // Coincidencia exacta por código completo
+        const matchPorCodigo =
+          imgTienda.includes(rawCode) ||
+          (cleanCode && clean(imgTienda).includes(cleanCode)) ||
+          nomTienda.includes(rawCode) ||
+          (cleanCode && clean(nomTienda).includes(cleanCode));
+
+        // Coincidencia por número de set específico (ej: Boa Hancock (051) con OP07-051)
+        let matchPorNumero = false;
         if (itemNum && itemNum.length >= 3) {
           const itemNomClean = clean(item.nombre);
           const nomStoreClean = clean(nomTienda);
@@ -531,8 +786,25 @@ export default function CreadorDecks({ user }) {
             nomStoreClean.includes(itemNomClean) &&
             (nomTienda.includes(`(${itemNum})`) || imgTienda.includes(itemNum))
           ) {
-            return true;
+            matchPorNumero = true;
           }
+        }
+
+        if (matchPorCodigo || matchPorNumero) {
+          // Si el usuario busca menor rareza (normal), priorizar la que NO es AA si existe
+          if (!esAA && isStoreAA) {
+            // Solo usar AA como respaldo si no hay versión normal en la tienda
+            const hayNormalEnTienda = cartasTienda.some(
+              (o) =>
+                (clean(o.imagen || "").includes(cleanCode) || clean(o.nombre || "").includes(cleanCode)) &&
+                !clean(o.nombre || "").includes("PARALLEL") &&
+                !clean(o.nombre || "").includes("MANGA") &&
+                !clean(o.nombre || "").includes("ALTERNATE") &&
+                Number(o.stock || 0) > 0
+            );
+            return !hayNormalEnTienda;
+          }
+          return true;
         }
 
         return false;
@@ -549,6 +821,12 @@ export default function CreadorDecks({ user }) {
         faltan,
         completa: faltan === 0,
         enTienda: tieneStockTienda ? enTienda : null,
+        // Datos activos según selección Normal vs AA
+        imagenActiva,
+        nombreActivo,
+        rarezaActiva,
+        tieneAA: tieneAAReal,
+        esAA,
       };
     });
 
@@ -565,19 +843,29 @@ export default function CreadorDecks({ user }) {
       faltantesDisponiblesTienda,
       porcentaje,
     };
-  }, [deckSeleccionado, coleccionFisica, cartasTienda]);
+  }, [deckSeleccionado, coleccionFisica, cartasTienda, preferenciaRareza, artesIndividuales]);
 
-  // Cartas filtradas dentro del deck
+  // Cartas filtradas dentro del deck (por estado y por texto de búsqueda)
   const cartasVisiblesDeck = useMemo(() => {
     if (!analisisDeck) return [];
+    let list = analisisDeck.cartas;
     if (filtroDeck === "faltantes") {
-      return analisisDeck.cartas.filter((c) => c.faltan > 0);
+      list = list.filter((c) => c.faltan > 0);
+    } else if (filtroDeck === "en_tienda") {
+      list = list.filter((c) => c.faltan > 0 && c.enTienda);
     }
-    if (filtroDeck === "en_tienda") {
-      return analisisDeck.cartas.filter((c) => c.faltan > 0 && c.enTienda);
+
+    if (busquedaDeck.trim()) {
+      const q = busquedaDeck.toLowerCase().trim();
+      list = list.filter(
+        (c) =>
+          (c.codigo || "").toLowerCase().includes(q) ||
+          (c.nombreActivo || c.nombre || "").toLowerCase().includes(q) ||
+          (c.expansion || "").toLowerCase().includes(q)
+      );
     }
-    return analisisDeck.cartas;
-  }, [analisisDeck, filtroDeck]);
+    return list;
+  }, [analisisDeck, filtroDeck, busquedaDeck]);
 
   // Lista de cartas faltantes para el generador de imagen
   const cartasFaltantes = useMemo(() => {
@@ -639,7 +927,7 @@ export default function CreadorDecks({ user }) {
   function handleCopiarTextoFaltantes() {
     if (cartasFaltantes.length === 0) return;
     const lineas = cartasFaltantes.map(
-      (c) => `${c.faltan}x ${c.codigo} - ${c.nombre} (${c.expansion})`
+      (c) => `${c.faltan}x ${c.codigo} - ${c.nombreActivo || c.nombre} (${c.expansion})`
     );
     const texto = `🏴‍☠️ Cartas que me faltan para: ${deckSeleccionado?.nombre}\n\n${lineas.join("\n")}\n\nCapsule Corp Gaming (www.onepiececc.shop)`;
     navigator.clipboard.writeText(texto);
@@ -758,7 +1046,11 @@ export default function CreadorDecks({ user }) {
                         <button
                           type="button"
                           className="auth-boton btn-ver-deck"
-                          onClick={() => setDeckSeleccionado(deck)}
+                          onClick={() => {
+                            setDeckSeleccionado(deck);
+                            setPreferenciaRareza("normal");
+                            setArtesIndividuales({});
+                          }}
                         >
                           Ver análisis y cartas <ChevronRight size={14} />
                         </button>
@@ -800,6 +1092,21 @@ export default function CreadorDecks({ user }) {
             </button>
 
             <div className="topbar-acciones">
+              <button
+                type="button"
+                className="btn-accion-top btn-add-card-deck"
+                title="Buscar y agregar una carta a este deck"
+                onClick={() => {
+                  setMostrarModalAgregarCarta(true);
+                  setQueryCartaDeck("");
+                  setResultadosCartaDeck([]);
+                  setRarezaCartaDeck("normal");
+                  setCantidadAgregar(1);
+                }}
+              >
+                <Plus size={14} /> Agregar Carta
+              </button>
+
               <button
                 type="button"
                 className="btn-accion-top btn-destacado-faltantes"
@@ -851,6 +1158,35 @@ export default function CreadorDecks({ user }) {
               )}
             </div>
 
+            {/* SELECTOR DE RAREZA / ARTE GLOBAL: NORMAL (DEFAULT) VS ALTERNATE ART */}
+            <div className="deck-arte-toggle-box">
+              <span className="arte-toggle-label">Rareza de cartas en pantalla:</span>
+              <div className="arte-toggle-buttons">
+                <button
+                  type="button"
+                  className={`btn-arte-switch ${preferenciaRareza === "normal" ? "active" : ""}`}
+                  onClick={() => {
+                    setPreferenciaRareza("normal");
+                    setArtesIndividuales({});
+                  }}
+                  title="Mostrar cartas en su menor rareza (versión normal/base)"
+                >
+                  📦 Menor rareza (Normal)
+                </button>
+                <button
+                  type="button"
+                  className={`btn-arte-switch ${preferenciaRareza === "aa" ? "active" : ""}`}
+                  onClick={() => {
+                    setPreferenciaRareza("aa");
+                    setArtesIndividuales({});
+                  }}
+                  title="Mostrar cartas en su versión Alternate Art (AA / Paralela)"
+                >
+                  ✨ Alternate Art (AA)
+                </button>
+              </div>
+            </div>
+
             {/* BARRA DE PROGRESO DE TU COLECCIÓN */}
             {analisisDeck && (
               <div className="deck-progreso-seccion">
@@ -898,6 +1234,27 @@ export default function CreadorDecks({ user }) {
               </button>
             </div>
 
+            {/* BUSCADOR DE CARTAS DENTRO DEL DECK */}
+            <div className="deck-search-filter-box">
+              <Search size={14} style={{ color: "var(--texto-suave)" }} />
+              <input
+                type="text"
+                placeholder="Buscar en este deck..."
+                value={busquedaDeck}
+                onChange={(e) => setBusquedaDeck(e.target.value)}
+              />
+              {busquedaDeck && (
+                <button
+                  type="button"
+                  className="btn-clear-search-deck"
+                  onClick={() => setBusquedaDeck("")}
+                  title="Limpiar búsqueda"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
             {/* SELECTOR ENTRE VISTA TABLERO VISUAL Y VISTA LISTA */}
             <div className="deck-vista-switch">
               <button
@@ -934,8 +1291,8 @@ export default function CreadorDecks({ user }) {
                       {/* CONTENEDOR DE LA CARTA (TCG PROPORTIONS) */}
                       <div className="deck-visual-card-media">
                         <img
-                          src={carta.imagen}
-                          alt={carta.nombre}
+                          src={carta.imagenActiva || carta.imagen}
+                          alt={carta.nombreActivo || carta.nombre}
                           loading="lazy"
                           onError={(e) => {
                             e.target.onerror = null;
@@ -960,6 +1317,23 @@ export default function CreadorDecks({ user }) {
                           )}
                         </div>
 
+                        {/* BADGE TOGGLE AA / NORMAL (SI TIENE ARTE ALTERNATIVO) */}
+                        {carta.tieneAA && (
+                          <div className="card-overlay-badge-aa">
+                            <button
+                              type="button"
+                              className={`badge-pill pill-aa-toggle ${carta.esAA ? "active-aa" : "active-normal"}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleArteCarta(carta.codigo);
+                              }}
+                              title={carta.esAA ? "Viendo Alternate Art. Clic para cambiar a Normal" : "Viendo Normal. Clic para cambiar a Alternate Art (AA)"}
+                            >
+                              {carta.esAA ? "✨ AA" : "📦 Normal"}
+                            </button>
+                          </div>
+                        )}
+
                         {/* BADGE DE TIENDA CAPSULE CORP */}
                         {carta.enTienda && (
                           <div className="card-overlay-badge-tienda">
@@ -982,7 +1356,7 @@ export default function CreadorDecks({ user }) {
                             onClick={(e) => {
                               e.stopPropagation();
                               agregar({ tipo: "carta", id: carta.enTienda.id });
-                              alert(`Se añadió "${carta.nombre}" al carrito.`);
+                              alert(`Se añadió "${carta.nombreActivo || carta.nombre}" al carrito.`);
                             }}
                           >
                             <ShoppingCart size={11} />
@@ -1006,18 +1380,27 @@ export default function CreadorDecks({ user }) {
                 return (
                   <div key={carta.codigo} className="deck-card-row">
                     <div className="deck-row-thumb">
-                      <img src={carta.imagen} alt={carta.nombre} loading="lazy" />
+                      <img src={carta.imagenActiva || carta.imagen} alt={carta.nombreActivo || carta.nombre} loading="lazy" />
                       <span className="deck-row-badge-cant">{carta.cantidad}x</span>
                     </div>
 
                     <div className="deck-row-info">
                       <div className="deck-row-title-row">
-                        <h4 className="deck-row-nombre">{carta.nombre}</h4>
+                        <h4 className="deck-row-nombre">{carta.nombreActivo || carta.nombre}</h4>
                         <span className="deck-row-codigo">{carta.codigo}</span>
+                        {carta.tieneAA && (
+                          <button
+                            type="button"
+                            className="btn-mini-aa"
+                            onClick={() => toggleArteCarta(carta.codigo)}
+                          >
+                            {carta.esAA ? "✨ Ver Normal" : "📦 Ver AA"}
+                          </button>
+                        )}
                       </div>
                       <div className="deck-row-tags">
                         <span className="tag-set">📦 {carta.expansion}</span>
-                        {carta.rareza && <span className="tag-rar">⭐ {carta.rareza}</span>}
+                        {carta.rarezaActiva && <span className="tag-rar">⭐ {carta.rarezaActiva}</span>}
                       </div>
                     </div>
 
@@ -1054,7 +1437,7 @@ export default function CreadorDecks({ user }) {
                               className="auth-boton btn-comprar-mini"
                               onClick={() => {
                                 agregar({ tipo: "carta", id: carta.enTienda.id });
-                                alert(`Se añadió ${carta.nombre} al carrito.`);
+                                alert(`Se añadió ${carta.nombreActivo || carta.nombre} al carrito.`);
                               }}
                             >
                               <ShoppingCart size={13} /> Comprar {carta.faltan}
@@ -1099,24 +1482,70 @@ export default function CreadorDecks({ user }) {
 
             <div className="card-inspector-layout">
               <div className="inspector-img-wrap">
-                <img src={cartaInspeccionada.imagen} alt={cartaInspeccionada.nombre} />
+                <img
+                  src={cartaInspeccionada.imagenActiva || cartaInspeccionada.imagen}
+                  alt={cartaInspeccionada.nombreActivo || cartaInspeccionada.nombre}
+                />
               </div>
 
               <div className="inspector-details">
                 <div className="inspector-header">
                   <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
                     <span className="deck-row-codigo">{cartaInspeccionada.codigo}</span>
-                    {cartaInspeccionada.rareza && (
-                      <span className="tag-rar">⭐ {cartaInspeccionada.rareza}</span>
+                    {cartaInspeccionada.rarezaActiva && (
+                      <span className="tag-rar">⭐ {cartaInspeccionada.rarezaActiva}</span>
                     )}
                   </div>
                   <h3 style={{ margin: "0 0 6px 0", fontSize: "17px", color: "var(--texto)" }}>
-                    {cartaInspeccionada.nombre}
+                    {cartaInspeccionada.nombreActivo || cartaInspeccionada.nombre}
                   </h3>
                   <p style={{ margin: 0, fontSize: "12.5px", color: "var(--texto-suave)" }}>
                     {cartaInspeccionada.expansion} • {cartaInspeccionada.tipo} {cartaInspeccionada.color ? `• ${cartaInspeccionada.color}` : ""}
                   </p>
                 </div>
+
+                {/* SELECTOR DE ARTE PARA ESTA CARTA (SI TIENE VERSIÓN AA) */}
+                {cartaInspeccionada.tieneAA && (
+                  <div className="inspector-arte-toggle">
+                    <span style={{ fontSize: "12px", color: "var(--texto-suave)" }}>Versión mostrada:</span>
+                    <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+                      <button
+                        type="button"
+                        className={`btn-arte-switch ${!cartaInspeccionada.esAA ? "active" : ""}`}
+                        style={{ padding: "5px 10px", fontSize: "11.5px" }}
+                        onClick={() => {
+                          toggleArteCarta(cartaInspeccionada.codigo);
+                          setCartaInspeccionada((prev) => ({
+                            ...prev,
+                            esAA: false,
+                            imagenActiva: prev.versiones.normal.imagen,
+                            nombreActivo: prev.versiones.normal.nombre,
+                            rarezaActiva: prev.versiones.normal.rareza,
+                          }));
+                        }}
+                      >
+                        📦 Normal (Base)
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn-arte-switch ${cartaInspeccionada.esAA ? "active" : ""}`}
+                        style={{ padding: "5px 10px", fontSize: "11.5px" }}
+                        onClick={() => {
+                          toggleArteCarta(cartaInspeccionada.codigo);
+                          setCartaInspeccionada((prev) => ({
+                            ...prev,
+                            esAA: true,
+                            imagenActiva: prev.versiones.aa.imagen,
+                            nombreActivo: prev.versiones.aa.nombre,
+                            rarezaActiva: prev.versiones.aa.rareza,
+                          }));
+                        }}
+                      >
+                        ✨ Alternate Art (AA)
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="inspector-section">
                   <h5 style={{ margin: "0 0 6px 0", fontSize: "11px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
@@ -1159,7 +1588,7 @@ export default function CreadorDecks({ user }) {
                           style={{ padding: "8px 12px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
                           onClick={() => {
                             agregar({ tipo: "carta", id: cartaInspeccionada.enTienda.id });
-                            alert(`Se añadió ${cartaInspeccionada.nombre} al carrito.`);
+                            alert(`Se añadió ${cartaInspeccionada.nombreActivo || cartaInspeccionada.nombre} al carrito.`);
                           }}
                         >
                           <ShoppingCart size={13} /> Añadir al Carrito
@@ -1289,6 +1718,33 @@ export default function CreadorDecks({ user }) {
                 />
               </div>
 
+              {/* OPCIÓN DE RAREZA POR DEFECTO AL CREAR EL DECK */}
+              <div className="form-campo">
+                <label>Rareza inicial de las cartas:</label>
+                <div className="radio-arte-group">
+                  <label className="radio-arte-item">
+                    <input
+                      type="radio"
+                      name="rarezaImport"
+                      value="normal"
+                      checked={rarezaImport === "normal"}
+                      onChange={() => setRarezaImport("normal")}
+                    />
+                    <span>📦 Menor rareza (Normal / Base) <em>[Por defecto]</em></span>
+                  </label>
+                  <label className="radio-arte-item">
+                    <input
+                      type="radio"
+                      name="rarezaImport"
+                      value="aa"
+                      checked={rarezaImport === "aa"}
+                      onChange={() => setRarezaImport("aa")}
+                    />
+                    <span>✨ Alternate Art (AA / Paralela)</span>
+                  </label>
+                </div>
+              </div>
+
               <div className="form-campo">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                   <label style={{ margin: 0 }}>
@@ -1344,6 +1800,159 @@ export default function CreadorDecks({ user }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PARA BUSCAR Y AGREGAR CARTA INDIVIDUAL AL DECK */}
+      {mostrarModalAgregarCarta && (
+        <div className="coleccion-modal-backdrop" onClick={() => setMostrarModalAgregarCarta(false)}>
+          <div
+            className="coleccion-modal-content coleccion-modal-grande"
+            style={{ maxWidth: "720px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                <Plus size={18} style={{ color: "var(--acento, #a855f7)" }} />
+                Agregar Carta a {deckSeleccionado?.nombre}
+              </h3>
+              <button
+                type="button"
+                className="btn-cerrar-modal"
+                onClick={() => setMostrarModalAgregarCarta(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* FORMULARIO DE BÚSQUEDA */}
+            <form onSubmit={handleBuscarCartaParaDeck} className="api-search-form" style={{ marginTop: "12px" }}>
+              <div className="coleccion-search-box" style={{ flex: 1 }}>
+                <Search size={16} style={{ color: "var(--texto-suave)" }} />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o código (ej: Yamato, OP01-121, Luffy, Zoro)..."
+                  value={queryCartaDeck}
+                  onChange={(e) => setQueryCartaDeck(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <button
+                type="submit"
+                className="auth-boton"
+                disabled={buscandoCartaDeck || !queryCartaDeck.trim()}
+                style={{ padding: "10px 20px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+              >
+                {buscandoCartaDeck ? <Loader2 size={16} className="spinner-icon" /> : <Search size={16} />}
+                Buscar Carta
+              </button>
+            </form>
+
+            {/* SELECTOR DE RAREZA / ARTE: NORMAL (DEFAULT) VS AA */}
+            <div className="api-rareza-filter-bar" style={{ marginTop: "12px" }}>
+              <span className="api-filter-label">Rareza a buscar:</span>
+              <div className="api-filter-tabs">
+                <button
+                  type="button"
+                  className={`api-filter-tab ${rarezaCartaDeck === "normal" ? "active" : ""}`}
+                  onClick={() => setRarezaCartaDeck("normal")}
+                >
+                  📦 Menor rareza (Normal / Base) <em>[Por defecto]</em>
+                </button>
+                <button
+                  type="button"
+                  className={`api-filter-tab ${rarezaCartaDeck === "aa" ? "active" : ""}`}
+                  onClick={() => setRarezaCartaDeck("aa")}
+                >
+                  ✨ Alternate Art (AA / Paralela)
+                </button>
+                <button
+                  type="button"
+                  className={`api-filter-tab ${rarezaCartaDeck === "todas" ? "active" : ""}`}
+                  onClick={() => setRarezaCartaDeck("todas")}
+                >
+                  🌐 Todas
+                </button>
+              </div>
+            </div>
+
+            {/* RESULTADOS DE BÚSQUEDA */}
+            <div style={{ marginTop: "14px", maxHeight: "360px", overflowY: "auto" }}>
+              {buscandoCartaDeck ? (
+                <div style={{ textAlign: "center", padding: "36px 20px" }}>
+                  <Loader2 size={32} className="spinner-icon" style={{ margin: "0 auto 10px auto", color: "var(--acento)" }} />
+                  <p style={{ color: "var(--texto-suave)", margin: 0 }}>Consultando cartas oficiales...</p>
+                </div>
+              ) : resultadosCartaDeck.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "36px 20px", color: "var(--texto-suave)" }}>
+                  <Search size={32} style={{ opacity: 0.3, margin: "0 auto 10px auto" }} />
+                  <p style={{ margin: 0 }}>Escribe el nombre o código de la carta y presiona "Buscar Carta".</p>
+                </div>
+              ) : (
+                <div className="api-cards-grid">
+                  {resultadosCartaDeck
+                    .filter((c) => {
+                      const esEsp = esVersionEspecial(c);
+                      if (rarezaCartaDeck === "normal") return !esEsp;
+                      if (rarezaCartaDeck === "aa") return esEsp;
+                      return true;
+                    })
+                    .map((item, idx) => {
+                      const esAA = esVersionEspecial(item);
+                      return (
+                        <div
+                          key={item.id || idx}
+                          className="api-card-min"
+                          style={{ cursor: "pointer" }}
+                        >
+                          <div className="api-card-thumb">
+                            <img
+                              src={item.imagen}
+                              alt={item.nombre}
+                              loading="lazy"
+                            />
+                            {item.rarity && (
+                              <span className="api-thumb-badge">{item.rarity}</span>
+                            )}
+                            <span className={`api-thumb-badge-arte ${esAA ? "tag-aa" : "tag-normal"}`}>
+                              {esAA ? "✨ AA" : "📦 Base"}
+                            </span>
+                          </div>
+                          <div className="api-card-info">
+                            <p className="api-card-title">{item.nombre}</p>
+                            <p className="api-card-code">{item.numero || item.id}</p>
+                            <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "6px" }}>
+                              <select
+                                value={cantidadAgregar}
+                                onChange={(e) => setCantidadAgregar(Number(e.target.value))}
+                                style={{ padding: "3px 6px", fontSize: "11px", background: "var(--fondo)", color: "#fff", border: "1px solid var(--borde)", borderRadius: "4px" }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <option value={1}>x1</option>
+                                <option value={2}>x2</option>
+                                <option value={3}>x3</option>
+                                <option value={4}>x4</option>
+                              </select>
+                              <button
+                                type="button"
+                                className="auth-boton"
+                                style={{ padding: "4px 8px", fontSize: "11px", flex: 1 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAgregarCartaADeck(item);
+                                }}
+                              >
+                                + Agregar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
