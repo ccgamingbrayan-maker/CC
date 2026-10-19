@@ -1,5 +1,19 @@
 import { useState, useEffect } from "react";
-import { Search, Grid2X2, LayoutGrid, Maximize2, Check, X } from "lucide-react";
+import {
+  Search,
+  Grid2X2,
+  LayoutGrid,
+  Maximize2,
+  Check,
+  X,
+  Sparkles,
+  Layers,
+  Package,
+  Loader2,
+  ArrowRight,
+  RotateCcw,
+  Plus
+} from "lucide-react";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
 import { buscarCartaRiftbound, buscarPrintsRiftbound } from "../lib/riftbound.js";
 import {
@@ -20,40 +34,35 @@ import CarouselStore from "../components/CarouselStore.jsx";
 import Cargando from "../components/Cargando.jsx";
 import AgregarAccesorio from "./AgregarAccesorio.jsx";
 
-// Etiqueta de un botón de fuente: muestra spinner + "Buscando…" cuando esa
-// fuente es la que está cargando; si no, muestra su texto normal.
-function LabelFuente({ activo, children }) {
-  if (activo) {
-    return (
-      <>
-        <span className="spinner-btn" aria-hidden="true" /> Buscando…
-      </>
-    );
-  }
-  return children;
-}
+const FUENTES_JUEGOS = [
+  { id: "onepiece", label: "One Piece TCG", badge: "OP TCG", placeholder: "Ej: Luffy, Zoro, Nami, OP05-060, ST01..." },
+  { id: "pokemon", label: "Pokémon TCG", badge: "PKMN", placeholder: "Ej: Charizard, Pikachu, Mewtwo, 151..." },
+  { id: "scryfall", label: "Magic: The Gathering", badge: "MTG", placeholder: "Ej: Black Lotus, Sol Ring, Lightning Bolt..." },
+  { id: "riftbound", label: "Riftbound TCG", badge: "RIFT", placeholder: "Ej: Vendetta, Genesis..." },
+];
 
 export default function AgregarCarta() {
   const [pestana, setPestana] = useState("cartas");
+  const [fuenteActiva, setFuenteActiva] = useState("onepiece");
   const [nombre, setNombre] = useState("");
   const [datosApi, setDatosApi] = useState(null);
   const [prints, setPrints] = useState([]);
   const [seleccionada, setSeleccionada] = useState(null);
   const [fuente, setFuente] = useState(null);
   const [precioReferencia, setPrecioReferencia] = useState(null);
-  const [juegoId, setJuegoId] = useState(4);
+  const [juegoId, setJuegoId] = useState(1);
   const [userSelectedJuego, setUserSelectedJuego] = useState(false);
   const [precio, setPrecio] = useState("");
   const [stock, setStock] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [mensajeTipo, setMensajeTipo] = useState("info"); // "info" | "success" | "error"
   const [buscando, setBuscando] = useState(false);
-  const [fuenteBuscando, setFuenteBuscando] = useState(null); // qué API está cargando
   const [guardando, setGuardando] = useState(false);
   const isCarrusel = Number(juegoId) === 6;
 
   // Filtros y vista para la galería de cartas
   const [filtroPrints, setFiltroPrints] = useState("");
-  const [filtroRareza, setFiltroRareza] = useState("normal"); // "normal" (menor rareza por default) | "aa" | "todas"
+  const [filtroRareza, setFiltroRareza] = useState("normal"); // "normal" | "aa" | "todas"
   const [ordenPrints, setOrdenPrints] = useState("default");
   const [densidad, setDensidad] = useState("compacto"); // "compacto" | "medio" | "grande"
 
@@ -80,8 +89,7 @@ export default function AgregarCarta() {
     listarExpansiones(juegoId).then(setExpansiones);
   }, [juegoId, isCarrusel]);
 
-  // Si la API trae la expansión (set), preseleccionarla automáticamente:
-  // la que coincida se elige; si no existe, queda lista para crearse.
+  // Si la API trae la expansión (set), preseleccionarla automáticamente
   useEffect(() => {
     if (!datosApi?.set || expansionTouched) return;
     const setApi = String(datosApi.set).trim();
@@ -142,58 +150,137 @@ export default function AgregarCarta() {
       const sugerido = Math.round(Number(usdRef) * tasa);
       setPrecio(String(sugerido));
     }
+    setMensaje("");
   }
 
-  async function buscar() {
-    if (!nombre) return;
+  // Búsqueda modular unificada según la fuente elegida
+  async function ejecutarBusqueda(targetFuente = fuenteActiva) {
+    const query = nombre.trim();
+    if (!query) return;
+
     setBuscando(true);
-    setFuenteBuscando("scryfall");
     setMensaje("");
     setFiltroPrints("");
-    const carta = await buscarCartaScryfall(nombre);
-    if (!carta) {
-      setDatosApi(null);
+    setDatosApi(null);
+    setSeleccionada(null);
+
+    try {
+      if (targetFuente === "onepiece") {
+        const [printsMain, decks, dons, promos] = await Promise.all([
+          buscarPrintsOnePiece(query),
+          buscarDecksFiltered(query),
+          buscarDonFiltered(query),
+          buscarPromosFiltered(query),
+        ]);
+
+        const merged = [
+          ...(printsMain || []).map((p) => ({ ...p, source: "onepiece" })),
+          ...(decks || []).map((p) => ({ ...p, source: "onepiece-deck" })),
+          ...(dons || []).map((p) => ({ ...p, source: "onepiece-don" })),
+          ...(promos || []).map((p) => ({ ...p, source: "onepiece-promo" })),
+        ];
+
+        if (!merged || merged.length === 0) {
+          setPrints([]);
+          setMensaje(`No se encontraron cartas en One Piece para "${query}".`);
+          setMensajeTipo("error");
+        } else {
+          // Deduplicar por id / imagen
+          const seen = new Set();
+          const dedup = [];
+          for (const p of merged) {
+            const key = p.id ?? p.nombre ?? p.imagen ?? JSON.stringify(p);
+            if (!seen.has(key)) {
+              seen.add(key);
+              dedup.push(p);
+            }
+          }
+          setPrints(dedup);
+          seleccionarVersion(dedup[0]);
+          setJuegoId(1);
+          setFuente("onepiece");
+        }
+      } else if (targetFuente === "pokemon") {
+        const versiones = await buscarPrintsPokemon(query);
+        if (!versiones || versiones.length === 0) {
+          setPrints([]);
+          setMensaje(`No se encontraron cartas en Pokémon para "${query}".`);
+          setMensajeTipo("error");
+        } else {
+          const mapped = versiones.map((v) => ({ ...v, source: "pokemon" }));
+          setPrints(mapped);
+          seleccionarVersion(mapped[0]);
+          setJuegoId(3);
+          setFuente("pokemon");
+        }
+      } else if (targetFuente === "scryfall") {
+        const carta = await buscarCartaScryfall(query);
+        if (!carta) {
+          setPrints([]);
+          setMensaje(`No se encontró carta en Magic (Scryfall) para "${query}".`);
+          setMensajeTipo("error");
+        } else {
+          setJuegoId(4);
+          setFuente("scryfall");
+          if (carta.printsSearchUri) {
+            const versiones = await buscarPrintsDesdeUri(carta.printsSearchUri);
+            const mapped = (versiones || []).map((v) => ({ ...v, source: "scryfall" }));
+            setPrints(mapped.length > 0 ? mapped : [carta]);
+            seleccionarVersion(mapped[0] || carta);
+          } else {
+            setPrints([carta]);
+            seleccionarVersion(carta);
+          }
+        }
+      } else if (targetFuente === "riftbound") {
+        const carta = await buscarCartaRiftbound(query);
+        if (!carta) {
+          setPrints([]);
+          setMensaje(`No se encontró carta en Riftbound para "${query}".`);
+          setMensajeTipo("error");
+        } else {
+          setJuegoId(2);
+          setFuente("riftbound");
+          const versiones = await buscarPrintsRiftbound(query);
+          const mapped = (versiones || []).map((v) => ({ ...v, source: "riftbound" }));
+          setPrints(mapped.length > 0 ? mapped : [carta]);
+          seleccionarVersion(mapped[0] || carta);
+        }
+      }
+    } catch (err) {
+      console.error("Error en búsqueda:", err);
       setPrints([]);
-      setSeleccionada(null);
-      setMensaje("No se encontró esa carta en Scryfall.");
-    } else {
-      setDatosApi(carta);
-      setFuente("scryfall");
-      setUserSelectedJuego(false);
-      setJuegoId(4);
-      const usdRef = carta.precios?.usd ?? null;
-      setPrecioReferencia(usdRef);
-      if (usdRef && (!precio || precio === "")) {
-        const tasa = 3500;
-        const sugerido = Math.round(Number(usdRef) * tasa);
-        setPrecio(String(sugerido));
-      }
-      // Obtener todas las prints para permitir selección manual
-      if (carta.printsSearchUri) {
-        const versiones = await buscarPrintsDesdeUri(carta.printsSearchUri);
-        const mapped = (versiones || []).map((v) => ({ ...v, source: "scryfall" }));
-        setPrints(mapped);
-        setSeleccionada(mapped[0] || carta);
-      } else {
-        setPrints([carta]);
-        setSeleccionada(carta);
-      }
+      setMensaje("Ocurrió un error al consultar la API. Verifica tu conexión e inténtalo de nuevo.");
+      setMensajeTipo("error");
+    } finally {
+      setBuscando(false);
     }
-    setBuscando(false);
-    setFuenteBuscando(null);
+  }
+
+  // Cambio de fuente con búsqueda instantánea si ya hay texto
+  function cambiarFuente(nuevaFuente) {
+    setFuenteActiva(nuevaFuente);
+    if (nombre.trim().length >= 2) {
+      ejecutarBusqueda(nuevaFuente);
+    }
   }
 
   async function guardar() {
     if (!datosApi) {
       setMensaje("Selecciona una carta antes de guardar.");
+      setMensajeTipo("error");
       return;
     }
 
     if (!isCarrusel && (!precio || !stock)) {
       setMensaje("Completa precio y stock antes de guardar.");
+      setMensajeTipo("error");
       return;
     }
+
     setGuardando(true);
+    setMensaje("");
+
     function mapFuenteToJuego(f) {
       if (!f) return null;
       const ff = String(f).toLowerCase();
@@ -209,18 +296,17 @@ export default function AgregarCarta() {
     if (String(juegoId) === "__nuevo") {
       if (!nuevoJuegoNombre.trim()) {
         setMensaje("Escribe el nombre del nuevo juego.");
+        setMensajeTipo("error");
         setGuardando(false);
         return;
       }
       try {
-        const creado = await crearJuego(
-          nuevoJuegoNombre,
-          nuevoJuegoImagen.trim() || null
-        );
+        const creado = await crearJuego(nuevoJuegoNombre, nuevoJuegoImagen.trim() || null);
         juegoToSave = creado.id;
         setJuegosLista((prev) => [...prev, creado].sort((a, b) => a.id - b.id));
       } catch (e) {
         setMensaje("Error al crear el juego: " + e.message);
+        setMensajeTipo("error");
         setGuardando(false);
         return;
       }
@@ -230,7 +316,7 @@ export default function AgregarCarta() {
         : (mapFuenteToJuego(fuente) ?? Number(juegoId));
     }
 
-    // Expansión: la elegida de la lista o una nueva creada aquí mismo.
+    // Expansión: la elegida de la lista o una nueva creada automáticamente
     let expansionFinal = null;
     if (!isCarrusel) {
       const nombreExp = expansionSel === "__nueva" ? expansionNueva : expansionSel;
@@ -252,16 +338,18 @@ export default function AgregarCarta() {
 
     if (error) {
       setMensaje("Error al guardar: " + error.message);
+      setMensajeTipo("error");
     } else {
-      setMensaje(`¡"${datosApi.nombre}" guardada en tu tienda!`);
+      setMensaje(`¡"${datosApi.nombre}" fue guardada exitosamente en la tienda!`);
+      setMensajeTipo("success");
 
       setNombre("");
       setDatosApi(null);
+      setSeleccionada(null);
       setPrecio("");
       setStock("");
       setFuente(null);
       setUserSelectedJuego(false);
-      setJuegoId(4);
       setExpansionSel("");
       setExpansionNueva("");
       setExpansionTouched(false);
@@ -270,6 +358,15 @@ export default function AgregarCarta() {
       setNuevoJuegoImagen("");
       if (expansionFinal) listarExpansiones(juegoToSave).then(setExpansiones);
     }
+  }
+
+  function descartarSeleccion() {
+    setDatosApi(null);
+    setSeleccionada(null);
+    setPrecio("");
+    setStock("");
+    setPrecioReferencia(null);
+    setMensaje("");
   }
 
   // Helper para saber si un print es versión alternativa / alta rareza
@@ -288,16 +385,14 @@ export default function AgregarCarta() {
     );
   }
 
-  // Filtrado y ordenamiento de las versiones disponibles (por default en menor rareza)
+  // Filtrado y ordenamiento de las versiones disponibles
   const printsFiltrados = prints
     .filter((p) => {
-      // Filtro por rareza/arte si es One Piece
       if (fuente?.startsWith("onepiece")) {
         const esAA = esPrintAA(p);
         if (filtroRareza === "normal" && esAA) return false;
         if (filtroRareza === "aa" && !esAA) return false;
       }
-
       if (!filtroPrints.trim()) return true;
       const q = filtroPrints.toLowerCase().trim();
       const n = (p.nombre || "").toLowerCase();
@@ -306,7 +401,6 @@ export default function AgregarCarta() {
       return n.includes(q) || s.includes(q) || num.includes(q);
     })
     .sort((a, b) => {
-      // Priorizar siempre menor rareza primero si no hay orden específico de precio/nombre
       if (ordenPrints === "default" && fuente?.startsWith("onepiece")) {
         const aaA = esPrintAA(a);
         const aaB = esPrintAA(b);
@@ -331,580 +425,535 @@ export default function AgregarCarta() {
       return 0;
     });
 
+  const fuenteConfig = FUENTES_JUEGOS.find((f) => f.id === fuenteActiva) || FUENTES_JUEGOS[0];
+
   return (
     <section className="juegos">
-      <div className="contenedor agregar-carta">
-        <h2>Agregar a la tienda (admin)</h2>
+      <div className="contenedor agregar-carta admin-view">
+        {/* ENCABEZADO PRINCIPAL DE ADMINISTRACIÓN */}
+        <div className="admin-header-row">
+          <div>
+            <h2 className="admin-titulo">Panel de Administración</h2>
+            <p className="admin-subtitulo">
+              Gestiona el catálogo de cartas físicas oficiales y suministros de la tienda.
+            </p>
+          </div>
 
-        <div className="admin-tabs">
-          <button
-            className={`admin-tab ${pestana === "cartas" ? "active" : ""}`}
-            onClick={() => setPestana("cartas")}
-          >
-            Cartas
-          </button>
-          <button
-            className={`admin-tab ${pestana === "accesorios" ? "active" : ""}`}
-            onClick={() => setPestana("accesorios")}
-          >
-            Accesorios
-          </button>
+          {/* PESTAÑAS PRINCIPALES: CARTAS VS ACCESORIOS */}
+          <div className="admin-segmented-nav">
+            <button
+              type="button"
+              className={`admin-nav-tab ${pestana === "cartas" ? "active" : ""}`}
+              onClick={() => { setPestana("cartas"); setMensaje(""); }}
+            >
+              <Layers size={16} />
+              <span>Cartas TCG</span>
+            </button>
+            <button
+              type="button"
+              className={`admin-nav-tab ${pestana === "accesorios" ? "active" : ""}`}
+              onClick={() => { setPestana("accesorios"); setMensaje(""); }}
+            >
+              <Package size={16} />
+              <span>Accesorios</span>
+            </button>
+          </div>
         </div>
 
         {pestana === "accesorios" ? (
           <AgregarAccesorio />
         ) : (
-        <>
-        <p style={{ color: "var(--texto-suave)", margin: "0 0 16px" }}>
-          Busca por nombre en las APIs oficiales, selecciona la versión exacta y guárdala con tu precio y stock.
-        </p>
-
-        <div className="agregar-carta-grid">
-          <div className="agregar-panel">
-            <div className="agregar-buscador">
-              <input
-                placeholder="Nombre de la carta (ej: Bonney, Sol Ring, Pikachu...)"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && buscar()}
-              />
-              <div className="buscador-fuentes">
-                <button className="btn-fuente" onClick={buscar} disabled={buscando}>
-                  <LabelFuente activo={fuenteBuscando === "scryfall"}>Buscar en Scryfall</LabelFuente>
-                </button>
-                <button
-                  className="btn-fuente"
-                  disabled={buscando}
-                  onClick={async () => {
-                    if (!nombre) return;
-                    setBuscando(true);
-                    setFuenteBuscando("riftbound");
-                    setMensaje("");
-                    setFiltroPrints("");
-                    try {
-                      const carta = await buscarCartaRiftbound(nombre);
-                      if (!carta) {
-                        setDatosApi(null);
-                        setPrints([]);
-                        setSeleccionada(null);
-                        setMensaje("No se encontró esa carta en Riftbound.");
-                      } else {
-                        setDatosApi(carta);
-                        setFuente("riftbound");
-                        setUserSelectedJuego(false);
-                        setJuegoId(2);
-                        const versiones = await buscarPrintsRiftbound(nombre);
-                        const mapped = (versiones || []).map((v) => ({ ...v, source: "riftbound" }));
-                        setPrints(mapped);
-                        setSeleccionada(mapped[0] || carta);
-                        setPrecioReferencia(null);
-                      }
-                    } catch (error) {
-                      setDatosApi(null);
-                      setPrints([]);
-                      setSeleccionada(null);
-                      setMensaje("Error al buscar en Riftbound. Intenta otra búsqueda.");
-                      console.error(error);
-                    } finally {
-                      setBuscando(false);
-                      setFuenteBuscando(null);
-                    }
-                  }}
-                >
-                  <LabelFuente activo={fuenteBuscando === "riftbound"}>Buscar en Riftbound</LabelFuente>
-                </button>
-                <button
-                  className="btn-fuente"
-                  disabled={buscando}
-                  onClick={async () => {
-                    if (!nombre) return;
-                    setBuscando(true);
-                    setFuenteBuscando("onepiece");
-                    setMensaje("");
-                    setFiltroPrints("");
-                    try {
-                      // buscar en varios endpoints de One Piece y combinar resultados
-                      const [printsMain, decks, dons, promos] = await Promise.all([
-                        buscarPrintsOnePiece(nombre),
-                        buscarDecksFiltered(nombre),
-                        buscarDonFiltered(nombre),
-                        buscarPromosFiltered(nombre),
-                      ]);
-
-                      const printsMainTagged = (printsMain || []).map((p) => ({ ...p, source: "onepiece" }));
-                      const decksTagged = (decks || []).map((p) => ({ ...p, source: "onepiece-deck" }));
-                      const donsTagged = (dons || []).map((p) => ({ ...p, source: "onepiece-don" }));
-                      const promosTagged = (promos || []).map((p) => ({ ...p, source: "onepiece-promo" }));
-
-                      const merged = [
-                        ...printsMainTagged,
-                        ...decksTagged,
-                        ...donsTagged,
-                        ...promosTagged,
-                      ];
-
-                      if (!merged || merged.length === 0) {
-                        setDatosApi(null);
-                        setPrints([]);
-                        setSeleccionada(null);
-                        setMensaje("No se encontraron resultados en One Piece para esa búsqueda.");
-                      } else {
-                        // deduplicar por id/imágen
-                        const seen = new Set();
-                        const dedup = [];
-                        for (const p of merged) {
-                          const key = p.id ?? p.nombre ?? p.imagen ?? JSON.stringify(p);
-                          if (!seen.has(key)) {
-                            seen.add(key);
-                            dedup.push(p);
-                          }
-                        }
-                        setPrints(dedup);
-                        setSeleccionada(dedup[0]);
-                        setFuente("onepiece");
-                        setUserSelectedJuego(false);
-                        setJuegoId(1);
-                        const primera = dedup[0];
-                        setDatosApi({
-                          nombre: primera.nombre,
-                          imagen: primera.imagen,
-                          set: primera.set,
-                          numero: primera.numero,
-                          precios: primera.precios,
-                        });
-                        const usdRef = primera.precios?.usd ?? null;
-                        setPrecioReferencia(usdRef);
-                        if (usdRef && (!precio || precio === "")) {
-                          const tasa = 3500;
-                          const sugerido = Math.round(Number(usdRef) * tasa);
-                          setPrecio(String(sugerido));
-                        }
-                      }
-                    } catch (error) {
-                      setDatosApi(null);
-                      setPrints([]);
-                      setSeleccionada(null);
-                      setMensaje("Error al buscar en One Piece. Intenta otra búsqueda.");
-                      console.error(error);
-                    } finally {
-                      setBuscando(false);
-                      setFuenteBuscando(null);
-                    }
-                  }}
-                >
-                  <LabelFuente activo={fuenteBuscando === "onepiece"}>Buscar en One Piece</LabelFuente>
-                </button>
-                <button
-                  className="btn-fuente"
-                  disabled={buscando}
-                  onClick={async () => {
-                    if (!nombre) return;
-                    setBuscando(true);
-                    setFuenteBuscando("pokemon");
-                    setMensaje("");
-                    setFiltroPrints("");
-                    try {
-                      const versiones = await buscarPrintsPokemon(nombre);
-                      if (!versiones || versiones.length === 0) {
-                        setDatosApi(null);
-                        setPrints([]);
-                        setSeleccionada(null);
-                        setMensaje("No se encontraron resultados en Pokémon para esa búsqueda.");
-                      } else {
-                        setPrints(versiones);
-                        setSeleccionada(versiones[0]);
-                        setFuente("pokemon");
-                        setUserSelectedJuego(false);
-                        setJuegoId(3);
-                        const primera = versiones[0];
-                        setDatosApi({
-                          nombre: primera.nombre,
-                          imagen: primera.imagen,
-                          set: primera.set,
-                          numero: primera.numero,
-                          precios: primera.precios,
-                        });
-                        const usdRef = primera.precios?.usd ?? null;
-                        setPrecioReferencia(usdRef);
-                        if (usdRef && (!precio || precio === "")) {
-                          const tasa = 3500;
-                          const sugerido = Math.round(Number(usdRef) * tasa);
-                          setPrecio(String(sugerido));
-                        }
-                      }
-                    } catch (error) {
-                      setDatosApi(null);
-                      setPrints([]);
-                      setSeleccionada(null);
-                      setMensaje("Error al buscar en Pokémon. Intenta otra búsqueda.");
-                      console.error(error);
-                    } finally {
-                      setBuscando(false);
-                      setFuenteBuscando(null);
-                    }
-                  }}
-                >
-                  <LabelFuente activo={fuenteBuscando === "pokemon"}>Buscar en Pokémon</LabelFuente>
-                </button>
-              </div>
-            </div>
-
-            {datosApi && (
-              <div className="agregar-preview">
-                <div className="agregar-preview-hero">
-                  {datosApi.imagen ? (
-                    <img src={datosApi.imagen} alt={datosApi.nombre} />
-                  ) : (
-                    <div className="preview-placeholder">Sin imagen</div>
-                  )}
-
-                  <div className="agregar-preview-details">
-                    <span className="preview-badge-status">Seleccionada</span>
-                    <h3>{datosApi.nombre}</h3>
-                    <p className="preview-set">
-                      {datosApi.set || "Sin expansión"} {datosApi.numero ? `#${datosApi.numero}` : ""}
-                    </p>
-
-                    {precioReferencia != null && (
-                      <div className="preview-ref-box">
-                        <span>Ref: <strong>${precioReferencia} USD</strong></span>
-                        <button
-                          type="button"
-                          className="btn-usar-ref"
-                          onClick={() => {
-                            const tasa = 3500;
-                            const sugerido = Math.round(Number(precioReferencia) * tasa);
-                            setPrecio(String(sugerido));
-                          }}
-                          title="Convertir referencia a COP (~$3.500 por USD)"
-                        >
-                          Usar ref (${Math.round(Number(precioReferencia) * 3500).toLocaleString("es-CO")} COP)
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="agregar-form">
-                  <label>
-                    Juego
-                    <select
-                      value={juegoId}
-                      onChange={(e) => {
-                        setUserSelectedJuego(true);
-                        setJuegoId(e.target.value);
-                        setExpansionSel("");
-                        setExpansionNueva("");
-                        setExpansionTouched(false);
-                      }}
+          <div className="admin-workbench">
+            {/* COLUMNA IZQUIERDA: BÚSQUEDA Y FORMULARIO DE EDICIÓN / PUBLICACIÓN */}
+            <div className="admin-sidebar-col">
+              {/* SELECTOR DE FUENTE / JUEGO */}
+              <div className="admin-section-box">
+                <span className="admin-section-label">Juego o Franquicia</span>
+                <div className="admin-game-tabs">
+                  {FUENTES_JUEGOS.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      className={`admin-game-tab ${fuenteActiva === f.id ? "active" : ""}`}
+                      onClick={() => cambiarFuente(f.id)}
+                      disabled={buscando}
                     >
-                      {juegosLista.map((j) => (
-                        <option key={j.id} value={j.id}>{j.nombre}</option>
-                      ))}
-                      <option value={6}>Carrusel</option>
-                      <option value="__nuevo">+ Crear nuevo juego…</option>
-                    </select>
-                  </label>
-
-                  {String(juegoId) === "__nuevo" && (
-                    <>
-                      <label>
-                        Nombre del nuevo juego
-                        <input
-                          type="text"
-                          placeholder="Ej: Yu-Gi-Oh!"
-                          value={nuevoJuegoNombre}
-                          onChange={(e) => setNuevoJuegoNombre(e.target.value)}
-                        />
-                      </label>
-                      <label>
-                        Imagen del juego (URL, opcional)
-                        <input
-                          type="text"
-                          placeholder="/img/nuevo_juego.png"
-                          value={nuevoJuegoImagen}
-                          onChange={(e) => setNuevoJuegoImagen(e.target.value)}
-                        />
-                      </label>
-                    </>
-                  )}
-
-                  {!isCarrusel && (
-                    <>
-                      <label>
-                        Expansión
-                        <select
-                          value={expansionSel}
-                          onChange={(e) => {
-                            setExpansionSel(e.target.value);
-                            setExpansionTouched(true);
-                          }}
-                        >
-                          <option value="">Sin expansión</option>
-                          {expansiones.map((x) => (
-                            <option key={x.id} value={x.nombre}>{x.nombre}</option>
-                          ))}
-                          <option value="__nueva">+ Crear nueva expansión…</option>
-                        </select>
-                      </label>
-
-                      {expansionSel === "__nueva" && (
-                        <label>
-                          Nombre de la nueva expansión
-                          <input
-                            type="text"
-                            placeholder="Ej: Vendetta"
-                            value={expansionNueva}
-                            onChange={(e) => {
-                              setExpansionNueva(e.target.value);
-                              setExpansionTouched(true);
-                            }}
-                          />
-                        </label>
-                      )}
-
-                      <label>
-                        Condición
-                        <select
-                          value={condicion}
-                          onChange={(e) => setCondicion(e.target.value)}
-                        >
-                          <option>Near Mint</option>
-                          <option>Lightly Played</option>
-                          <option>Moderately Played</option>
-                          <option>Heavily Played</option>
-                          <option>Damaged</option>
-                        </select>
-                      </label>
-                    </>
-                  )}
-
-                  {isCarrusel && (
-                    <div style={{ marginTop: 12 }}>
-                      <CarouselStore
-                        onPick={(c) => {
-                          setDatosApi({ nombre: c.nombre, imagen: c.imagen, set: c.set });
-                          setFuente("carrusel");
-                          setUserSelectedJuego(true);
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {!isCarrusel && (
-                    <>
-                      <label>
-                        Precio (COP)
-                        <input
-                          type="number"
-                          placeholder="15000"
-                          value={precio}
-                          onChange={(e) => setPrecio(e.target.value)}
-                        />
-                      </label>
-
-                      <label>
-                        Stock
-                        <input
-                          type="number"
-                          placeholder="10"
-                          value={stock}
-                          onChange={(e) => setStock(e.target.value)}
-                        />
-                      </label>
-                    </>
-                  )}
-
-                  <button className="btn-guardar-tienda" onClick={guardar} disabled={guardando}>
-                    {guardando ? "Guardando…" : "Guardar en mi tienda"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {mensaje && <p className="agregar-mensaje">{mensaje}</p>}
-          </div>
-
-          {buscando && (
-            <div className="agregar-print-list">
-              <Cargando texto="Buscando cartas…" />
-            </div>
-          )}
-
-          {!buscando && prints && prints.length > 0 && (
-            <div className="agregar-print-list">
-              <div className="print-list-header">
-                <div className="print-list-title-wrap">
-                  <h3>Versiones disponibles</h3>
-                  <span className="print-count-badge">
-                    {printsFiltrados.length} {printsFiltrados.length === 1 ? "versión" : "versiones"}
-                  </span>
+                      <span className="admin-game-badge">{f.badge}</span>
+                      <span>{f.label}</span>
+                    </button>
+                  ))}
                 </div>
 
-                <div className="print-list-controls">
-                  {fuente?.startsWith("onepiece") && (
-                    <div className="api-rareza-filter-bar mini-filter-bar">
-                      <button
-                        type="button"
-                        className={`api-filter-tab ${filtroRareza === "normal" ? "active" : ""}`}
-                        onClick={() => setFiltroRareza("normal")}
-                        title="Mostrar versiones en menor rareza (normal/base por defecto)"
-                      >
-                        📦 Normal
-                      </button>
-                      <button
-                        type="button"
-                        className={`api-filter-tab ${filtroRareza === "aa" ? "active" : ""}`}
-                        onClick={() => setFiltroRareza("aa")}
-                        title="Mostrar versiones Alternate Art (AA / Paralelas)"
-                      >
-                        ✨ AA
-                      </button>
-                      <button
-                        type="button"
-                        className={`api-filter-tab ${filtroRareza === "todas" ? "active" : ""}`}
-                        onClick={() => setFiltroRareza("todas")}
-                        title="Mostrar todas las versiones"
-                      >
-                        🌐 Todas
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="print-filter-box">
-                    <Search size={14} className="filter-icon" />
+                {/* CAJA DE BÚSQUEDA TÁCTIL */}
+                <div className="admin-search-wrapper">
+                  <div className="admin-search-input-box">
+                    <Search size={16} className="search-icon-muted" />
                     <input
                       type="text"
-                      placeholder="Filtrar por set, código, arte..."
-                      value={filtroPrints}
-                      onChange={(e) => setFiltroPrints(e.target.value)}
+                      placeholder={fuenteConfig.placeholder}
+                      value={nombre}
+                      onChange={(e) => setNombre(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && ejecutarBusqueda()}
+                      autoFocus
                     />
-                    {filtroPrints && (
+                    {nombre && (
                       <button
                         type="button"
-                        className="btn-clear-filter"
-                        onClick={() => setFiltroPrints("")}
-                        title="Limpiar filtro"
+                        className="btn-clear-search"
+                        onClick={() => setNombre("")}
+                        title="Borrar texto"
                       >
-                        <X size={13} />
+                        <X size={14} />
                       </button>
                     )}
                   </div>
 
-                  <select
-                    className="print-sort-select"
-                    value={ordenPrints}
-                    onChange={(e) => setOrdenPrints(e.target.value)}
-                    title="Ordenar versiones"
+                  <button
+                    type="button"
+                    className="btn-admin-search"
+                    disabled={buscando || !nombre.trim()}
+                    onClick={() => ejecutarBusqueda()}
                   >
-                    <option value="default">Orden original</option>
-                    <option value="precio-asc">Precio: Menor a mayor</option>
-                    <option value="precio-desc">Precio: Mayor a menor</option>
-                    <option value="nombre">Nombre (A-Z)</option>
-                    <option value="set">Set / Expansión</option>
-                  </select>
-
-                  <div className="densidad-selector" title="Tamaño de las cartas en pantalla">
-                    <button
-                      type="button"
-                      className={`btn-densidad ${densidad === "compacto" ? "active" : ""}`}
-                      onClick={() => setDensidad("compacto")}
-                      title="Compacto (6 a 8 cartas por fila)"
-                    >
-                      <Grid2X2 size={13} /> Compacto
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn-densidad ${densidad === "medio" ? "active" : ""}`}
-                      onClick={() => setDensidad("medio")}
-                      title="Medio (4 a 6 cartas por fila)"
-                    >
-                      <LayoutGrid size={13} /> Medio
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn-densidad ${densidad === "grande" ? "active" : ""}`}
-                      onClick={() => setDensidad("grande")}
-                      title="Grande (3 a 4 cartas por fila)"
-                    >
-                      <Maximize2 size={13} /> Grande
-                    </button>
-                  </div>
+                    {buscando ? (
+                      <>
+                        <Loader2 size={16} className="spinner-icon" />
+                        <span>Buscando…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search size={16} />
+                        <span>Buscar Carta</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
-              {printsFiltrados.length === 0 ? (
-                <div className="print-list-empty">
-                  <p>No se encontraron cartas que coincidan con "<strong>{filtroPrints}</strong>"</p>
-                  <button type="button" onClick={() => setFiltroPrints("")}>
-                    Restablecer filtro
-                  </button>
-                </div>
-              ) : (
-                <div className={`grid densidad-${densidad}`}>
-                  {printsFiltrados.map((p, index) => {
-                    const tag = getCardTag(p);
-                    const esSeleccionada =
-                      seleccionada &&
-                      (seleccionada === p ||
-                        (seleccionada.id && p.id && seleccionada.id === p.id && seleccionada.imagen === p.imagen) ||
-                        (seleccionada.imagen && seleccionada.imagen === p.imagen));
-
-                    return (
-                      <div
-                        key={p.id ? `${p.id}-${index}` : index}
-                        className={`game-card ${esSeleccionada ? "selected" : ""}`}
-                        onClick={() => seleccionarVersion(p)}
-                        title={`${p.nombre}\n${p.set || ""} ${p.numero ? `#${p.numero}` : ""}\n${p.precios?.usd ? `$${p.precios.usd} USD` : "Sin precio"}`}
-                      >
-                        {esSeleccionada && (
-                          <span className="card-badge-selected">
-                            <Check size={11} strokeWidth={3} /> Elegida
-                          </span>
-                        )}
-                        {tag && (
-                          <span className={`card-badge-tag ${tag.type}`}>
-                            {tag.text}
-                          </span>
-                        )}
-
-                        {p.imagen ? (
-                          <img src={p.imagen} alt={p.nombre} loading="lazy" />
-                        ) : (
-                          <div className="preview-placeholder">Sin imagen</div>
-                        )}
-
-                        <div className="card-info-wrap">
-                          <h3 title={p.nombre}>{p.nombre}</h3>
-                          <p className="card-meta" title={`${p.set || ""} ${p.numero ? `#${p.numero}` : ""}`}>
-                            {p.set || "—"} {p.numero ? `#${p.numero}` : ""}
-                          </p>
-                          <span className="card-price-pill">
-                            {p.precios?.usd != null ? `$${p.precios.usd} USD` : "—"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+              {/* MENSAJES DE ESTADO / RETROALIMENTACIÓN */}
+              {mensaje && (
+                <div className={`admin-alert-banner ${mensajeTipo}`}>
+                  {mensajeTipo === "success" ? <Check size={16} /> : <X size={16} />}
+                  <span>{mensaje}</span>
                 </div>
               )}
-              <p style={{ color: "var(--texto-suave)", fontSize: 13, marginTop: 4 }}>
-                Haz clic en la carta que quieres agregar a tu tienda.
-              </p>
-            </div>
-          )}
 
-          {!buscando && prints && prints.length === 0 && (
-            <div className="agregar-empty-hero">
-              <div className="empty-hero-icon">🃏</div>
-              <h3>Catálogo de búsqueda</h3>
-              <p>
-                Escribe el nombre de una carta a la izquierda y pulsa una de las fuentes (One Piece, Scryfall, Pokémon o Riftbound) para ver todas sus versiones y arte alterno.
-              </p>
+              {/* FORMULARIO DE PUBLICACIÓN CUANDO HAY UNA CARTA SELECCIONADA */}
+              {datosApi && (
+                <div className="admin-section-box admin-editor-card">
+                  <div className="editor-card-header">
+                    <span className="editor-card-title">Configuración de Inventario</span>
+                    <button
+                      type="button"
+                      className="btn-admin-discard"
+                      onClick={descartarSeleccion}
+                      title="Descartar esta carta y buscar otra"
+                    >
+                      <RotateCcw size={13} /> Descartar
+                    </button>
+                  </div>
+
+                  {/* MINI PREVIEW DE LA CARTA SELECCIONADA */}
+                  <div className="admin-selected-hero">
+                    <div className="selected-thumb-wrap">
+                      {datosApi.imagen ? (
+                        <img src={datosApi.imagen} alt={datosApi.nombre} />
+                      ) : (
+                        <div className="thumb-placeholder">Sin imagen</div>
+                      )}
+                    </div>
+                    <div className="selected-meta-info">
+                      <span className="selected-ready-badge">
+                        <Check size={11} strokeWidth={3} /> Lista para publicar
+                      </span>
+                      <h4 title={datosApi.nombre}>{datosApi.nombre}</h4>
+                      <p className="selected-set-code">
+                        {datosApi.set || "Sin expansión"} {datosApi.numero ? `#${datosApi.numero}` : ""}
+                      </p>
+
+                      {/* CONVERSOR RÁPIDO DE PRECIO REFERENCIA USD -> COP */}
+                      {precioReferencia != null && (
+                        <div className="admin-ref-converter">
+                          <span className="ref-usd">Ref: <strong>${precioReferencia} USD</strong></span>
+                          <button
+                            type="button"
+                            className="btn-convert-ref"
+                            onClick={() => {
+                              const tasa = 3500;
+                              const sugerido = Math.round(Number(precioReferencia) * tasa);
+                              setPrecio(String(sugerido));
+                            }}
+                            title="Calcular sugerido en COP a ~$3.500 por USD"
+                          >
+                            Usar sugerido: ${(Math.round(Number(precioReferencia) * 3500)).toLocaleString("es-CO")} COP
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CAMPOS DEL FORMULARIO */}
+                  <div className="admin-form-fields">
+                    <label className="admin-form-label">
+                      <span>Juego de destino</span>
+                      <select
+                        value={juegoId}
+                        onChange={(e) => {
+                          setUserSelectedJuego(true);
+                          setJuegoId(e.target.value);
+                          setExpansionSel("");
+                          setExpansionNueva("");
+                          setExpansionTouched(false);
+                        }}
+                      >
+                        {juegosLista.map((j) => (
+                          <option key={j.id} value={j.id}>{j.nombre}</option>
+                        ))}
+                        <option value={6}>Carrusel Destacado</option>
+                        <option value="__nuevo">+ Crear nuevo juego…</option>
+                      </select>
+                    </label>
+
+                    {String(juegoId) === "__nuevo" && (
+                      <div className="admin-subfield-box">
+                        <label className="admin-form-label">
+                          <span>Nombre del nuevo juego *</span>
+                          <input
+                            type="text"
+                            placeholder="Ej: Yu-Gi-Oh!, Digimon, Lorcana..."
+                            value={nuevoJuegoNombre}
+                            onChange={(e) => setNuevoJuegoNombre(e.target.value)}
+                          />
+                        </label>
+                        <label className="admin-form-label">
+                          <span>URL de imagen del juego</span>
+                          <input
+                            type="text"
+                            placeholder="/img/nuevo_juego.png"
+                            value={nuevoJuegoImagen}
+                            onChange={(e) => setNuevoJuegoImagen(e.target.value)}
+                          />
+                        </label>
+                      </div>
+                    )}
+
+                    {!isCarrusel && (
+                      <>
+                        <label className="admin-form-label">
+                          <span>Expansión / Set</span>
+                          <select
+                            value={expansionSel}
+                            onChange={(e) => {
+                              setExpansionSel(e.target.value);
+                              setExpansionTouched(true);
+                            }}
+                          >
+                            <option value="">Sin expansión</option>
+                            {expansiones.map((x) => (
+                              <option key={x.id} value={x.nombre}>{x.nombre}</option>
+                            ))}
+                            <option value="__nueva">+ Crear nueva expansión…</option>
+                          </select>
+                        </label>
+
+                        {expansionSel === "__nueva" && (
+                          <label className="admin-form-label">
+                            <span>Nombre de la nueva expansión *</span>
+                            <input
+                              type="text"
+                              placeholder="Ej: Two Legends (OP-08), Obsidian Flames..."
+                              value={expansionNueva}
+                              onChange={(e) => {
+                                setExpansionNueva(e.target.value);
+                                setExpansionTouched(true);
+                              }}
+                            />
+                          </label>
+                        )}
+
+                        <label className="admin-form-label">
+                          <span>Condición de la carta</span>
+                          <select
+                            value={condicion}
+                            onChange={(e) => setCondicion(e.target.value)}
+                          >
+                            <option>Near Mint</option>
+                            <option>Lightly Played</option>
+                            <option>Moderately Played</option>
+                            <option>Heavily Played</option>
+                            <option>Damaged</option>
+                          </select>
+                        </label>
+
+                        <div className="admin-row-2col">
+                          <label className="admin-form-label">
+                            <span>Precio en COP *</span>
+                            <input
+                              type="number"
+                              placeholder="Ej: 25000"
+                              value={precio}
+                              onChange={(e) => setPrecio(e.target.value)}
+                            />
+                          </label>
+                          <label className="admin-form-label">
+                            <span>Stock disponible *</span>
+                            <input
+                              type="number"
+                              placeholder="Ej: 4"
+                              value={stock}
+                              onChange={(e) => setStock(e.target.value)}
+                            />
+                          </label>
+                        </div>
+                      </>
+                    )}
+
+                    {isCarrusel && (
+                      <div className="admin-carrusel-selector">
+                        <CarouselStore
+                          onPick={(c) => {
+                            setDatosApi({ nombre: c.nombre, imagen: c.imagen, set: c.set });
+                            setFuente("carrusel");
+                            setUserSelectedJuego(true);
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* BOTÓN PRIMARIO DE GUARDADO TÁCTIL */}
+                    <button
+                      type="button"
+                      className="btn-admin-save-primary"
+                      onClick={guardar}
+                      disabled={guardando}
+                    >
+                      {guardando ? (
+                        <>
+                          <Loader2 size={16} className="spinner-icon" />
+                          <span>Guardando en la tienda…</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={17} />
+                          <span>Guardar y Publicar en Tienda</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        </>
+
+            {/* COLUMNA DERECHA: RESULTADOS DE EDICIONES DISPONIBLES O ESTADO INICIAL */}
+            <div className="admin-results-col">
+              {buscando ? (
+                <div className="admin-loading-card">
+                  <Cargando texto={`Buscando cartas en la base de datos de ${fuenteConfig.label}…`} />
+                </div>
+              ) : prints && prints.length > 0 ? (
+                <div className="admin-prints-container">
+                  {/* BARRA SUPERIOR DE FILTROS Y DENSIDAD */}
+                  <div className="admin-prints-toolbar">
+                    <div className="toolbar-info-group">
+                      <h3 className="toolbar-title">Versiones y artes disponibles</h3>
+                      <span className="toolbar-count-badge">
+                        {printsFiltrados.length} {printsFiltrados.length === 1 ? "versión" : "versiones"}
+                      </span>
+                    </div>
+
+                    <div className="toolbar-actions-group">
+                      {fuente?.startsWith("onepiece") && (
+                        <div className="admin-filter-segmented">
+                          <button
+                            type="button"
+                            className={`admin-seg-btn ${filtroRareza === "normal" ? "active" : ""}`}
+                            onClick={() => setFiltroRareza("normal")}
+                            title="Mostrar versiones en menor rareza (base)"
+                          >
+                            Versión Base
+                          </button>
+                          <button
+                            type="button"
+                            className={`admin-seg-btn ${filtroRareza === "aa" ? "active" : ""}`}
+                            onClick={() => setFiltroRareza("aa")}
+                            title="Mostrar versiones Alternate Art (AA / Paralelas)"
+                          >
+                            Alternate Art (AA)
+                          </button>
+                          <button
+                            type="button"
+                            className={`admin-seg-btn ${filtroRareza === "todas" ? "active" : ""}`}
+                            onClick={() => setFiltroRareza("todas")}
+                            title="Mostrar todas las versiones disponibles"
+                          >
+                            Todas
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="toolbar-search-filter">
+                        <Search size={14} className="search-icon-muted" />
+                        <input
+                          type="text"
+                          placeholder="Filtrar por set o código..."
+                          value={filtroPrints}
+                          onChange={(e) => setFiltroPrints(e.target.value)}
+                        />
+                        {filtroPrints && (
+                          <button
+                            type="button"
+                            className="btn-clear-subfilter"
+                            onClick={() => setFiltroPrints("")}
+                          >
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+
+                      <select
+                        className="toolbar-select-sort"
+                        value={ordenPrints}
+                        onChange={(e) => setOrdenPrints(e.target.value)}
+                      >
+                        <option value="default">Orden original</option>
+                        <option value="precio-asc">Precio: Menor a mayor</option>
+                        <option value="precio-desc">Precio: Mayor a menor</option>
+                        <option value="nombre">Nombre (A-Z)</option>
+                        <option value="set">Expansión / Set</option>
+                      </select>
+
+                      <div className="toolbar-density-group">
+                        <button
+                          type="button"
+                          className={`btn-density-tab ${densidad === "compacto" ? "active" : ""}`}
+                          onClick={() => setDensidad("compacto")}
+                          title="Vista compacta"
+                        >
+                          <Grid2X2 size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn-density-tab ${densidad === "medio" ? "active" : ""}`}
+                          onClick={() => setDensidad("medio")}
+                          title="Vista media"
+                        >
+                          <LayoutGrid size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn-density-tab ${densidad === "grande" ? "active" : ""}`}
+                          onClick={() => setDensidad("grande")}
+                          title="Vista amplia"
+                        >
+                          <Maximize2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CUADRÍCULA DE CARTAS */}
+                  {printsFiltrados.length === 0 ? (
+                    <div className="admin-empty-filter-box">
+                      <p>No se encontraron cartas que coincidan con "<strong>{filtroPrints}</strong>"</p>
+                      <button
+                        type="button"
+                        className="btn-reset-filter"
+                        onClick={() => setFiltroPrints("")}
+                      >
+                        Restablecer filtro de texto
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={`admin-cards-grid densidad-${densidad}`}>
+                      {printsFiltrados.map((p, index) => {
+                        const tag = getCardTag(p);
+                        const esSeleccionada =
+                          seleccionada &&
+                          (seleccionada === p ||
+                            (seleccionada.id && p.id && seleccionada.id === p.id && seleccionada.imagen === p.imagen) ||
+                            (seleccionada.imagen && seleccionada.imagen === p.imagen));
+
+                        return (
+                          <div
+                            key={p.id ? `${p.id}-${index}` : index}
+                            className={`admin-card-item ${esSeleccionada ? "selected" : ""}`}
+                            onClick={() => seleccionarVersion(p)}
+                          >
+                            {esSeleccionada && (
+                              <span className="card-badge-selected-pill">
+                                <Check size={11} strokeWidth={3} /> Seleccionada
+                              </span>
+                            )}
+                            {tag && (
+                              <span className={`card-badge-tag-pill ${tag.type}`}>
+                                {tag.text}
+                              </span>
+                            )}
+
+                            <div className="admin-card-item-thumb">
+                              {p.imagen ? (
+                                <img
+                                  src={p.imagen}
+                                  alt={p.nombre}
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    if (p.numero && fuente?.startsWith("onepiece")) {
+                                      e.target.src = `https://www.optcgapi.com/media/static/Card_Images/${p.numero}.jpg`;
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div className="thumb-placeholder">Sin imagen</div>
+                              )}
+                            </div>
+
+                            <div className="admin-card-item-info">
+                              <h4 title={p.nombre}>{p.nombre}</h4>
+                              <p className="card-item-set" title={`${p.set || ""} ${p.numero ? `#${p.numero}` : ""}`}>
+                                {p.set || "—"} {p.numero ? `#${p.numero}` : ""}
+                              </p>
+                              <span className="card-item-price">
+                                {p.precios?.usd != null ? `$${p.precios.usd} USD` : "—"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* ESTADO INICIAL / GUÍA PARA EL ADMINISTRADOR */
+                <div className="admin-guide-card">
+                  <div className="guide-card-icon-badge">
+                    <Sparkles size={24} />
+                  </div>
+                  <h3>Flujo de Ingreso de Cartas</h3>
+                  <p className="guide-card-lead">
+                    Busca cartas por nombre o código en las APIs oficiales para importar automáticamente su foto oficial en alta resolución, rareza y expansión a tu base de datos.
+                  </p>
+
+                  <div className="guide-steps-grid">
+                    <div className="guide-step-item">
+                      <span className="step-num">1</span>
+                      <h5>Selecciona el juego</h5>
+                      <p>Elige One Piece, Pokémon, Magic o Riftbound en el selector de la izquierda.</p>
+                    </div>
+                    <div className="guide-step-item">
+                      <span className="step-num">2</span>
+                      <h5>Elige la versión exacta</h5>
+                      <p>Visualiza todas las impresiones, artes base, paralelas (AA) y cartas especiales.</p>
+                    </div>
+                    <div className="guide-step-item">
+                      <span className="step-num">3</span>
+                      <h5>Fija precio y publica</h5>
+                      <p>Asigna tu precio en COP, unidades en stock y publica al instante en tu tienda.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </section>
