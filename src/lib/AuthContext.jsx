@@ -56,12 +56,16 @@ export function AuthProvider({ children }) {
       setRecuperacionPassword(false);
     },
     registro(email, password, datos = {}) {
+      const emailRedirectTo = new URL(
+        "/confirmar-cuenta",
+        window.location.origin
+      ).toString();
       return supabase.auth.signUp({
         email,
         password,
         options: {
           data: datos,
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo,
         },
       });
     },

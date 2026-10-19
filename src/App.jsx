@@ -9,6 +9,7 @@ import DetalleCarta from "./pages/DetalleCarta.jsx";
 import Carrito from "./pages/Carrito.jsx";
 import Login from "./pages/Login.jsx";
 import RestablecerClave from "./pages/RestablecerClave.jsx";
+import ConfirmarCuenta from "./pages/ConfirmarCuenta.jsx";
 import Perfil from "./pages/Perfil.jsx";
 import RutaAdmin from "./components/RutaAdmin.jsx";
 import { useCart } from "./lib/CartContext.jsx";
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/carrito" element={<Carrito />} />
         <Route path="/login" element={<Login />} />
         <Route path="/restablecer-clave" element={<RestablecerClave />} />
+        <Route path="/confirmar-cuenta" element={<ConfirmarCuenta />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route
           path="/admin/agregar"
