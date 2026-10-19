@@ -4307,7 +4307,7 @@ img { display: block; max-width: 100%; }
   font-weight: 800;
   letter-spacing: 1px;
   color: #f59e0b;
-  text-transform uppercase;
+  text-transform: uppercase;
   display: inline-block;
   margin-bottom: 6px;
 }
