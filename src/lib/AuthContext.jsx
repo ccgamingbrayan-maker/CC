@@ -56,7 +56,14 @@ export function AuthProvider({ children }) {
       setRecuperacionPassword(false);
     },
     registro(email, password, datos = {}) {
-      return supabase.auth.signUp({ email, password, options: { data: datos } });
+      return supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: datos,
+          emailRedirectTo: window.location.origin,
+        },
+      });
     },
     logout() {
       return supabase.auth.signOut();
