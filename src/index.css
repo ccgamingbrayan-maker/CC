@@ -1533,13 +1533,19 @@ img { display: block; max-width: 100%; }
 }
 .mini-item:hover { background: var(--t06); }
 .mini-item-img img,
-.mini-sin-img {
-  width: 34px;
-  height: 46px;
-  object-fit: contain;
+.mini-sin-img,
+.mini-img {
+  width: 36px !important;
+  height: 50px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  object-fit: cover !important;
   border-radius: 4px;
   background: var(--img-fondo);
-  display: block;
+  display: block !important;
+  flex-shrink: 0 !important;
 }
 .mini-item-img { flex: 0 0 auto; }
 .mini-detalle {

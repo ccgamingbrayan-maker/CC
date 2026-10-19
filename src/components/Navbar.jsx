@@ -204,33 +204,47 @@ export default function Navbar() {
                     <div className="mini-lista">
                       {items.slice(0, 5).map((i) => (
                         <div className="mini-item" key={`${i.tipo}-${i.item_id}`}>
-                          {i.imagen ? (
-                            <img src={i.imagen} alt="" className="mini-img" />
-                          ) : (
-                            <span className="mini-img-placeholder" />
-                          )}
-                          <div className="mini-info">
-                            <p className="mini-nombre">{i.nombre}</p>
+                          <Link
+                            to={`/${i.tipo}/${i.item_id}`}
+                            className="mini-item-img"
+                            onClick={() => setCarritoAbierto(false)}
+                          >
+                            {i.imagen ? (
+                              <img src={i.imagen} alt={i.nombre} />
+                            ) : (
+                              <span className="mini-sin-img" />
+                            )}
+                          </Link>
+                          <div className="mini-detalle">
+                            <Link
+                              to={`/${i.tipo}/${i.item_id}`}
+                              className="mini-nombre"
+                              onClick={() => setCarritoAbierto(false)}
+                            >
+                              {i.nombre}
+                            </Link>
                             <div className="mini-controles">
                               <button
                                 type="button"
-                                className="mini-cant-btn"
                                 onClick={() => cambiarCantidad(i.tipo, i.item_id, -1)}
+                                aria-label="Quitar uno"
                               >
-                                <Minus size={11} />
+                                <Minus size={12} />
                               </button>
-                              <span className="mini-cant">{i.cantidad}</span>
+                              <span>{i.cantidad}</span>
                               <button
                                 type="button"
-                                className="mini-cant-btn"
                                 onClick={() => cambiarCantidad(i.tipo, i.item_id, 1)}
+                                disabled={i.stock != null && i.cantidad >= i.stock}
+                                aria-label="Agregar uno"
                               >
-                                <Plus size={11} />
+                                <Plus size={12} />
                               </button>
                               <button
                                 type="button"
-                                className="mini-eliminar-btn"
+                                className="mini-quitar"
                                 onClick={() => quitar(i.tipo, i.item_id)}
+                                aria-label={`Quitar ${i.nombre}`}
                               >
                                 <Trash2 size={12} />
                               </button>
