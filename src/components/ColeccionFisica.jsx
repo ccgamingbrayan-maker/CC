@@ -41,14 +41,8 @@ const JUEGOS_TABS = [
 ];
 
 export default function ColeccionFisica({ user }) {
-  // Cargar colección desde user_metadata o localStorage de respaldo
-  const [coleccion, setColeccion] = useState(() => {
-    return (
-      user?.user_metadata?.coleccion ||
-      JSON.parse(localStorage.getItem(`coleccion_${user?.id}`) || "[]")
-    );
-  });
-
+  const [coleccion, setColeccion] = useState([]);
+  const [cargandoColeccion, setCargandoColeccion] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -66,7 +60,7 @@ export default function ColeccionFisica({ user }) {
   const [formCantidad, setFormCantidad] = useState(1);
   const [formCondicion, setFormCondicion] = useState("Near Mint (NM)");
 
-  // Campos específicos para el modo 100% manual
+  // Campos específicos para el modo manual
   const [manualNombre, setManualNombre] = useState("");
   const [manualExpansion, setManualExpansion] = useState("");
   const [manualRareza, setManualRareza] = useState("Rare");
@@ -76,7 +70,59 @@ export default function ColeccionFisica({ user }) {
   // Expansiones existentes en la base de datos de la tienda
   const [expansionesDb, setExpansionesDb] = useState([]);
 
+  // Cargar colección directamente desde la tabla SQL coleccion_usuario de Supabase
   useEffect(() => {
+    async function cargarColeccion() {
+      if (!user?.id) return;
+      setCargandoColeccion(true);
+
+      try {
+        const { data, error } = await supabase
+          .from("coleccion_usuario")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("creado_en", { ascending: false });
+
+        if (!error && data) {
+          // Si había cartas previas en user_metadata que no estén en la tabla, las migramos
+          const metaCards = user?.user_metadata?.coleccion || [];
+          if (data.length === 0 && metaCards.length > 0) {
+            const filasMigrar = metaCards.map((c) => ({
+              user_id: user.id,
+              nombre: c.nombre,
+              expansion: c.expansion || "Sin Expansión",
+              codigo: c.codigo || "",
+              rareza: c.rareza || "",
+              condicion: c.condicion || "Near Mint (NM)",
+              cantidad: c.cantidad || 1,
+              imagen: c.imagen || "",
+              juego: c.juego || "onepiece",
+            }));
+
+            const { data: migrados } = await supabase
+              .from("coleccion_usuario")
+              .insert(filasMigrar)
+              .select();
+
+            setColeccion(migrados || metaCards);
+          } else {
+            setColeccion(data);
+          }
+        } else if (error) {
+          console.warn("Tabla coleccion_usuario no encontrada o error RLS, usando respaldo:", error.message);
+          // Respaldo de contingencia
+          setColeccion(user?.user_metadata?.coleccion || []);
+        }
+      } catch (err) {
+        console.error("Error cargando colección:", err);
+      } finally {
+        setCargandoColeccion(false);
+      }
+    }
+
+    cargarColeccion();
+
+    // Cargar nombres de expansiones de la tienda
     supabase
       .from("expansiones")
       .select("nombre")
@@ -87,25 +133,7 @@ export default function ColeccionFisica({ user }) {
           setExpansionesDb([...new Set(nombres)]);
         }
       });
-  }, []);
-
-  // Guardar cambios en Supabase (metadata) y localStorage
-  async function persistirColeccion(nuevaColeccion) {
-    setColeccion(nuevaColeccion);
-    if (user?.id) {
-      localStorage.setItem(`coleccion_${user.id}`, JSON.stringify(nuevaColeccion));
-    }
-    setGuardando(true);
-    try {
-      await supabase.auth.updateUser({
-        data: { coleccion: nuevaColeccion },
-      });
-    } catch (err) {
-      console.error("Error guardando colección:", err);
-    } finally {
-      setGuardando(false);
-    }
-  }
+  }, [user?.id]);
 
   // Buscar en las APIs oficiales
   async function ejecutarBusquedaApi(e) {
@@ -119,7 +147,6 @@ export default function ColeccionFisica({ user }) {
 
     try {
       if (juegoActivo === "onepiece") {
-        // Buscar en sets normales, starter decks, promos y don
         const [sets, decks, promos, don] = await Promise.all([
           buscarPrintsOnePiece(texto).catch(() => []),
           buscarDecksFiltered(texto).catch(() => []),
@@ -128,7 +155,6 @@ export default function ColeccionFisica({ user }) {
         ]);
 
         const combinados = [...sets, ...decks, ...promos, ...don];
-        // Eliminar duplicados por ID o imagen
         const unicos = [];
         const idsVistos = new Set();
         for (const c of combinados) {
@@ -175,7 +201,6 @@ export default function ColeccionFisica({ user }) {
     if (!cartaSeleccionada) return;
 
     const nuevaCarta = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
       nombre: cartaSeleccionada.nombre,
       expansion: cartaSeleccionada.expansion,
       codigo: cartaSeleccionada.codigo,
@@ -184,10 +209,9 @@ export default function ColeccionFisica({ user }) {
       condicion: formCondicion,
       cantidad: Math.max(1, parseInt(formCantidad) || 1),
       juego: cartaSeleccionada.juego,
-      creado_en: new Date().toISOString(),
     };
 
-    insertarEnColeccion(nuevaCarta);
+    await guardarCartaEnBaseDatos(nuevaCarta);
   }
 
   // Agregar carta manual
@@ -196,7 +220,6 @@ export default function ColeccionFisica({ user }) {
     if (!manualNombre.trim()) return;
 
     const nuevaCarta = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
       nombre: manualNombre.trim(),
       expansion: manualExpansion.trim() || "Sin Expansión",
       codigo: manualCodigo.trim().toUpperCase(),
@@ -205,61 +228,112 @@ export default function ColeccionFisica({ user }) {
       condicion: formCondicion,
       cantidad: Math.max(1, parseInt(formCantidad) || 1),
       juego: "manual",
-      creado_en: new Date().toISOString(),
     };
 
-    insertarEnColeccion(nuevaCarta);
+    await guardarCartaEnBaseDatos(nuevaCarta);
     setManualNombre("");
     setManualExpansion("");
     setManualCodigo("");
     setManualImagen("");
   }
 
-  // Lógica común de inserción (sumar cantidad si ya existe o agregar nueva)
-  async function insertarEnColeccion(carta) {
-    const indexExistente = coleccion.findIndex(
-      (c) =>
-        c.nombre.toLowerCase() === carta.nombre.toLowerCase() &&
-        c.expansion.toLowerCase() === carta.expansion.toLowerCase() &&
-        c.condicion === carta.condicion &&
-        (c.codigo || "").toLowerCase() === (carta.codigo || "").toLowerCase()
-    );
+  // Inserción en la tabla SQL `coleccion_usuario` de Supabase
+  async function guardarCartaEnBaseDatos(carta) {
+    setGuardando(true);
 
-    let nuevaLista;
-    if (indexExistente >= 0) {
-      nuevaLista = [...coleccion];
-      nuevaLista[indexExistente].cantidad += carta.cantidad;
-    } else {
-      nuevaLista = [carta, ...coleccion];
-    }
+    try {
+      // Verificar si ya existe en la lista local para actualizar cantidad
+      const indexExistente = coleccion.findIndex(
+        (c) =>
+          c.nombre.toLowerCase() === carta.nombre.toLowerCase() &&
+          c.expansion.toLowerCase() === carta.expansion.toLowerCase() &&
+          c.condicion === carta.condicion &&
+          (c.codigo || "").toLowerCase() === (carta.codigo || "").toLowerCase()
+      );
 
-    await persistirColeccion(nuevaLista);
+      if (indexExistente >= 0) {
+        const itemExistente = coleccion[indexExistente];
+        const nuevaCantidad = itemExistente.cantidad + carta.cantidad;
 
-    // Resetear estados y cerrar modal
-    setCartaSeleccionada(null);
-    setFormCantidad(1);
-    setMostrarModal(false);
-  }
+        // Actualizar en Supabase
+        const { error } = await supabase
+          .from("coleccion_usuario")
+          .update({ cantidad: nuevaCantidad, actualizado_en: new Date().toISOString() })
+          .eq("id", itemExistente.id);
 
-  // Modificar cantidad (+ / -)
-  async function cambiarCantidad(id, delta) {
-    const nuevaLista = coleccion
-      .map((c) => {
-        if (c.id === id) {
-          const nuevaCant = c.cantidad + delta;
-          return nuevaCant > 0 ? { ...c, cantidad: nuevaCant } : null;
+        if (!error) {
+          const nuevaLista = [...coleccion];
+          nuevaLista[indexExistente] = { ...itemExistente, cantidad: nuevaCantidad };
+          setColeccion(nuevaLista);
         }
-        return c;
-      })
-      .filter(Boolean);
+      } else {
+        // Insertar nueva fila en Supabase
+        const { data, error } = await supabase
+          .from("coleccion_usuario")
+          .insert([
+            {
+              user_id: user.id,
+              nombre: carta.nombre,
+              expansion: carta.expansion,
+              codigo: carta.codigo,
+              rareza: carta.rareza,
+              condicion: carta.condicion,
+              cantidad: carta.cantidad,
+              imagen: carta.imagen,
+              juego: carta.juego,
+            },
+          ])
+          .select()
+          .single();
 
-    await persistirColeccion(nuevaLista);
+        if (!error && data) {
+          setColeccion((prev) => [data, ...prev]);
+        } else if (error) {
+          console.error("Error insertando en coleccion_usuario:", error);
+          // Fallback en memoria si la tabla aún no se creó
+          const cartaFallback = { ...carta, id: Date.now().toString(), user_id: user.id };
+          const nuevaLista = [cartaFallback, ...coleccion];
+          setColeccion(nuevaLista);
+          supabase.auth.updateUser({ data: { coleccion: nuevaLista } }).catch(() => {});
+        }
+      }
+    } catch (err) {
+      console.error("Error al guardar carta:", err);
+    } finally {
+      setGuardando(false);
+      setCartaSeleccionada(null);
+      setFormCantidad(1);
+      setMostrarModal(false);
+    }
   }
 
-  // Eliminar carta
+  // Modificar cantidad (+ / -) directamente en Supabase
+  async function cambiarCantidad(id, delta) {
+    const item = coleccion.find((c) => c.id === id);
+    if (!item) return;
+
+    const nuevaCant = item.cantidad + delta;
+
+    if (nuevaCant <= 0) {
+      // Eliminar de Supabase
+      setColeccion((prev) => prev.filter((c) => c.id !== id));
+      await supabase.from("coleccion_usuario").delete().eq("id", id);
+    } else {
+      // Actualizar cantidad en Supabase
+      setColeccion((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, cantidad: nuevaCant } : c))
+      );
+      await supabase
+        .from("coleccion_usuario")
+        .update({ cantidad: nuevaCant, actualizado_en: new Date().toISOString() })
+        .eq("id", id);
+    }
+  }
+
+  // Eliminar carta directamente en Supabase
   async function eliminarCarta(id) {
-    const nuevaLista = coleccion.filter((c) => c.id !== id);
-    await persistirColeccion(nuevaLista);
+    setColeccion((prev) => prev.filter((c) => c.id !== id));
+    await supabase.from("coleccion_usuario").delete().eq("id", id);
   }
 
   // Alternar colapsar expansión
@@ -270,7 +344,7 @@ export default function ColeccionFisica({ user }) {
     }));
   }
 
-  // Filtrado de cartas en la colección del usuario
+  // Filtrado de cartas
   const cartasFiltradas = useMemo(() => {
     return coleccion.filter((carta) => {
       const coincideTexto =
@@ -303,15 +377,26 @@ export default function ColeccionFisica({ user }) {
       }));
   }, [cartasFiltradas]);
 
-  // Lista de todas las expansiones en la colección
+  // Expansiones presentes en la colección
   const expansionesEnColeccion = useMemo(() => {
     return [...new Set(coleccion.map((c) => c.expansion || "Otras / Varias"))].sort();
   }, [coleccion]);
 
-  // Estadísticas rápidas
+  // Total de cartas físicas sumando copias
   const totalCartasFisicas = useMemo(() => {
     return coleccion.reduce((acc, c) => acc + (c.cantidad || 1), 0);
   }, [coleccion]);
+
+  if (cargandoColeccion) {
+    return (
+      <div className="perfil-panel coleccion-contenedor" style={{ textAlign: "center", padding: "48px 20px" }}>
+        <Loader2 size={36} className="spinner-icon" style={{ margin: "0 auto 12px auto", color: "var(--acento, #a855f7)" }} />
+        <p style={{ color: "var(--texto-suave, #a1a1aa)", fontSize: "14px" }}>
+          Cargando tu colección física de cartas desde Supabase...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="perfil-panel coleccion-contenedor">
@@ -323,7 +408,7 @@ export default function ColeccionFisica({ user }) {
             Mi Colección Física de Cartas
           </h3>
           <p style={{ margin: 0, fontSize: "13px", color: "var(--texto-suave, #a1a1aa)" }}>
-            Registra tus cartas físicas con sus fotos oficiales, rarezas y expansiones.
+            Registra y gestiona tus cartas físicas con sus fotos oficiales, rarezas y expansiones.
           </p>
         </div>
 
@@ -402,7 +487,7 @@ export default function ColeccionFisica({ user }) {
             Tu colección física está vacía
           </h4>
           <p style={{ maxWidth: "440px", margin: "0 auto 24px auto", fontSize: "14px", lineHeight: "1.6" }}>
-            Busca cualquier carta en la API oficial de One Piece, Pokémon o Magic para agregarla con su foto oficial, rareza y expansión en un clic.
+            Busca cualquier carta en la API oficial de One Piece, Pokémon o Magic para agregarla con su foto oficial, rareza y expansión en un solo clic.
           </p>
           <button
             type="button"
@@ -550,7 +635,7 @@ export default function ColeccionFisica({ user }) {
                   Agregar Carta a mi Colección Física
                 </h3>
                 <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "var(--texto-suave, #a1a1aa)" }}>
-                  Busca la carta en la API oficial para importar su foto oficial, rareza y expansión.
+                  Busca la carta en la API oficial para importar su foto oficial, rareza y expansión a tu base de datos.
                 </p>
               </div>
               <button
@@ -745,9 +830,18 @@ export default function ColeccionFisica({ user }) {
                             <button
                               type="button"
                               className="auth-boton btn-confirmar-add"
+                              disabled={guardando}
                               onClick={agregarCartaDesdeApi}
                             >
-                              <Plus size={16} /> Agregar a mi Colección
+                              {guardando ? (
+                                <>
+                                  <Loader2 size={16} className="spinner-icon" /> Guardando en Supabase...
+                                </>
+                              ) : (
+                                <>
+                                  <Plus size={16} /> Agregar a mi Colección
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -855,8 +949,16 @@ export default function ColeccionFisica({ user }) {
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="auth-boton">
-                    <Plus size={16} /> Guardar carta manual
+                  <button type="submit" className="auth-boton" disabled={guardando}>
+                    {guardando ? (
+                      <>
+                        <Loader2 size={16} className="spinner-icon" /> Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={16} /> Guardar carta en Supabase
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
