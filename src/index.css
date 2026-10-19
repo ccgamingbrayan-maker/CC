@@ -3427,42 +3427,95 @@ img { display: block; max-width: 100%; }
 }
 .card-acciones-hover {
   position: absolute;
-  bottom: 6px;
+  bottom: 8px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(4px);
   display: flex;
-  gap: 4px;
-  background: rgba(10, 10, 15, 0.9);
-  padding: 4px;
-  border-radius: 20px;
-  border: 1px solid var(--t15);
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 5px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
   opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
-  backdrop-filter: blur(4px);
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
 }
-.coleccion-card-item:hover .card-acciones-hover {
+.coleccion-card-item:hover .card-acciones-hover,
+.coleccion-card-item:focus-within .card-acciones-hover {
   opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+@media (hover: none) {
+  .card-acciones-hover {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 .btn-acc {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: none;
-  background: var(--t08);
-  color: var(--texto);
-  display: flex;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .btn-acc:hover {
-  background: var(--acento, #a855f7);
-  color: #fff;
+  transform: translateY(-1px) scale(1.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
+.btn-acc:active {
+  transform: translateY(0) scale(0.96);
+}
+.btn-acc.btn-acc-minus {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fcd34d !important;
+}
+.btn-acc.btn-acc-minus:hover {
+  background: #f59e0b;
+  border-color: #d97706;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.45);
+}
+.btn-acc.btn-acc-plus {
+  background: rgba(16, 185, 129, 0.24);
+  border-color: rgba(52, 211, 153, 0.5);
+  color: #6ee7b7 !important;
+}
+.btn-acc.btn-acc-plus:hover {
+  background: #10b981;
+  border-color: #059669;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);
+}
+.btn-acc.btn-acc-trash,
+.btn-acc.btn-trash {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #fca5a5 !important;
+}
+.btn-acc.btn-acc-trash:hover,
 .btn-acc.btn-trash:hover {
   background: #ef4444;
-  color: #fff;
+  border-color: #dc2626;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
 }
 .card-detalles {
   padding: 8px 10px;

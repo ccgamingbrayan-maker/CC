@@ -627,27 +627,39 @@ export default function ColeccionFisica({ user }) {
                           <div className="card-acciones-hover">
                             <button
                               type="button"
-                              className="btn-acc"
-                              title="Restar una carta"
-                              onClick={() => cambiarCantidad(carta.id, -1)}
+                              className="btn-acc btn-acc-minus"
+                              title="Restar 1 carta"
+                              aria-label="Restar 1 carta"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cambiarCantidad(carta.id, -1);
+                              }}
                             >
-                              <Minus size={13} />
+                              <Minus size={15} strokeWidth={2.6} />
                             </button>
                             <button
                               type="button"
-                              className="btn-acc"
-                              title="Sumar una carta"
-                              onClick={() => cambiarCantidad(carta.id, 1)}
+                              className="btn-acc btn-acc-plus"
+                              title="Sumar 1 carta"
+                              aria-label="Sumar 1 carta"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cambiarCantidad(carta.id, 1);
+                              }}
                             >
-                              <Plus size={13} />
+                              <Plus size={15} strokeWidth={2.6} />
                             </button>
                             <button
                               type="button"
-                              className="btn-acc btn-trash"
+                              className="btn-acc btn-acc-trash"
                               title="Eliminar de mi colección"
-                              onClick={() => eliminarCarta(carta.id)}
+                              aria-label="Eliminar de mi colección"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                eliminarCarta(carta.id);
+                              }}
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={15} strokeWidth={2.2} />
                             </button>
                           </div>
                         </div>
