@@ -6486,3 +6486,218 @@ img { display: block; max-width: 100%; }
   background: var(--t10);
   border-color: var(--t20);
 }
+
+
+/* ========================================================
+   NAVBAR MODERNO UNIFICADO Y BOTONES TÁCTILES
+   ======================================================== */
+.navbar {
+  background: var(--nav);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--borde);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.navbar .navbar-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 24px;
+  min-height: 64px;
+}
+
+/* Logo de marca */
+.navbar .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+.navbar .logo:hover {
+  transform: scale(1.02);
+}
+.logo-brand {
+  font-size: 17.5px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--texto);
+}
+.logo-tag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #ffffff;
+}
+:root[data-tema="oscuro"] .logo-tag {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* Grupo de botones de navegación (Catálogo, Accesorios, Pre-Ventas) */
+.navbar-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  text-decoration: none;
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-pill:hover {
+  color: var(--texto);
+  background: var(--t08);
+  border-color: var(--t20);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.nav-pill.active {
+  color: #ffffff;
+  background: #0f172a;
+  border-color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.2);
+}
+
+:root[data-tema="oscuro"] .nav-pill.active {
+  color: #0f172a;
+  background: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 3px 10px rgba(255, 255, 255, 0.15);
+}
+
+.dot-preventa-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  display: inline-block;
+  animation: pulse-preventa 2s infinite ease-in-out;
+}
+
+@keyframes pulse-preventa {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    transform: scale(1.25);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.45);
+  }
+}
+
+/* Barra de búsqueda proporcional (evita estirarse infinitamente) */
+.navbar-busqueda {
+  flex: 1;
+  max-width: 440px;
+  min-width: 180px;
+  margin: 0 8px;
+}
+
+/* Botón de usuario tipo cápsula táctil */
+.usuario-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.usuario-pill-btn:hover,
+.usuario-pill-btn.active {
+  background: var(--t08);
+  border-color: var(--t20);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+.usuario-avatar-circulo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--t10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texto);
+}
+.usuario-pill-nombre {
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.usuario-chevron {
+  color: var(--texto-suave);
+  transition: transform 0.2s ease;
+}
+.usuario-chevron.rotate {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 960px) {
+  .navbar .navbar-inner {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  .navbar-nav-group {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .navbar-nav-group::-webkit-scrollbar {
+    display: none;
+  }
+  .navbar-busqueda {
+    order: 2;
+    flex-basis: 100%;
+    max-width: 100%;
+    margin: 4px 0;
+  }
+  .usuario-pill-nombre {
+    display: none;
+  }
+  .usuario-pill-btn {
+    padding: 4px;
+  }
+}
+

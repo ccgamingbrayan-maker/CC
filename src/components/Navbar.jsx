@@ -1,6 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Minus, Moon, Plus, ShoppingCart, Sun, Trash2, User, LogOut, LogIn, UserPlus, ShieldCheck } from "lucide-react";
+import {
+  LayoutGrid,
+  Package,
+  Minus,
+  Moon,
+  Plus,
+  ShoppingCart,
+  Sun,
+  Trash2,
+  User,
+  LogOut,
+  LogIn,
+  UserPlus,
+  ShieldCheck,
+  ChevronDown
+} from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useCart } from "../lib/CartContext.jsx";
 import BuscadorNav from "./BuscadorNav.jsx";
@@ -47,15 +62,56 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        {/* Logo */}
-        <Link to="/" className="logo">CapsuleCorp Gaming</Link>
+        {/* Logo de marca */}
+        <Link to="/" className="logo">
+          <span className="logo-brand">CapsuleCorp</span>
+          <span className="logo-tag">Gaming</span>
+        </Link>
 
-        {/* Barra de búsqueda global */}
+        {/* Botones de navegación principal (Catálogo, Accesorios, Pre-Ventas) */}
+        <div className="navbar-nav-group">
+          <Link
+            to="/"
+            className={`nav-pill ${location.pathname === "/" || location.pathname.startsWith("/carta") ? "active" : ""}`}
+            title="Ver catálogo completo de cartas"
+          >
+            <LayoutGrid size={15} />
+            <span>Catálogo</span>
+          </Link>
+          <Link
+            to="/accesorios"
+            className={`nav-pill ${location.pathname.startsWith("/accesorios") ? "active" : ""}`}
+            title="Ver fundas, playmats, cajas y dados"
+          >
+            <Package size={15} />
+            <span>Accesorios</span>
+          </Link>
+          <Link
+            to="/catalogo/5"
+            className={`nav-pill nav-pill-preventa ${location.pathname === "/catalogo/5" ? "active" : ""}`}
+            title="Productos en preventa oficial"
+          >
+            <span className="dot-preventa-pulse" />
+            <span>Pre-Ventas</span>
+          </Link>
+          {esAdmin && (
+            <Link
+              to="/admin/agregar"
+              className={`nav-pill nav-pill-admin ${location.pathname.startsWith("/admin") ? "active" : ""}`}
+              title="Panel de administración de tienda"
+            >
+              <ShieldCheck size={15} />
+              <span>Admin</span>
+            </Link>
+          )}
+        </div>
+
+        {/* Barra de búsqueda global proporcional */}
         <div className="navbar-busqueda">
           <BuscadorNav />
         </div>
 
-        {/* Sección usuario/carrito */}
+        {/* Sección de herramientas: Tema, Cuenta de Usuario, Carrito */}
         <div className="navbar-iconos">
           <button
             type="button"
@@ -64,25 +120,25 @@ export default function Navbar() {
             aria-label={tema === "claro" ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
             title={tema === "claro" ? "Tema oscuro" : "Tema claro"}
           >
-            {tema === "claro" ? <Moon size={20} /> : <Sun size={20} />}
+            {tema === "claro" ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-
-          {user && (
-            <span className="bienvenida">
-              Bienvenido de nuevo,{" "}
-              <strong>{user.user_metadata?.nombre || user.email}</strong>
-            </span>
-          )}
 
           <div className="usuario" ref={menuRef}>
             <button
               type="button"
-              className="icono-btn"
+              className={`usuario-pill-btn ${menuAbierto ? "active" : ""}`}
               aria-label="Cuenta de usuario"
               onClick={() => setMenuAbierto((v) => !v)}
             >
-              <User size={22} />
+              <div className="usuario-avatar-circulo">
+                <User size={15} />
+              </div>
+              <span className="usuario-pill-nombre">
+                {user ? (user.user_metadata?.nombre || user.email?.split("@")[0]) : "Mi Cuenta"}
+              </span>
+              <ChevronDown size={14} className={`usuario-chevron ${menuAbierto ? "rotate" : ""}`} />
             </button>
+
             {menuAbierto && (
               <div className="usuario-menu">
                 {user ? (
@@ -132,10 +188,10 @@ export default function Navbar() {
             <button
               type="button"
               className="icono-btn carrito"
-              aria-label="Carrito"
+              aria-label="Carrito de compras"
               onClick={() => setCarritoAbierto((v) => !v)}
             >
-              <ShoppingCart size={22} />
+              <ShoppingCart size={20} />
               {total > 0 && <span className="carrito-badge">{total}</span>}
             </button>
 
@@ -148,45 +204,33 @@ export default function Navbar() {
                     <div className="mini-lista">
                       {items.slice(0, 5).map((i) => (
                         <div className="mini-item" key={`${i.tipo}-${i.item_id}`}>
-                          <Link
-                            to={`/${i.tipo}/${i.item_id}`}
-                            className="mini-item-img"
-                            onClick={() => setCarritoAbierto(false)}
-                          >
-                            {i.imagen
-                              ? <img src={i.imagen} alt="" />
-                              : <span className="mini-sin-img" />}
-                          </Link>
-                          <div className="mini-detalle">
-                            <Link
-                              to={`/${i.tipo}/${i.item_id}`}
-                              className="mini-nombre"
-                              onClick={() => setCarritoAbierto(false)}
-                            >
-                              {i.nombre}
-                            </Link>
+                          {i.imagen ? (
+                            <img src={i.imagen} alt="" className="mini-img" />
+                          ) : (
+                            <span className="mini-img-placeholder" />
+                          )}
+                          <div className="mini-info">
+                            <p className="mini-nombre">{i.nombre}</p>
                             <div className="mini-controles">
                               <button
                                 type="button"
+                                className="mini-cant-btn"
                                 onClick={() => cambiarCantidad(i.tipo, i.item_id, -1)}
-                                aria-label="Quitar uno"
                               >
-                                <Minus size={12} />
+                                <Minus size={11} />
                               </button>
-                              <span>{i.cantidad}</span>
+                              <span className="mini-cant">{i.cantidad}</span>
                               <button
                                 type="button"
+                                className="mini-cant-btn"
                                 onClick={() => cambiarCantidad(i.tipo, i.item_id, 1)}
-                                disabled={i.stock != null && i.cantidad >= i.stock}
-                                aria-label="Agregar uno"
                               >
-                                <Plus size={12} />
+                                <Plus size={11} />
                               </button>
                               <button
                                 type="button"
-                                className="mini-quitar"
+                                className="mini-eliminar-btn"
                                 onClick={() => quitar(i.tipo, i.item_id)}
-                                aria-label={`Quitar ${i.nombre}`}
                               >
                                 <Trash2 size={12} />
                               </button>
@@ -216,48 +260,6 @@ export default function Navbar() {
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Fila de navegación principal */}
-      <div className="navbar-subfila">
-        <div className="navbar-subfila-inner">
-          <ul className="nav-links">
-            <li>
-              <Link
-                to="/"
-                className={`nav-link-btn ${location.pathname === "/" || location.pathname.startsWith("/carta") ? "active" : ""}`}
-              >
-                Catálogo
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/accesorios"
-                className={`nav-link-btn ${location.pathname.startsWith("/accesorios") ? "active" : ""}`}
-              >
-                Accesorios
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/catalogo/5"
-                className={`nav-link-btn ${location.pathname === "/catalogo/5" ? "active" : ""}`}
-              >
-                <span className="dot-preventa" /> Pre-Ventas
-              </Link>
-            </li>
-            {esAdmin && (
-              <li>
-                <Link
-                  to="/admin/agregar"
-                  className={`nav-link-btn nav-link-admin ${location.pathname.startsWith("/admin") ? "active" : ""}`}
-                >
-                  Panel Admin
-                </Link>
-              </li>
-            )}
-          </ul>
         </div>
       </div>
     </nav>
