@@ -27,58 +27,71 @@ export default function Perfil() {
   return (
     <section className="perfil">
       <div className="contenedor">
-        <header className="perfil-cabecera">
-          <div className="perfil-avatar">{inicial}</div>
-          <div>
-            <h2>{nombre}</h2>
-            <p>{user.email}</p>
-            <span className="perfil-desde">
-              Miembro desde{" "}
-              {new Date(user.created_at).toLocaleDateString("es-CO", {
-                year: "numeric",
-                month: "long",
-              })}
-            </span>
+        <header className="perfil-card-header">
+          <div className="perfil-user-spotlight">
+            <div className="perfil-avatar-circle">{inicial}</div>
+            <div className="perfil-user-meta">
+              <div className="perfil-name-badge-row">
+                <h1 className="perfil-user-name">{nombre}</h1>
+                <span className="perfil-badge-verified">Cuenta Verificada</span>
+              </div>
+              <p className="perfil-user-email">{user.email}</p>
+              <div className="perfil-meta-footer">
+                <span className="perfil-member-date">
+                  Miembro desde {new Date(user.created_at).toLocaleDateString("es-CO", {
+                    year: "numeric",
+                    month: "long",
+                  })}
+                </span>
+              </div>
+            </div>
           </div>
         </header>
 
-        <div className="auth-tabs perfil-tabs">
-          <button
-            type="button"
-            className={tab === "datos" ? "active" : ""}
-            onClick={() => setTab("datos")}
-          >
-            <User size={15} /> Mis datos
-          </button>
-          <button
-            type="button"
-            className={tab === "coleccion" ? "active" : ""}
-            onClick={() => setTab("coleccion")}
-          >
-            <Layers size={15} /> Mi Colección
-          </button>
-          <button
-            type="button"
-            className={tab === "decks" ? "active" : ""}
-            onClick={() => setTab("decks")}
-          >
-            <Sparkles size={15} /> Creador de Decks
-          </button>
-          <button
-            type="button"
-            className={tab === "wishlist" ? "active" : ""}
-            onClick={() => setTab("wishlist")}
-          >
-            <Heart size={15} /> Wishlist
-          </button>
-          <button
-            type="button"
-            className={tab === "pedidos" ? "active" : ""}
-            onClick={() => setTab("pedidos")}
-          >
-            <Package size={15} /> Pedidos
-          </button>
-        </div>
+        <nav className="perfil-nav-bar" aria-label="Secciones de perfil">
+          <div className="perfil-nav-tabs">
+            <button
+              type="button"
+              className={`perfil-tab-btn ${tab === "datos" ? "active" : ""}`}
+              onClick={() => setTab("datos")}
+            >
+              <User size={16} />
+              <span>Mis datos</span>
+            </button>
+            <button
+              type="button"
+              className={`perfil-tab-btn ${tab === "coleccion" ? "active" : ""}`}
+              onClick={() => setTab("coleccion")}
+            >
+              <Layers size={16} />
+              <span>Mi Colección</span>
+            </button>
+            <button
+              type="button"
+              className={`perfil-tab-btn ${tab === "decks" ? "active" : ""}`}
+              onClick={() => setTab("decks")}
+            >
+              <Sparkles size={16} />
+              <span>Creador de Decks</span>
+            </button>
+            <button
+              type="button"
+              className={`perfil-tab-btn ${tab === "wishlist" ? "active" : ""}`}
+              onClick={() => setTab("wishlist")}
+            >
+              <Heart size={16} />
+              <span>Wishlist</span>
+            </button>
+            <button
+              type="button"
+              className={`perfil-tab-btn ${tab === "pedidos" ? "active" : ""}`}
+              onClick={() => setTab("pedidos")}
+            >
+              <Package size={16} />
+              <span>Pedidos</span>
+            </button>
+          </div>
+        </nav>
 
         {tab === "datos" && (
           <>

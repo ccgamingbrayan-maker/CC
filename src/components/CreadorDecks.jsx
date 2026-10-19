@@ -1089,10 +1089,10 @@ export default function CreadorDecks({ user }) {
   if (cargando) {
     return (
       <div className="perfil-panel" style={{ textAlign: "center", padding: "60px 20px" }}>
-        <Loader2 size={40} className="spinner-icon" style={{ margin: "0 auto 14px auto", color: "var(--acento, #a855f7)" }} />
-        <h4 style={{ margin: "0 0 6px 0", color: "#fff" }}>Cargando Decks y Verificando Base de Cartas...</h4>
-        <p style={{ color: "var(--texto-suave, #94a3b8)", fontSize: "14px" }}>
-          Cotejando disponibilidad contra tu colección física y stock de Capsule Corp...
+        <Loader2 size={36} className="spinner-icon" style={{ margin: "0 auto 12px auto", color: "var(--acento)" }} />
+        <h4 style={{ margin: "0 0 6px 0", color: "var(--texto)" }}>Cargando Decks</h4>
+        <p style={{ color: "var(--texto-suave)", fontSize: "14px" }}>
+          Un momento por favor...
         </p>
       </div>
     );
@@ -1100,20 +1100,16 @@ export default function CreadorDecks({ user }) {
 
   return (
     <div className="perfil-panel decks-contenedor tcg-deckbuilder-root">
-      {/* ========================================================
-          VISTA 1: LISTADO DE DECKS GUARDADOS
-          ======================================================== */}
+      {/* VISTA 1: LISTADO DE DECKS GUARDADOS */}
       {!deckSeleccionado ? (
         <>
           <div className="tcg-header-bar">
             <div>
-              <div className="tcg-badge-sub">🏴‍☠️ ONE PIECE CARD GAME • DECK BUILDER</div>
               <h2 className="tcg-page-title">
-                <Sparkles size={22} className="tcg-icon-sparkle" />
-                Mis Decks & Simulador de Faltantes
+                Mis Decks
               </h2>
               <p className="tcg-page-desc">
-                Pega tu decklist para saber qué cartas tienes en tu colección física, cuáles te faltan y cuáles puedes comprar de inmediato en Capsule Corp.
+                Gestiona tus mazos y consulta cartas faltantes para tu colección física.
               </p>
             </div>
 
@@ -1122,24 +1118,24 @@ export default function CreadorDecks({ user }) {
               className="tcg-btn-primary"
               onClick={() => setMostrarModalCrear(true)}
             >
-              <Plus size={16} /> Importar / Crear Deck
+              <Plus size={16} /> Nuevo Deck
             </button>
           </div>
 
           {/* LISTA DE DECKS */}
           {decks.length === 0 ? (
             <div className="tcg-empty-state">
-              <Layers size={52} className="tcg-empty-icon" />
-              <h4>Aún no has creado ningún Deck</h4>
+              <Layers size={48} className="tcg-empty-icon" />
+              <h4>Aún no has registrado ningún deck</h4>
               <p>
-                Copia y pega la lista de cartas de tu simulador o torneo (ej: <code>4xST34-003</code>) para analizar tu mazo con cotejo de colección en tiempo real.
+                Importa una lista de cartas (ej: <code>4xST34-003</code>) para gestionar tu mazo y verificar faltantes con tu colección.
               </p>
               <button
                 type="button"
                 className="tcg-btn-primary"
                 onClick={() => setMostrarModalCrear(true)}
               >
-                <Plus size={16} /> Crear mi primer deck
+                <Plus size={16} /> Importar Deck
               </button>
             </div>
           ) : (
@@ -1169,9 +1165,11 @@ export default function CreadorDecks({ user }) {
                       <div className="tcg-deck-chip-total">
                         {totalCartasDeck} cartas
                       </div>
-                      <div className="tcg-deck-chip-lider">
-                        👑 {lider?.nombre || "One Piece Deck"}
-                      </div>
+                      {lider && (
+                        <div className="tcg-deck-chip-lider">
+                          {lider.nombre || "Líder"}
+                        </div>
+                      )}
                     </div>
 
                     <div className="tcg-deck-item-content">
@@ -1199,7 +1197,7 @@ export default function CreadorDecks({ user }) {
                             setBusquedaDeck("");
                           }}
                         >
-                          Ver Decklist & Análisis <ChevronRight size={15} />
+                          Ver mazo <ChevronRight size={14} />
                         </button>
                         <button
                           type="button"
@@ -1302,11 +1300,11 @@ export default function CreadorDecks({ user }) {
                     className="tcg-leader-img"
                   />
                   <div className="tcg-leader-ribbon">
-                    👑 LÍDER
+                    LÍDER
                   </div>
                   {analisisDeck.lider.poder && (
                     <div className="tcg-leader-stats-badge">
-                      ⚡ {analisisDeck.lider.poder}
+                      {analisisDeck.lider.poder}
                     </div>
                   )}
                 </div>
@@ -1322,7 +1320,7 @@ export default function CreadorDecks({ user }) {
             <div className="tcg-deck-hero-body">
               <div className="tcg-deck-title-row">
                 <div className="tcg-format-tag">
-                  🏴‍☠️ ONE PIECE CARD GAME • STANDARD FORMAT
+                  ONE PIECE CARD GAME
                 </div>
                 <div className="tcg-deck-title-group">
                   <h1 className="tcg-deck-main-title">{deckSeleccionado.nombre}</h1>
@@ -1347,20 +1345,20 @@ export default function CreadorDecks({ user }) {
                   <span className="chip-num">{analisisDeck?.totalNecesarias || 0} cartas</span>
                 </div>
                 <div className="tcg-stat-chip chip-leader">
-                  <span className="chip-label">👑 Líder</span>
+                  <span className="chip-label">Líder</span>
                   <span className="chip-num">{analisisDeck?.desglose.cantLider || 0}</span>
                 </div>
                 <div className="tcg-stat-chip chip-character">
-                  <span className="chip-label">⚔️ Personajes</span>
+                  <span className="chip-label">Personajes</span>
                   <span className="chip-num">{analisisDeck?.desglose.cantPersonajes || 0}</span>
                 </div>
                 <div className="tcg-stat-chip chip-event">
-                  <span className="chip-label">⚡ Eventos</span>
+                  <span className="chip-label">Eventos</span>
                   <span className="chip-num">{analisisDeck?.desglose.cantEventos || 0}</span>
                 </div>
                 {analisisDeck?.desglose.cantEscenarios > 0 && (
                   <div className="tcg-stat-chip chip-stage">
-                    <span className="chip-label">🏟️ Escenarios</span>
+                    <span className="chip-label">Escenarios</span>
                     <span className="chip-num">{analisisDeck?.desglose.cantEscenarios}</span>
                   </div>
                 )}
@@ -1370,13 +1368,13 @@ export default function CreadorDecks({ user }) {
               <div className="tcg-collection-progress-card">
                 <div className="tcg-progress-labels">
                   <span className="tcg-progress-status">
-                    Progreso en tu Colección: <strong>{analisisDeck?.totalTienes || 0} / {analisisDeck?.totalNecesarias || 0} ({analisisDeck?.porcentaje || 0}%)</strong>
+                    Colección física: <strong>{analisisDeck?.totalTienes || 0} / {analisisDeck?.totalNecesarias || 0} ({analisisDeck?.porcentaje || 0}%)</strong>
                   </span>
                   <span className="tcg-missing-count">
                     {analisisDeck?.totalFaltantes === 0 ? (
-                      <span className="text-all-ready">🎉 ¡Deck 100% completo en tu colección!</span>
+                      <span className="text-all-ready">Deck completo en tu colección</span>
                     ) : (
-                      <span>Te faltan: <strong>{analisisDeck?.totalFaltantes} cartas</strong></span>
+                      <span>Faltan: <strong>{analisisDeck?.totalFaltantes} cartas</strong></span>
                     )}
                   </span>
                 </div>
@@ -1389,14 +1387,14 @@ export default function CreadorDecks({ user }) {
                 </div>
               </div>
 
-              {/* BOTÓN DE COMPRA INSTANTÁNEA EN CAPSULE CORP */}
+              {/* BOTÓN DE COMPRA EN TIENDA */}
               {analisisDeck && analisisDeck.faltantesDisponiblesTienda > 0 && (
                 <div className="tcg-store-quick-buy-box">
                   <div className="store-buy-info">
                     <ShoppingCart size={18} className="store-buy-icon" />
                     <div>
                       <div className="store-buy-title">
-                        {analisisDeck.faltantesDisponiblesTienda} cartas faltantes en stock en Capsule Corp
+                        {analisisDeck.faltantesDisponiblesTienda} cartas faltantes disponibles en tienda
                       </div>
                       <div className="store-buy-price">
                         Total: ${analisisDeck.costoTotalFaltantesTienda.toLocaleString("es-CO")} COP
@@ -1415,9 +1413,7 @@ export default function CreadorDecks({ user }) {
             </div>
           </div>
 
-          {/* ========================================================
-              BARRA DE HERRAMIENTAS Y CONTROLES ESTILO TCGPLAYER
-              ======================================================== */}
+          {/* BARRA DE HERRAMIENTAS Y CONTROLES */}
           <div className="tcg-controls-bar">
             {/* TABS DE FILTRO POR TIPO / ESTADO */}
             <div className="tcg-filter-tabs">
@@ -1433,39 +1429,39 @@ export default function CreadorDecks({ user }) {
                 className={`tcg-filter-pill ${filtroTipo === "Leader" ? "active" : ""}`}
                 onClick={() => setFiltroTipo("Leader")}
               >
-                👑 Líder ({analisisDeck?.cartas.filter((c) => (c.tipo || "").toUpperCase() === "LEADER" || c.rareza === "L").length || 0})
+                Líder ({analisisDeck?.cartas.filter((c) => (c.tipo || "").toUpperCase() === "LEADER" || c.rareza === "L").length || 0})
               </button>
               <button
                 type="button"
                 className={`tcg-filter-pill ${filtroTipo === "Character" ? "active" : ""}`}
                 onClick={() => setFiltroTipo("Character")}
               >
-                ⚔️ Personajes ({analisisDeck?.cartas.filter((c) => (c.tipo || "").toUpperCase() === "CHARACTER").length || 0})
+                Personajes ({analisisDeck?.cartas.filter((c) => (c.tipo || "").toUpperCase() === "CHARACTER").length || 0})
               </button>
               <button
                 type="button"
                 className={`tcg-filter-pill ${filtroTipo === "Event" ? "active" : ""}`}
                 onClick={() => setFiltroTipo("Event")}
               >
-                ⚡ Eventos ({analisisDeck?.cartas.filter((c) => (c.tipo || "").toUpperCase() === "EVENT").length || 0})
+                Eventos ({analisisDeck?.cartas.filter((c) => (c.tipo || "").toUpperCase() === "EVENT").length || 0})
               </button>
               <button
                 type="button"
                 className={`tcg-filter-pill pill-alert ${filtroTipo === "faltantes" ? "active" : ""}`}
                 onClick={() => setFiltroTipo("faltantes")}
               >
-                ⚠️ Faltantes ({analisisDeck?.cartas.filter((c) => c.faltan > 0).length || 0})
+                Faltantes ({analisisDeck?.cartas.filter((c) => c.faltan > 0).length || 0})
               </button>
               <button
                 type="button"
                 className={`tcg-filter-pill pill-store ${filtroTipo === "en_tienda" ? "active" : ""}`}
                 onClick={() => setFiltroTipo("en_tienda")}
               >
-                🟢 En Tienda ({analisisDeck?.cartas.filter((c) => c.faltan > 0 && c.enTienda).length || 0})
+                En Tienda ({analisisDeck?.cartas.filter((c) => c.faltan > 0 && c.enTienda).length || 0})
               </button>
             </div>
 
-            {/* CONTROL SEGMENTADO DE RAREZA / ARTE (NORMAL MENOR RAREZA VS AA) */}
+            {/* CONTROL SEGMENTADO DE RAREZA / ARTE */}
             <div className="tcg-rarity-segmented-control">
               <span className="rarity-control-title">Arte:</span>
               <button
@@ -1475,9 +1471,9 @@ export default function CreadorDecks({ user }) {
                   setPreferenciaRareza("normal");
                   setArtesIndividuales({});
                 }}
-                title="Mostrar versión base / menor rareza oficial (Normal)"
+                title="Versión base / menor rareza"
               >
-                📦 Versión Base (Normal)
+                Versión Base (Normal)
               </button>
               <button
                 type="button"
@@ -1486,9 +1482,9 @@ export default function CreadorDecks({ user }) {
                   setPreferenciaRareza("aa");
                   setArtesIndividuales({});
                 }}
-                title="Mostrar versión Alternate Art (AA / Paralela)"
+                title="Versión Alternate Art (AA)"
               >
-                ✨ Alternate Art (AA)
+                Alternate Art (AA)
               </button>
             </div>
 

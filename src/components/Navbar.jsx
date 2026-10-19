@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Minus, Moon, Plus, ShoppingCart, Sun, Trash2, User } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Minus, Moon, Plus, ShoppingCart, Sun, Trash2, User, LogOut, LogIn, UserPlus, ShieldCheck } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useCart } from "../lib/CartContext.jsx";
 import BuscadorNav from "./BuscadorNav.jsx";
@@ -9,6 +9,7 @@ export default function Navbar() {
   const { user, esAdmin, logout } = useAuth();
   const { items, total, subtotal, cambiarCantidad, quitar } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef(null);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
@@ -86,29 +87,42 @@ export default function Navbar() {
               <div className="usuario-menu">
                 {user ? (
                   <>
-                    {user.user_metadata?.nombre && (
-                      <p className="usuario-nombre">{user.user_metadata.nombre}</p>
-                    )}
-                    <p className="usuario-email">{user.email}</p>
-                    <Link to="/perfil" onClick={() => setMenuAbierto(false)}>
-                      Mi perfil
-                    </Link>
-                    {esAdmin && (
-                      <Link to="/admin/agregar" onClick={() => setMenuAbierto(false)}>
-                        Panel de administración
+                    <div className="usuario-menu-header">
+                      {user.user_metadata?.nombre && (
+                        <p className="usuario-nombre">{user.user_metadata.nombre}</p>
+                      )}
+                      <p className="usuario-email">{user.email}</p>
+                    </div>
+                    <div className="usuario-menu-links">
+                      <Link to="/perfil" onClick={() => setMenuAbierto(false)}>
+                        <User size={15} />
+                        <span>Mi perfil</span>
                       </Link>
-                    )}
-                    <button type="button" onClick={salir}>Cerrar sesión</button>
+                      {esAdmin && (
+                        <Link to="/admin/agregar" onClick={() => setMenuAbierto(false)}>
+                          <ShieldCheck size={15} />
+                          <span>Panel Admin</span>
+                        </Link>
+                      )}
+                    </div>
+                    <div className="usuario-menu-footer">
+                      <button type="button" className="usuario-btn-logout" onClick={salir}>
+                        <LogOut size={15} />
+                        <span>Cerrar sesión</span>
+                      </button>
+                    </div>
                   </>
                 ) : (
-                  <>
+                  <div className="usuario-menu-links">
                     <Link to="/login" onClick={() => setMenuAbierto(false)}>
-                      Iniciar sesión
+                      <LogIn size={15} />
+                      <span>Iniciar sesión</span>
                     </Link>
                     <Link to="/login" state={{ modo: "registro" }} onClick={() => setMenuAbierto(false)}>
-                      Crear cuenta
+                      <UserPlus size={15} />
+                      <span>Crear cuenta</span>
                     </Link>
-                  </>
+                  </div>
                 )}
               </div>
             )}
@@ -205,14 +219,46 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Fila de navegación (estilo TCGplayer) */}
+      {/* Fila de navegación principal */}
       <div className="navbar-subfila">
-        <ul className="nav-links">
-          <li><Link to="/">Catálogo</Link></li>
-          <li><Link to="/accesorios">Accesorios</Link></li>
-          <li><Link to="/catalogo/5">Pre-Ventas</Link></li>
-          {esAdmin && <li><Link to="/admin/agregar">Agregar</Link></li>}
-        </ul>
+        <div className="navbar-subfila-inner">
+          <ul className="nav-links">
+            <li>
+              <Link
+                to="/"
+                className={`nav-link-btn ${location.pathname === "/" || location.pathname.startsWith("/carta") ? "active" : ""}`}
+              >
+                Catálogo
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/accesorios"
+                className={`nav-link-btn ${location.pathname.startsWith("/accesorios") ? "active" : ""}`}
+              >
+                Accesorios
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/catalogo/5"
+                className={`nav-link-btn ${location.pathname === "/catalogo/5" ? "active" : ""}`}
+              >
+                <span className="dot-preventa" /> Pre-Ventas
+              </Link>
+            </li>
+            {esAdmin && (
+              <li>
+                <Link
+                  to="/admin/agregar"
+                  className={`nav-link-btn nav-link-admin ${location.pathname.startsWith("/admin") ? "active" : ""}`}
+                >
+                  Panel Admin
+                </Link>
+              </li>
+            )}
+          </ul>
+        </div>
       </div>
     </nav>
   );
