@@ -2932,71 +2932,53 @@ img { display: block; max-width: 100%; }
   gap: 16px;
 }
 
-.admin-prints-toolbar {
+/* ==========================================================
+   TOOLBAR DE FILTROS TCGPLAYER
+   ========================================================== */
+.tcg-toolbar {
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tcg-toolbar-row-primary {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 12px 16px;
-  background: var(--fondo-panel);
-  border: 1px solid var(--borde);
-  border-radius: 10px;
 }
 
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.toolbar-right {
+.tcg-toolbar-title-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.prints-count-badge {
-  font-size: 12px;
+.tcg-toolbar-title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tcg-toolbar-count-badge {
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--texto);
   background: var(--t08);
-  padding: 5px 10px;
-  border-radius: 6px;
-}
-
-.admin-search-inline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--nav);
   border: 1px solid var(--borde);
+  padding: 3px 9px;
   border-radius: 6px;
-  padding: 4px 8px;
 }
 
-.admin-search-inline input {
-  border: none;
-  background: transparent;
-  color: var(--texto);
-  font-size: 12px;
-  outline: none;
-  width: 140px;
-  font-family: inherit;
-}
-
-.btn-clear-inline {
-  background: transparent;
-  border: none;
-  color: var(--texto-suave);
-  cursor: pointer;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-}
-
-.admin-filter-pills {
+/* Segmented tabs de rareza (Base vs AA vs Todas) */
+.tcg-rareza-segmented {
   display: inline-flex;
   gap: 4px;
   background: var(--nav);
@@ -3005,189 +2987,423 @@ img { display: block; max-width: 100%; }
   border: 1px solid var(--borde);
 }
 
-.admin-filter-pill {
-  background: transparent;
-  border: none;
-  padding: 5px 10px;
+.tcg-seg-btn {
+  padding: 6px 14px;
   border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
+  border: none;
+  background: transparent;
   color: var(--texto-suave);
+  font-size: 12.5px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
 }
 
-.admin-filter-pill.active {
+.tcg-seg-btn:hover {
+  color: var(--texto);
+  background: var(--t08);
+}
+
+.tcg-seg-btn.active {
   background: var(--btn-fondo);
   color: var(--btn-texto);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
-.admin-density-toggle {
+/* Fila secundaria del toolbar */
+.tcg-toolbar-row-secondary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde);
+}
+
+.tcg-toolbar-search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 380px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 0 10px;
+  height: 36px;
+  transition: border-color 0.15s;
+}
+
+.tcg-toolbar-search:focus-within {
+  border-color: var(--acento);
+  box-shadow: 0 0 0 2px rgba(91, 63, 209, 0.2);
+}
+
+.tcg-search-icon {
+  color: var(--texto-suave);
+  flex-shrink: 0;
+}
+
+.tcg-toolbar-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--texto);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.tcg-toolbar-search input::placeholder {
+  color: var(--texto-suave);
+  opacity: 0.8;
+}
+
+.tcg-btn-clear-search {
+  border: none;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.tcg-btn-clear-search:hover {
+  color: var(--texto);
+  background: var(--t10);
+}
+
+.tcg-toolbar-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tcg-toolbar-select {
+  height: 36px;
+  background: var(--nav);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.tcg-toolbar-select:focus {
+  border-color: var(--acento);
+}
+
+.tcg-density-segmented {
   display: inline-flex;
   gap: 2px;
   background: var(--nav);
   padding: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid var(--borde);
 }
 
-.density-btn {
-  background: transparent;
-  border: none;
-  padding: 5px;
-  border-radius: 4px;
-  color: var(--texto-suave);
-  cursor: pointer;
-  display: flex;
+.tcg-density-btn {
+  display: inline-flex;
   align-items: center;
-  transition: all 0.15s;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.density-btn.active {
-  background: var(--t12);
+.tcg-density-btn:hover {
   color: var(--texto);
+  background: var(--t08);
 }
 
+.tcg-density-btn.active {
+  background: var(--t15);
+  color: var(--texto);
+  font-weight: 700;
+}
+
+/* ==========================================================
+   CUADRÍCULA Y TARJETAS DE CARTAS ESTILO TCGPLAYER
+   ========================================================== */
+.tcg-cards-grid,
 .admin-cards-grid {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
+.tcg-cards-grid.densidad-compacto,
 .admin-cards-grid.densidad-compacto {
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
 }
 
+.tcg-cards-grid.densidad-medio,
 .admin-cards-grid.densidad-medio {
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
 }
 
+.tcg-cards-grid.densidad-grande,
 .admin-cards-grid.densidad-grande {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
+/* Tarjeta producto TCGPlayer */
+.tcg-product-card,
 .admin-card-tile {
   position: relative;
-  display: flex;
-  flex-direction: column;
   background: var(--fondo-panel);
   border: 1.5px solid var(--borde);
-  border-radius: 10px;
-  overflow: hidden;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s, box-shadow 0.18s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  user-select: none;
 }
 
+.tcg-product-card:hover,
 .admin-card-tile:hover {
   transform: translateY(-3px);
   border-color: var(--acento);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
+.tcg-product-card.is-selected,
 .admin-card-tile.is-selected {
   border-color: var(--acento);
-  box-shadow: 0 0 0 2px var(--acento), 0 8px 24px rgba(91, 63, 209, 0.25);
+  box-shadow: 0 0 0 2px var(--acento), 0 10px 24px rgba(91, 63, 209, 0.25);
+  background: var(--fondo-panel);
 }
 
+/* Badges sobre la carta */
+.tcg-card-selected-badge,
+.admin-card-selected-check {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--acento);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.tcg-card-tag-badge {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 4;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+}
+
+.tcg-card-tag-badge.tag-parallel {
+  background: rgba(147, 51, 234, 0.9);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.4);
+}
+
+.tcg-card-tag-badge.tag-promo {
+  background: rgba(234, 179, 8, 0.92);
+  color: #111827;
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.4);
+}
+
+.tcg-card-tag-badge.tag-deck {
+  background: rgba(59, 130, 246, 0.9);
+  color: #ffffff;
+}
+
+.tcg-card-tag-badge.tag-don {
+  background: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+}
+
+/* Arte de la carta */
+.tcg-card-media,
 .admin-card-art {
   position: relative;
   width: 100%;
   aspect-ratio: 5 / 7;
   background: var(--img-fondo);
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.tcg-card-media img,
 .admin-card-art img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: transform 0.2s ease;
+  transition: transform 0.22s ease;
 }
 
+.tcg-product-card:hover .tcg-card-media img,
 .admin-card-tile:hover .admin-card-art img {
   transform: scale(1.03);
 }
 
+.tcg-media-placeholder,
 .admin-card-art-empty {
   font-size: 11px;
   color: var(--texto-suave);
 }
 
-.admin-card-selected-check {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--acento);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  z-index: 2;
-}
-
+.tcg-card-select-overlay,
 .btn-select-hover {
   position: absolute;
   bottom: 8px;
   left: 8px;
   right: 8px;
-  background: rgba(17, 24, 39, 0.88);
+  background: rgba(17, 24, 39, 0.9);
   color: #ffffff;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 6px 8px;
+  padding: 7px 10px;
   border-radius: 6px;
   text-align: center;
   opacity: 0;
   transform: translateY(6px);
   transition: all 0.15s ease;
   backdrop-filter: blur(4px);
-  z-index: 2;
+  z-index: 3;
 }
 
+.tcg-product-card:hover .tcg-card-select-overlay,
 .admin-card-tile:hover .btn-select-hover {
   opacity: 1;
   transform: translateY(0);
 }
 
+/* Contenido informativo de la carta estilo TCGPlayer */
+.tcg-card-content,
 .admin-card-details {
-  padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: var(--fondo-panel);
+  padding: 2px 2px 4px 2px;
 }
 
+.tcg-card-title,
 .admin-card-name {
-  font-size: 13px;
+  margin: 0;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--texto);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tcg-card-set-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #60a5fa; /* Azul distintivo estilo link TCGPlayer */
+  line-height: 1.3;
+}
+
+.tcg-set-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.admin-card-sub {
-  font-size: 11px;
-  color: var(--texto-suave);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.admin-card-price-chip {
-  align-self: flex-start;
-  font-size: 11px;
+.tcg-card-num {
+  flex-shrink: 0;
   font-weight: 700;
-  color: var(--acento);
-  background: var(--t08);
-  padding: 2px 6px;
-  border-radius: 4px;
+  color: var(--texto-suave);
+}
+
+.tcg-card-price-section {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--t08);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tcg-price-primary {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--texto);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.tcg-price-market {
+  font-size: 11px;
+  font-weight: 600;
+  color: #34d399; /* Verde TCGPlayer para referencia de mercado */
+  line-height: 1.2;
+}
+
+/* Estado de filtro vacío */
+.tcg-empty-filter-box {
+  background: var(--fondo-panel);
+  border: 1.5px dashed var(--borde);
+  border-radius: 12px;
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.tcg-empty-filter-box p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.tcg-btn-reset-filter {
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tcg-btn-reset-filter:hover {
+  filter: brightness(1.1);
 }
 
 .admin-prints-footer {

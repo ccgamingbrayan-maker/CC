@@ -752,20 +752,21 @@ export default function AgregarCarta() {
               ) : prints && prints.length > 0 ? (
                 <div className="admin-prints-container">
                   {/* BARRA SUPERIOR DE FILTROS Y DENSIDAD */}
-                  <div className="admin-prints-toolbar">
-                    <div className="toolbar-info-group">
-                      <h3 className="toolbar-title">Versiones y artes disponibles</h3>
-                      <span className="toolbar-count-badge">
-                        {printsFiltrados.length} {printsFiltrados.length === 1 ? "versión" : "versiones"}
-                      </span>
-                    </div>
+                  <div className="tcg-toolbar">
+                    {/* Fila 1: Título de sección y Segmented Tabs de Rareza */}
+                    <div className="tcg-toolbar-row-primary">
+                      <div className="tcg-toolbar-title-wrap">
+                        <h3 className="tcg-toolbar-title">Versiones y artes disponibles</h3>
+                        <span className="tcg-toolbar-count-badge">
+                          {printsFiltrados.length} {printsFiltrados.length === 1 ? "versión" : "versiones"}
+                        </span>
+                      </div>
 
-                    <div className="toolbar-actions-group">
                       {fuente?.startsWith("onepiece") && (
-                        <div className="admin-filter-segmented">
+                        <div className="tcg-rareza-segmented" role="tablist">
                           <button
                             type="button"
-                            className={`admin-seg-btn ${filtroRareza === "normal" ? "active" : ""}`}
+                            className={`tcg-seg-btn ${filtroRareza === "normal" ? "active" : ""}`}
                             onClick={() => setFiltroRareza("normal")}
                             title="Mostrar versiones en menor rareza (base)"
                           >
@@ -773,7 +774,7 @@ export default function AgregarCarta() {
                           </button>
                           <button
                             type="button"
-                            className={`admin-seg-btn ${filtroRareza === "aa" ? "active" : ""}`}
+                            className={`tcg-seg-btn ${filtroRareza === "aa" ? "active" : ""}`}
                             onClick={() => setFiltroRareza("aa")}
                             title="Mostrar versiones Alternate Art (AA / Paralelas)"
                           >
@@ -781,7 +782,7 @@ export default function AgregarCarta() {
                           </button>
                           <button
                             type="button"
-                            className={`admin-seg-btn ${filtroRareza === "todas" ? "active" : ""}`}
+                            className={`tcg-seg-btn ${filtroRareza === "todas" ? "active" : ""}`}
                             onClick={() => setFiltroRareza("todas")}
                             title="Mostrar todas las versiones disponibles"
                           >
@@ -789,81 +790,90 @@ export default function AgregarCarta() {
                           </button>
                         </div>
                       )}
+                    </div>
 
-                      <div className="toolbar-search-filter">
-                        <Search size={14} className="search-icon-muted" />
+                    {/* Fila 2: Filtro rápido de texto, Selector de Orden y Selector de Densidad */}
+                    <div className="tcg-toolbar-row-secondary">
+                      <div className="tcg-toolbar-search">
+                        <Search size={14} className="tcg-search-icon" />
                         <input
                           type="text"
-                          placeholder="Filtrar por set o código..."
+                          placeholder="Filtrar por set o código (ej: OP01, ST01)..."
                           value={filtroPrints}
                           onChange={(e) => setFiltroPrints(e.target.value)}
                         />
                         {filtroPrints && (
                           <button
                             type="button"
-                            className="btn-clear-subfilter"
+                            className="tcg-btn-clear-search"
                             onClick={() => setFiltroPrints("")}
+                            title="Limpiar filtro"
                           >
                             <X size={13} />
                           </button>
                         )}
                       </div>
 
-                      <select
-                        className="toolbar-select-sort"
-                        value={ordenPrints}
-                        onChange={(e) => setOrdenPrints(e.target.value)}
-                      >
-                        <option value="default">Orden original</option>
-                        <option value="precio-asc">Precio: Menor a mayor</option>
-                        <option value="precio-desc">Precio: Mayor a menor</option>
-                        <option value="nombre">Nombre (A-Z)</option>
-                        <option value="set">Expansión / Set</option>
-                      </select>
+                      <div className="tcg-toolbar-controls-right">
+                        <select
+                          className="tcg-toolbar-select"
+                          value={ordenPrints}
+                          onChange={(e) => setOrdenPrints(e.target.value)}
+                        >
+                          <option value="default">Orden por defecto</option>
+                          <option value="precio-asc">Precio: Menor a mayor</option>
+                          <option value="precio-desc">Precio: Mayor a menor</option>
+                          <option value="nombre">Nombre (A-Z)</option>
+                          <option value="set">Expansión / Set</option>
+                        </select>
 
-                      <div className="toolbar-density-group">
-                        <button
-                          type="button"
-                          className={`btn-density-tab ${densidad === "compacto" ? "active" : ""}`}
-                          onClick={() => setDensidad("compacto")}
-                          title="Vista compacta"
-                        >
-                          <Grid2X2 size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn-density-tab ${densidad === "medio" ? "active" : ""}`}
-                          onClick={() => setDensidad("medio")}
-                          title="Vista media"
-                        >
-                          <LayoutGrid size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn-density-tab ${densidad === "grande" ? "active" : ""}`}
-                          onClick={() => setDensidad("grande")}
-                          title="Vista amplia"
-                        >
-                          <Maximize2 size={13} />
-                        </button>
+                        <div className="tcg-density-segmented">
+                          <button
+                            type="button"
+                            className={`tcg-density-btn ${densidad === "compacto" ? "active" : ""}`}
+                            onClick={() => setDensidad("compacto")}
+                            title="Vista compacta"
+                          >
+                            <Grid2X2 size={14} />
+                            <span>Compacto</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`tcg-density-btn ${densidad === "medio" ? "active" : ""}`}
+                            onClick={() => setDensidad("medio")}
+                            title="Vista estándar"
+                          >
+                            <LayoutGrid size={14} />
+                            <span>Medio</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`tcg-density-btn ${densidad === "grande" ? "active" : ""}`}
+                            onClick={() => setDensidad("grande")}
+                            title="Vista amplia"
+                          >
+                            <Maximize2 size={14} />
+                            <span>Detallado</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* CUADRÍCULA DE CARTAS */}
+                  {/* CUADRÍCULA DE CARTAS ESTILO TCGPLAYER */}
                   {printsFiltrados.length === 0 ? (
-                    <div className="admin-empty-filter-box">
+                    <div className="tcg-empty-filter-box">
                       <p>No se encontraron cartas que coincidan con "<strong>{filtroPrints}</strong>"</p>
                       <button
                         type="button"
-                        className="btn-reset-filter"
+                        className="tcg-btn-reset-filter"
                         onClick={() => setFiltroPrints("")}
                       >
                         Restablecer filtro de texto
                       </button>
                     </div>
                   ) : (
-                    <div className={`admin-cards-grid densidad-${densidad}`}>
+                    <div className={`tcg-cards-grid densidad-${densidad}`}>
                       {printsFiltrados.map((p, index) => {
                         const tag = getCardTag(p);
                         const esSeleccionada =
@@ -872,24 +882,40 @@ export default function AgregarCarta() {
                             (seleccionada.id && p.id && seleccionada.id === p.id && seleccionada.imagen === p.imagen) ||
                             (seleccionada.imagen && seleccionada.imagen === p.imagen));
 
+                        const usdVal = p.precios?.usd;
+                        const copEquiv = usdVal ? Math.round(Number(usdVal) * 3500) : null;
+
                         return (
                           <div
                             key={p.id ? `${p.id}-${index}` : index}
-                            className={`admin-card-item ${esSeleccionada ? "selected" : ""}`}
+                            className={`tcg-product-card ${esSeleccionada ? "is-selected" : ""}`}
                             onClick={() => seleccionarVersion(p)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                seleccionarVersion(p);
+                              }
+                            }}
                           >
+                            {/* BADGE DE SELECCIÓN */}
                             {esSeleccionada && (
-                              <span className="card-badge-selected-pill">
-                                <Check size={11} strokeWidth={3} /> Seleccionada
-                              </span>
-                            )}
-                            {tag && (
-                              <span className={`card-badge-tag-pill ${tag.type}`}>
-                                {tag.text}
-                              </span>
+                              <div className="tcg-card-selected-badge">
+                                <Check size={11} strokeWidth={3} />
+                                <span>Seleccionada</span>
+                              </div>
                             )}
 
-                            <div className="admin-card-item-thumb">
+                            {/* TAG DE VARIANTE O ARTE ESPECIAL */}
+                            {tag && (
+                              <div className={`tcg-card-tag-badge tag-${tag.type}`}>
+                                {tag.text}
+                              </div>
+                            )}
+
+                            {/* MEDIA / ARTE DE LA CARTA */}
+                            <div className="tcg-card-media">
                               {p.imagen ? (
                                 <img
                                   src={p.imagen}
@@ -903,18 +929,35 @@ export default function AgregarCarta() {
                                   }}
                                 />
                               ) : (
-                                <div className="thumb-placeholder">Sin imagen</div>
+                                <div className="tcg-media-placeholder">Sin imagen</div>
                               )}
+
+                              <div className="tcg-card-select-overlay">
+                                <span>{esSeleccionada ? "Carta en edición" : "Elegir versión"}</span>
+                              </div>
                             </div>
 
-                            <div className="admin-card-item-info">
-                              <h4 title={p.nombre}>{p.nombre}</h4>
-                              <p className="card-item-set" title={`${p.set || ""} ${p.numero ? `#${p.numero}` : ""}`}>
-                                {p.set || "—"} {p.numero ? `#${p.numero}` : ""}
-                              </p>
-                              <span className="card-item-price">
-                                {p.precios?.usd != null ? `$${p.precios.usd} USD` : "—"}
-                              </span>
+                            {/* INFORMACIÓN ESTILO TCGPLAYER */}
+                            <div className="tcg-card-content">
+                              <h4 className="tcg-card-title" title={p.nombre}>
+                                {p.nombre}
+                              </h4>
+
+                              <div className="tcg-card-set-row" title={`${p.set || ""} ${p.numero ? `#${p.numero}` : ""}`}>
+                                <span className="tcg-set-name">{p.set || "Edición estándar"}</span>
+                                {p.numero && <span className="tcg-card-num">#{p.numero}</span>}
+                              </div>
+
+                              <div className="tcg-card-price-section">
+                                <div className="tcg-price-primary">
+                                  {usdVal != null ? `$${Number(usdVal).toFixed(2)}` : "—"}
+                                </div>
+                                <div className="tcg-price-market">
+                                  {copEquiv != null
+                                    ? `Market: ~$${copEquiv.toLocaleString("es-CO")} COP`
+                                    : "Sin ref mercado"}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );
