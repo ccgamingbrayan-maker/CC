@@ -752,9 +752,8 @@ export default function ColeccionFisica({ user }) {
                   </div>
                   <button
                     type="submit"
-                    className="auth-boton"
+                    className="btn-api-search"
                     disabled={buscandoApi || !queryApi.trim()}
-                    style={{ padding: "10px 22px", display: "inline-flex", alignItems: "center", gap: "6px" }}
                   >
                     {buscandoApi ? <Loader2 size={16} className="spinner-icon" /> : <Search size={16} />}
                     Buscar en API
@@ -772,7 +771,7 @@ export default function ColeccionFisica({ user }) {
                         onClick={() => setFiltroRarezaApi("normal")}
                         title="Mostrar versiones en su menor rareza (versión normal / base por defecto)"
                       >
-                        📦 Menor rareza (Normal / Base) <em>[Por defecto]</em>
+                        Versión Base (Normal)
                       </button>
                       <button
                         type="button"
@@ -780,7 +779,7 @@ export default function ColeccionFisica({ user }) {
                         onClick={() => setFiltroRarezaApi("aa")}
                         title="Mostrar versiones Alternate Art (AA / Paralelas / Manga)"
                       >
-                        ✨ Alternate Art (AA / Paralela)
+                        Alternate Art (AA)
                       </button>
                       <button
                         type="button"
@@ -788,7 +787,7 @@ export default function ColeccionFisica({ user }) {
                         onClick={() => setFiltroRarezaApi("todas")}
                         title="Mostrar todas las versiones disponibles"
                       >
-                        🌐 Todas
+                        Todas
                       </button>
                     </div>
                   </div>
@@ -833,7 +832,17 @@ export default function ColeccionFisica({ user }) {
                             >
                               <div className="api-card-thumb">
                                 {item.imagen ? (
-                                  <img src={item.imagen} alt={item.nombre} loading="lazy" />
+                                  <img
+                                    src={item.imagen}
+                                    alt={item.nombre}
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      if (item.numero) {
+                                        e.target.src = `https://www.optcgapi.com/media/static/Card_Images/${item.numero}.jpg`;
+                                      }
+                                    }}
+                                  />
                                 ) : (
                                   <div className="thumb-placeholder">Sin imagen</div>
                                 )}
@@ -842,7 +851,7 @@ export default function ColeccionFisica({ user }) {
                                 )}
                                 {juegoActivo === "onepiece" && (
                                   <span className={`api-thumb-badge-arte ${esAA ? "tag-aa" : "tag-normal"}`}>
-                                    {esAA ? "✨ AA" : "📦 Base"}
+                                    {esAA ? "AA" : "Base"}
                                   </span>
                                 )}
                               </div>
@@ -918,7 +927,7 @@ export default function ColeccionFisica({ user }) {
                                   onClick={() => seleccionarCartaApi(alternativa)}
                                   title="Cambiar entre versión Normal y Alternate Art de esta misma carta"
                                 >
-                                  {esActAA ? "📦 Cambiar a versión Normal (Menor rareza)" : "✨ Cambiar a versión Alternate Art (AA)"}
+                                  {esActAA ? "Cambiar a versión Normal" : "Cambiar a versión Alternate Art (AA)"}
                                 </button>
                               );
                             })()}

@@ -374,36 +374,6 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
     ctx.stroke();
     ctx.restore();
 
-    // Chip pill discreto en la esquina superior izquierda sobre la carta (sin tapar el arte)
-    ctx.save();
-    const pillW = 44;
-    const pillH = 20;
-    const pillX = x + 8;
-    const pillY = y + 8;
-    const pr = 5;
-    ctx.beginPath();
-    ctx.moveTo(pillX + pr, pillY);
-    ctx.lineTo(pillX + pillW - pr, pillY);
-    ctx.quadraticCurveTo(pillX + pillW, pillY, pillX + pillW, pillY + pr);
-    ctx.lineTo(pillX + pillW, pillY + pillH - pr);
-    ctx.quadraticCurveTo(pillX + pillW, pillY + pillH, pillX + pillW - pr, pillY + pillH);
-    ctx.lineTo(pillX + pr, pillY + pillH);
-    ctx.quadraticCurveTo(pillX, pillY + pillH, pillX, pillY + pillH - pr);
-    ctx.lineTo(pillX, pillY + pr);
-    ctx.quadraticCurveTo(pillX, pillY, pillX + pr, pillY);
-    ctx.closePath();
-    ctx.fillStyle = "rgba(10, 14, 26, 0.85)";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 11px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(`-${carta.faltan}`, pillX + pillW / 2, pillY + 14);
-    ctx.restore();
-
     // Texto al pie de carta (fuera de la imagen, sin tapar la carta)
     // Línea 1: Código a la izquierda y estado de faltantes a la derecha
     ctx.textAlign = "left";
@@ -1963,7 +1933,7 @@ export default function CreadorDecks({ user }) {
                           }));
                         }}
                       >
-                        ✨ Alternate Art (AA)
+                        Alternate Art (AA)
                       </button>
                     </div>
                   </div>
@@ -2200,14 +2170,14 @@ export default function CreadorDecks({ user }) {
                     className={`tcg-segmented-btn ${rarezaImport === "normal" ? "active" : ""}`}
                     onClick={() => setRarezaImport("normal")}
                   >
-                    📦 Menor rareza (Normal / Base) [Por defecto]
+                    Versión Base (Normal)
                   </button>
                   <button
                     type="button"
                     className={`tcg-segmented-btn ${rarezaImport === "aa" ? "active" : ""}`}
                     onClick={() => setRarezaImport("aa")}
                   >
-                    ✨ Alternate Art (AA / Paralela)
+                    Alternate Art (AA)
                   </button>
                 </div>
               </div>
@@ -2324,7 +2294,7 @@ export default function CreadorDecks({ user }) {
                 className={`tcg-segmented-btn ${rarezaCartaDeck === "normal" ? "active" : ""}`}
                 onClick={() => setRarezaCartaDeck("normal")}
               >
-                📦 Menor rareza (Normal)
+                Versión Base (Normal)
               </button>
               <button
                 type="button"
@@ -2338,7 +2308,7 @@ export default function CreadorDecks({ user }) {
                 className={`tcg-segmented-btn ${rarezaCartaDeck === "todas" ? "active" : ""}`}
                 onClick={() => setRarezaCartaDeck("todas")}
               >
-                🌐 Todas
+                Todas
               </button>
             </div>
 
