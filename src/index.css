@@ -4051,6 +4051,581 @@ img { display: block; max-width: 100%; }
   border-radius: 10px;
 }
 
+/* ========================================================
+   CREADOR Y GESTOR DE DECKS (PERFIL)
+   ======================================================== */
+.decks-contenedor {
+  padding: 24px;
+}
+
+.btn-link-ejemplo {
+  background: transparent;
+  border: none;
+  color: var(--acento, #a855f7);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+.btn-link-ejemplo:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.decklist-textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--t15);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--texto);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.decklist-textarea:focus {
+  border-color: var(--acento, #a855f7);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+}
+
+.decks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.deck-card-item {
+  background: var(--nav);
+  border: 1px solid var(--t12);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.deck-card-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--t20);
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.5);
+}
+
+.deck-card-banner {
+  height: 140px;
+  width: 100%;
+  position: relative;
+  background: #18181b;
+  overflow: hidden;
+}
+.deck-card-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  transition: transform 0.3s ease;
+}
+.deck-card-item:hover .deck-card-banner img {
+  transform: scale(1.04);
+}
+
+.deck-banner-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--texto-suave);
+  opacity: 0.4;
+}
+
+.deck-card-cant-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.deck-card-content {
+  padding: 14px 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.deck-card-title {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-card-fecha {
+  margin: 0 0 14px 0;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.deck-card-acciones {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-ver-deck {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-deck-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--t08);
+  border: 1px solid var(--t12);
+  color: var(--texto-suave);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.btn-deck-icon:hover {
+  background: var(--t15);
+  color: var(--texto);
+}
+.btn-deck-icon.btn-trash:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* VISTA DETALLE DEL DECK */
+.deck-detalle-vista {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.deck-detalle-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--t12);
+}
+
+.btn-volver-decks {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: color 0.15s;
+}
+.btn-volver-decks:hover {
+  color: var(--acento, #a855f7);
+}
+
+.topbar-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-accion-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--t08);
+  border: 1px solid var(--t15);
+  color: var(--texto);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-accion-top:hover {
+  background: var(--t15);
+}
+.btn-accion-top.btn-danger:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.deck-stats-panel {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(24, 24, 27, 0.8) 100%);
+  border: 1px solid var(--t15);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.deck-stats-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.deck-tag-onepiece {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #f59e0b;
+  text-transform uppercase;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.deck-detalle-nombre {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--texto);
+}
+
+.deck-detalle-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-suave);
+  max-width: 520px;
+}
+
+.btn-comprar-faltantes {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 10px 18px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+.btn-comprar-faltantes:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+}
+
+.deck-progreso-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--t10);
+}
+
+.progreso-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--texto-suave);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.progreso-header strong {
+  color: var(--texto);
+}
+
+.progreso-track {
+  height: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progreso-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #06b6d4, #10b981);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.deck-filtros-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.deck-tabs-filtro {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.deck-filtro-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--t08);
+  border: 1px solid var(--t12);
+  color: var(--texto-suave);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.deck-filtro-btn:hover {
+  color: var(--texto);
+  background: var(--t15);
+}
+.deck-filtro-btn.active {
+  background: var(--acento, #a855f7);
+  color: #fff;
+  border-color: transparent;
+}
+
+.deck-cards-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deck-card-row {
+  display: grid;
+  grid-template-columns: 60px 1.5fr 1.3fr 1.3fr;
+  align-items: center;
+  gap: 16px;
+  background: var(--nav);
+  border: 1px solid var(--t12);
+  border-radius: 12px;
+  padding: 10px 16px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.deck-card-row:hover {
+  border-color: var(--t20);
+}
+
+.deck-row-thumb {
+  position: relative;
+  width: 56px;
+  height: 78px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #18181b;
+  flex-shrink: 0;
+}
+.deck-row-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.deck-row-badge-cant {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.deck-row-info {
+  min-width: 0;
+}
+
+.deck-row-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.deck-row-nombre {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-row-codigo {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--acento, #a855f7);
+  background: rgba(168, 85, 247, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.deck-row-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tag-set {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.tag-rar {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.deck-row-coleccion-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.col-status-label {
+  font-size: 11px;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.status-completa {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.status-parcial {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.status-cero {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.deck-row-tienda-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tienda-disponible-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.tienda-precio {
+  display: flex;
+  flex-direction: column;
+}
+
+.precio-val {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.stock-val {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.btn-comprar-mini {
+  padding: 5px 10px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: var(--acento, #a855f7) !important;
+  color: #fff !important;
+  border: none !important;
+  cursor: pointer !important;
+  white-space: nowrap;
+}
+
+.status-no-tienda {
+  font-size: 12px;
+  color: var(--texto-suave);
+  font-style: italic;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .deck-card-row {
+    grid-template-columns: 60px 1fr;
+    gap: 12px;
+  }
+  .deck-row-coleccion-status,
+  .deck-row-tienda-status {
+    grid-column: 1 / -1;
+  }
+}
+
 
 
 

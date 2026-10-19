@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Heart, Package, Save, HeartOff, KeyRound, Layers } from "lucide-react";
+import { User, Heart, Package, Save, HeartOff, KeyRound, Layers, Sparkles } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { supabase } from "../lib/supabase.js";
 import Cargando from "../components/Cargando.jsx";
 import ColeccionFisica from "../components/ColeccionFisica.jsx";
+import CreadorDecks from "../components/CreadorDecks.jsx";
 
 export default function Perfil() {
   const { user, cargando } = useAuth();
@@ -58,6 +59,13 @@ export default function Perfil() {
           </button>
           <button
             type="button"
+            className={tab === "decks" ? "active" : ""}
+            onClick={() => setTab("decks")}
+          >
+            <Sparkles size={15} /> Creador de Decks
+          </button>
+          <button
+            type="button"
             className={tab === "wishlist" ? "active" : ""}
             onClick={() => setTab("wishlist")}
           >
@@ -79,6 +87,7 @@ export default function Perfil() {
           </>
         )}
         {tab === "coleccion" && <ColeccionFisica user={user} />}
+        {tab === "decks" && <CreadorDecks user={user} />}
         {tab === "wishlist" && <Wishlist user={user} />}
         {tab === "pedidos" && <Pedidos user={user} />}
       </div>
