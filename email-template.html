@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirma tu cuenta - Capsule Corp</title>
+</head>
+<body style="margin: 0; padding: 24px 10px; background-color: #0a0908; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+
+  <!-- CONTENEDOR GENERAL -->
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <td align="center">
+
+        <!-- TARJETA CON EL MAPA DE FONDO COMPLETO -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"
+          background="https://www.onepiececc.shop/img/banner-correo.jpg"
+          style="max-width: 560px; width: 100%; border-radius: 16px; overflow: hidden; background-image: url('https://www.onepiececc.shop/img/banner-correo.jpg'); background-size: cover; background-position: center top; background-repeat: no-repeat; border: 1px solid #3f3f46; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.85);">
+          <tr>
+            <!-- CAPA TRANSLÚCIDA OSCURA -->
+            <td style="padding: 48px 32px; background: rgba(10, 10, 12, 0.86); text-align: center;">
+
+              <!-- BADGE CAPSULE CORP -->
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 24px auto;">
+                <tr>
+                  <td style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 6px 18px; color: #e4e4e7; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;">
+                    CAPSULE CORP GAMING
+                  </td>
+                </tr>
+              </table>
+
+              <!-- TÍTULO -->
+              <h1 style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 0 0 16px 0; letter-spacing: -0.5px;">
+                ¡Bienvenido a Capsule Corp!
+              </h1>
+
+              <!-- TEXTO -->
+              <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6; margin: 0 0 14px 0;">
+                Gracias por registrarte en nuestra tienda.
+              </p>
+              
+              <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; margin: 0 0 32px 0;">
+                Para activar tu cuenta y poder realizar compras de cartas y accesorios, por favor confirma tu correo electrónico:
+              </p>
+
+              <!-- BOTÓN DE CONFIRMACIÓN -->
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 32px auto;">
+                <tr>
+                  <td align="center" style="border-radius: 10px; background: #eab308; box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);">
+                    <a 
+                      href="{{ .ConfirmationURL }}" 
+                      target="_blank" 
+                      style="display: inline-block; padding: 14px 32px; color: #09090b; text-decoration: none; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 10px;"
+                    >
+                      Confirmar correo electrónico
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- ENLACE ALTERNATIVO -->
+              <p style="color: #71717a; font-size: 12px; line-height: 1.5; margin: 0 0 8px 0;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:
+              </p>
+              <p style="margin: 0 0 28px 0; word-break: break-all;">
+                <a href="{{ .ConfirmationURL }}" target="_blank" style="color: #eab308; font-size: 12px; text-decoration: underline;">
+                  {{ .ConfirmationURL }}
+                </a>
+              </p>
+
+              <!-- LÍNEA FINAL -->
+              <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 0 auto 20px auto; max-width: 90%;"></div>
+
+              <!-- PIE DE CORREO -->
+              <p style="color: #71717a; font-size: 12px; margin: 0 0 6px 0;">
+                Si no te has registrado en Capsule Corp, puedes ignorar este mensaje.
+              </p>
+              <p style="color: #52525b; font-size: 11px; margin: 0;">
+                © 2026 Capsule Corp Gaming • <a href="https://www.onepiececc.shop" style="color: #71717a; text-decoration: none;">onepiececc.shop</a>
+              </p>
+
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
