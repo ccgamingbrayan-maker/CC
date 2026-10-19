@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Sparkles,
   Plus,
@@ -17,6 +17,11 @@ import {
   Loader2,
   Share2,
   X,
+  LayoutGrid,
+  List,
+  Download,
+  Image as ImageIcon,
+  FileText,
 } from "lucide-react";
 import { supabase } from "../lib/supabase.js";
 import { useCart } from "../lib/CartContext.jsx";
@@ -49,7 +54,6 @@ async function obtenerSetOptcg(setOdeck) {
 
 // Resuelve la información oficial de una lista de códigos
 async function resolverCodigosOnePiece(itemsParseados) {
-  // Identificar qué sets/decks están presentes en la lista
   const setsRequeridos = new Set();
 
   itemsParseados.forEach((item) => {
@@ -70,7 +74,9 @@ async function resolverCodigosOnePiece(itemsParseados) {
       if (num.length === 1) num = "0" + num;
       setsRequeridos.add(`EB-${num}`);
     } else if (prefijo.startsWith("PRB")) {
-      setsRequeridos.add("PRB-01");
+      let num = prefijo.replace("PRB", "");
+      if (num.length === 1) num = "0" + num;
+      setsRequeridos.add(num ? `PRB-${num}` : "PRB-01");
     }
   });
 
@@ -80,8 +86,14 @@ async function resolverCodigosOnePiece(itemsParseados) {
     [...setsRequeridos].map(async (setId) => {
       const cartas = await obtenerSetOptcg(setId);
       cartas.forEach((c) => {
-        if (c.card_set_id) cartasMap.set(c.card_set_id.toUpperCase(), c);
-        if (c.card_image_id) cartasMap.set(c.card_image_id.toUpperCase(), c);
+        if (c.card_set_id) {
+          cartasMap.set(c.card_set_id.toUpperCase(), c);
+          cartasMap.set(c.card_set_id.toUpperCase().replace("-", ""), c);
+        }
+        if (c.card_image_id) {
+          cartasMap.set(c.card_image_id.toUpperCase(), c);
+          cartasMap.set(c.card_image_id.toUpperCase().replace("-", ""), c);
+        }
       });
     })
   );
@@ -89,10 +101,28 @@ async function resolverCodigosOnePiece(itemsParseados) {
   // Mapear cada item con sus datos enriquecidos
   return itemsParseados.map((item) => {
     const rawCode = item.codigo.toUpperCase();
-    let optcg = cartasMap.get(rawCode);
+    let optcg = cartasMap.get(rawCode) || cartasMap.get(rawCode.replace("-", ""));
 
-    if (!optcg) {
-      optcg = cartasMap.get(rawCode.replace("-", ""));
+    // Fallbacks para cartas especiales o eventos (ej: Jamboule OP15-077, Mamaragan OP15-078)
+    if (!optcg && rawCode === "OP15-077") {
+      optcg = {
+        card_name: "Jamboule",
+        set_name: "One Piece TCG",
+        rarity: "C",
+        card_type: "Event",
+        card_color: "Purple",
+        card_image: "https://www.optcgapi.com/media/static/Card_Images/OP15-077.jpg",
+      };
+    }
+    if (!optcg && rawCode === "OP15-078") {
+      optcg = {
+        card_name: "Mamaragan",
+        set_name: "One Piece TCG",
+        rarity: "C",
+        card_type: "Event",
+        card_color: "Purple",
+        card_image: "https://www.optcgapi.com/media/static/Card_Images/OP15-078.jpg",
+      };
     }
 
     const imagen =
@@ -112,12 +142,166 @@ async function resolverCodigosOnePiece(itemsParseados) {
   });
 }
 
+// Genera un Canvas con el collage visual de cartas faltantes con CORS seguro
+async function generarCanvasFaltantes(deck, cartasFaltantes) {
+  const padding = 28;
+  const cardWidth = 160;
+  const cardHeight = 224; // Proporción TCG estándar ~1:1.4
+  const gap = 16;
+  const cols = Math.min(4, Math.max(2, cartasFaltantes.length));
+  const rows = Math.ceil(cartasFaltantes.length / cols);
+
+  const headerHeight = 110;
+  const footerHeight = 44;
+
+  const width = padding * 2 + cols * cardWidth + (cols - 1) * gap;
+  const height = headerHeight + rows * (cardHeight + 42) + footerHeight;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  // Fondo degradado náutico One Piece
+  const grad = ctx.createLinearGradient(0, 0, width, height);
+  grad.addColorStop(0, "#14110f");
+  grad.addColorStop(0.5, "#1f1914");
+  grad.addColorStop(1, "#100d0b");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, width, height);
+
+  // Borde temático dorado
+  ctx.strokeStyle = "rgba(212, 175, 55, 0.4)";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(8, 8, width - 16, height - 16);
+
+  // Cabecera
+  ctx.fillStyle = "#eab308";
+  ctx.font = "bold 12px system-ui, sans-serif";
+  ctx.fillText("🏴‍☠️ CAPSULE CORP GAMING • ONE PIECE TCG", padding, 38);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 22px system-ui, sans-serif";
+  ctx.fillText(`Cartas que me faltan: ${deck.nombre}`, padding, 68);
+
+  const totalFaltan = cartasFaltantes.reduce((acc, c) => acc + c.faltan, 0);
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "13px system-ui, sans-serif";
+  ctx.fillText(
+    `Total: ${totalFaltan} copias en ${cartasFaltantes.length} cartas distintas • ¿Alguien las tiene para venta o cambio?`,
+    padding,
+    92
+  );
+
+  // Carga de imágenes con proxy seguro para evitar CORS tainted canvas
+  const cargarImagen = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        const fallback = new Image();
+        fallback.onload = () => resolve(fallback);
+        fallback.onerror = () => resolve(null);
+        fallback.src = url;
+      };
+      // images.weserv.nl habilita cabeceras CORS para dibujar en canvas sin error
+      img.src = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=320&output=jpg`;
+    });
+  };
+
+  const imagenesCargadas = await Promise.all(
+    cartasFaltantes.map((c) => cargarImagen(c.imagen))
+  );
+
+  // Dibujar cartas en cuadrícula
+  for (let i = 0; i < cartasFaltantes.length; i++) {
+    const carta = cartasFaltantes[i];
+    const img = imagenesCargadas[i];
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+
+    const x = padding + col * (cardWidth + gap);
+    const y = headerHeight + row * (cardHeight + 42);
+
+    ctx.save();
+    // Bordes redondeados de la carta
+    const radius = 8;
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + cardWidth - radius, y);
+    ctx.quadraticCurveTo(x + cardWidth, y, x + cardWidth, y + radius);
+    ctx.lineTo(x + cardWidth, y + cardHeight - radius);
+    ctx.quadraticCurveTo(x + cardWidth, y + cardHeight, x + cardWidth - radius, y + cardHeight);
+    ctx.lineTo(x + radius, y + cardHeight);
+    ctx.quadraticCurveTo(x, y + cardHeight, x, y + cardHeight - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.clip();
+
+    if (img) {
+      ctx.drawImage(img, x, y, cardWidth, cardHeight);
+    } else {
+      ctx.fillStyle = "#27272a";
+      ctx.fillRect(x, y, cardWidth, cardHeight);
+    }
+    ctx.restore();
+
+    // Franja roja "FALTAN X" sobre la carta
+    ctx.fillStyle = "rgba(220, 38, 38, 0.92)";
+    const bH = 24;
+    ctx.fillRect(x, y + cardHeight - bH, cardWidth, bH);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 12px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`FALTAN ${carta.faltan} COPIAS`, x + cardWidth / 2, y + cardHeight - 7);
+
+    // Texto al pie de carta: Código y Nombre
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#38bdf8";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText(carta.codigo, x, y + cardHeight + 16);
+
+    ctx.fillStyle = "#e4e4e7";
+    ctx.font = "11px system-ui, sans-serif";
+    const nom = carta.nombre.length > 20 ? carta.nombre.slice(0, 19) + "…" : carta.nombre;
+    ctx.fillText(nom, x, y + cardHeight + 30);
+  }
+
+  // Footer Capsule Corp
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#71717a";
+  ctx.font = "11.5px system-ui, sans-serif";
+  ctx.fillText("Generado con el Creador de Decks en www.onepiececc.shop • Capsule Corp Gaming", width / 2, height - 16);
+
+  return canvas;
+}
+
 export default function CreadorDecks({ user }) {
   const { agregar } = useCart();
   const [decks, setDecks] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [deckSeleccionado, setDeckSeleccionado] = useState(null);
   const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
+
+  // Modo de vista: "tablero" (cuadrícula visual con mapa de fondo) o "lista"
+  const [vistaModo, setVistaModo] = useState("tablero");
+
+  // Inspección de carta individual
+  const [cartaInspeccionada, setCartaInspeccionada] = useState(null);
+
+  // Modal para ver y descargar imagen de faltantes
+  const [modalFaltantes, setModalFaltantes] = useState(false);
+  const [canvasFaltantesUrl, setCanvasFaltantesUrl] = useState(null);
+  const [generandoImagen, setGenerandoImagen] = useState(false);
+  const canvasRef = useRef(null);
+
+  // Estados de copia
+  const [copiadoDecklist, setCopiadoDecklist] = useState(false);
+  const [copiadoFaltantesTxt, setCopiadoFaltantesTxt] = useState(false);
+  const [copiadoFaltantesImg, setCopiadoFaltantesImg] = useState(false);
 
   // Datos para contrastar
   const [coleccionFisica, setColeccionFisica] = useState([]);
@@ -127,7 +311,6 @@ export default function CreadorDecks({ user }) {
   const [nombreDeck, setNombreDeck] = useState("");
   const [textoDecklist, setTextoDecklist] = useState("");
   const [procesando, setProcesando] = useState(false);
-  const [copiado, setCopiado] = useState(false);
   const [filtroDeck, setFiltroDeck] = useState("todas"); // "todas" | "faltantes" | "en_tienda"
 
   // Cargar coleccion del usuario, productos de la tienda y decks guardados
@@ -165,7 +348,6 @@ export default function CreadorDecks({ user }) {
         if (!errDecks && decksData) {
           setDecks(decksData);
         } else {
-          // Fallback a localStorage / metadata
           const localDecks =
             user?.user_metadata?.decks ||
             JSON.parse(localStorage.getItem(`decks_${user.id}`) || "[]");
@@ -208,12 +390,11 @@ export default function CreadorDecks({ user }) {
     try {
       const parseados = parsearDecklist(textoDecklist);
       if (parseados.length === 0) {
-        alert("No se encontraron cartas en el formato válido. Ejemplo: 4xOP08-058");
+        alert("No se encontraron cartas en el formato válido. Ejemplo: 4xST34-003");
         setProcesando(false);
         return;
       }
 
-      // Resolver nombres, expansiones e imágenes oficiales
       const cartasResueltas = await resolverCodigosOnePiece(parseados);
 
       const nuevoDeck = {
@@ -224,7 +405,6 @@ export default function CreadorDecks({ user }) {
         creado_en: new Date().toISOString(),
       };
 
-      // Guardar en Supabase
       const { data: deckGuardado, error } = await supabase
         .from("decks_usuario")
         .insert([
@@ -242,7 +422,6 @@ export default function CreadorDecks({ user }) {
       setDecks(nuevosDecks);
       localStorage.setItem(`decks_${user.id}`, JSON.stringify(nuevosDecks));
 
-      // Limpiar formulario y abrir el deck creado
       setNombreDeck("");
       setTextoDecklist("");
       setMostrarModalCrear(false);
@@ -265,12 +444,12 @@ export default function CreadorDecks({ user }) {
     localStorage.setItem(`decks_${user.id}`, JSON.stringify(nuevos));
   }
 
-  // Copiar decklist al portapapeles
+  // Copiar decklist completo
   function copiarDecklist(deck) {
     const lineas = (deck.cartas || []).map((c) => `${c.cantidad}x${c.codigo}`);
     navigator.clipboard.writeText(lineas.join("\n"));
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 2000);
+    setCopiadoDecklist(true);
+    setTimeout(() => setCopiadoDecklist(false), 2000);
   }
 
   // Analizar el estado de cada carta en el deck seleccionado
@@ -282,11 +461,12 @@ export default function CreadorDecks({ user }) {
     let totalFaltantes = 0;
     let faltantesDisponiblesTienda = 0;
 
+    const clean = (s) => (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
     const listaAnalizada = deckSeleccionado.cartas.map((item) => {
       totalNecesarias += item.cantidad;
 
       // 1. Buscar en mi colección física
-      const clean = (s) => (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
       const codItemClean = clean(item.codigo);
       const nombreItemClean = (item.nombre || "").toLowerCase().trim();
 
@@ -316,19 +496,46 @@ export default function CreadorDecks({ user }) {
       totalTienes += tienes;
       totalFaltantes += faltan;
 
-      // 2. Buscar si está a la venta en Capsule Corp
-      const enTienda = cartasTienda.find((c) => {
-        const img = (c.imagen || "").toUpperCase();
-        const cod = item.codigo.toUpperCase();
-        const nomTienda = (c.nombre || "").toLowerCase().trim();
-        const imgClean = clean(img);
+      // 2. Buscar en tienda con COTEJO RIGUROSO de código y tipo
+      const isItemDon =
+        (item.tipo || "").toUpperCase().includes("DON") ||
+        item.codigo.toUpperCase().startsWith("DON");
+      const cleanCode = clean(item.codigo);
+      const rawCode = item.codigo.toUpperCase();
+      const itemNum = rawCode.split("-")[1];
 
-        return (
-          img.includes(cod) ||
-          (codItemClean && imgClean.includes(codItemClean)) ||
-          nomTienda.includes(cod.toLowerCase()) ||
-          (nombreItemClean.length > 3 && nomTienda.includes(nombreItemClean))
-        );
+      const enTienda = cartasTienda.find((c) => {
+        if (Number(c.stock || 0) <= 0) return false;
+
+        const nomTienda = (c.nombre || "").toUpperCase();
+        const imgTienda = (c.imagen || "").toUpperCase();
+        const isStoreDon =
+          nomTienda.includes("DON!!") ||
+          nomTienda.includes("DON CARD") ||
+          imgTienda.includes("DON_CARD");
+
+        // Regla estricta: si uno es DON y el otro no, NUNCA coinciden
+        // (Evita que el personaje Yamato OP17-074 coincida con un DON!! Card de Yamato)
+        if (isItemDon !== isStoreDon) return false;
+
+        // Coincidencia exacta por código completo
+        if (imgTienda.includes(rawCode) || (cleanCode && clean(imgTienda).includes(cleanCode))) return true;
+        if (nomTienda.includes(rawCode) || (cleanCode && clean(nomTienda).includes(cleanCode))) return true;
+
+        // Coincidencia por número de set específico (ej: OP07-051 coincide si tiene (051) y nombre)
+        if (itemNum && itemNum.length >= 3) {
+          const itemNomClean = clean(item.nombre);
+          const nomStoreClean = clean(nomTienda);
+          if (
+            itemNomClean.length > 3 &&
+            nomStoreClean.includes(itemNomClean) &&
+            (nomTienda.includes(`(${itemNum})`) || imgTienda.includes(itemNum))
+          ) {
+            return true;
+          }
+        }
+
+        return false;
       });
 
       const tieneStockTienda = enTienda && Number(enTienda.stock || 0) > 0;
@@ -371,6 +578,74 @@ export default function CreadorDecks({ user }) {
     }
     return analisisDeck.cartas;
   }, [analisisDeck, filtroDeck]);
+
+  // Lista de cartas faltantes para el generador de imagen
+  const cartasFaltantes = useMemo(() => {
+    if (!analisisDeck) return [];
+    return analisisDeck.cartas.filter((c) => c.faltan > 0);
+  }, [analisisDeck]);
+
+  // Abrir modal y generar imagen de faltantes
+  async function handleAbrirModalFaltantes() {
+    if (!deckSeleccionado || cartasFaltantes.length === 0) {
+      alert("¡Felicidades! Ya tienes todas las cartas de este deck en tu colección.");
+      return;
+    }
+
+    setModalFaltantes(true);
+    setGenerandoImagen(true);
+    setCanvasFaltantesUrl(null);
+
+    try {
+      const canvas = await generarCanvasFaltantes(deckSeleccionado, cartasFaltantes);
+      canvasRef.current = canvas;
+      setCanvasFaltantesUrl(canvas.toDataURL("image/png"));
+    } catch (err) {
+      console.error("Error generando imagen de faltantes:", err);
+      alert("Ocurrió un error al generar la imagen. Puedes copiar la lista en texto.");
+    } finally {
+      setGenerandoImagen(false);
+    }
+  }
+
+  // Descargar imagen generada
+  function handleDescargarImagen() {
+    if (!canvasRef.current || !canvasFaltantesUrl) return;
+    const a = document.createElement("a");
+    a.download = `faltantes-${(deckSeleccionado?.nombre || "deck").toLowerCase().replace(/[^a-z0-9]/g, "-")}.png`;
+    a.href = canvasFaltantesUrl;
+    a.click();
+  }
+
+  // Copiar imagen al portapapeles
+  async function handleCopiarImagen() {
+    if (!canvasRef.current) return;
+    try {
+      canvasRef.current.toBlob(async (blob) => {
+        if (!blob) return;
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob }),
+        ]);
+        setCopiadoFaltantesImg(true);
+        setTimeout(() => setCopiadoFaltantesImg(false), 2500);
+      });
+    } catch (err) {
+      console.warn("Navegador no soporta escribir imagen a portapapeles:", err);
+      handleDescargarImagen();
+    }
+  }
+
+  // Copiar lista de faltantes en formato texto
+  function handleCopiarTextoFaltantes() {
+    if (cartasFaltantes.length === 0) return;
+    const lineas = cartasFaltantes.map(
+      (c) => `${c.faltan}x ${c.codigo} - ${c.nombre} (${c.expansion})`
+    );
+    const texto = `🏴‍☠️ Cartas que me faltan para: ${deckSeleccionado?.nombre}\n\n${lineas.join("\n")}\n\nCapsule Corp Gaming (www.onepiececc.shop)`;
+    navigator.clipboard.writeText(texto);
+    setCopiadoFaltantesTxt(true);
+    setTimeout(() => setCopiadoFaltantesTxt(false), 2000);
+  }
 
   // Agregar todas las cartas faltantes disponibles al carrito de compra
   function comprarTodasFaltantes() {
@@ -493,7 +768,7 @@ export default function CreadorDecks({ user }) {
                           title="Copiar decklist"
                           onClick={() => copiarDecklist(deck)}
                         >
-                          {copiado ? <Check size={14} style={{ color: "#10b981" }} /> : <Copy size={14} />}
+                          {copiadoDecklist ? <Check size={14} style={{ color: "#10b981" }} /> : <Copy size={14} />}
                         </button>
                         <button
                           type="button"
@@ -514,7 +789,7 @@ export default function CreadorDecks({ user }) {
       ) : (
         /* VISTA 2: ANÁLISIS DETALLADO DEL DECK SELECCIONADO */
         <div className="deck-detalle-vista">
-          {/* BOTÓN VOLVER Y HEADER */}
+          {/* BOTÓN VOLVER Y ACCIONES PRINCIPALES */}
           <div className="deck-detalle-topbar">
             <button
               type="button"
@@ -527,12 +802,22 @@ export default function CreadorDecks({ user }) {
             <div className="topbar-acciones">
               <button
                 type="button"
+                className="btn-accion-top btn-destacado-faltantes"
+                title="Generar imagen de las cartas faltantes para compartir"
+                onClick={handleAbrirModalFaltantes}
+              >
+                <ImageIcon size={14} /> Imagen de Faltantes
+              </button>
+
+              <button
+                type="button"
                 className="btn-accion-top"
                 onClick={() => copiarDecklist(deckSeleccionado)}
               >
-                {copiado ? <Check size={14} style={{ color: "#10b981" }} /> : <Copy size={14} />}
-                {copiado ? "¡Copiado!" : "Copiar Decklist"}
+                {copiadoDecklist ? <Check size={14} style={{ color: "#10b981" }} /> : <Copy size={14} />}
+                {copiadoDecklist ? "¡Copiado!" : "Copiar Decklist"}
               </button>
+
               <button
                 type="button"
                 className="btn-accion-top btn-danger"
@@ -550,7 +835,7 @@ export default function CreadorDecks({ user }) {
                 <span className="deck-tag-onepiece">🏴‍☠️ ONE PIECE TCG</span>
                 <h2 className="deck-detalle-nombre">{deckSeleccionado.nombre}</h2>
                 <p className="deck-detalle-desc">
-                  Comprobando disponibilidad contra tu colección física y el stock de Capsule Corp.
+                  Comprobando disponibilidad contra tu colección física y el stock real de Capsule Corp.
                 </p>
               </div>
 
@@ -587,7 +872,7 @@ export default function CreadorDecks({ user }) {
             )}
           </div>
 
-          {/* FILTROS INTERNOS DEL DECK */}
+          {/* FILTROS INTERNOS Y SELECTOR DE VISTA */}
           <div className="deck-filtros-bar">
             <div className="deck-tabs-filtro">
               <button
@@ -612,82 +897,359 @@ export default function CreadorDecks({ user }) {
                 🟢 Disponibles en Capsule Corp ({analisisDeck?.cartas.filter((c) => c.faltan > 0 && c.enTienda).length || 0})
               </button>
             </div>
+
+            {/* SELECTOR ENTRE VISTA TABLERO VISUAL Y VISTA LISTA */}
+            <div className="deck-vista-switch">
+              <button
+                type="button"
+                className={`btn-vista-toggle ${vistaModo === "tablero" ? "active" : ""}`}
+                onClick={() => setVistaModo("tablero")}
+                title="Vista visual con fondo náutico del mazo"
+              >
+                <LayoutGrid size={14} /> Tablero Visual
+              </button>
+              <button
+                type="button"
+                className={`btn-vista-toggle ${vistaModo === "lista" ? "active" : ""}`}
+                onClick={() => setVistaModo("lista")}
+                title="Vista lista"
+              >
+                <List size={14} /> Lista
+              </button>
+            </div>
           </div>
 
-          {/* LISTADO DE CARTAS DEL DECK */}
-          <div className="deck-cards-lista">
-            {cartasVisiblesDeck.map((carta) => {
-              return (
-                <div key={carta.codigo} className="deck-card-row">
-                  {/* IMAGEN Y CANTIDAD */}
-                  <div className="deck-row-thumb">
-                    <img src={carta.imagen} alt={carta.nombre} loading="lazy" />
-                    <span className="deck-row-badge-cant">{carta.cantidad}x</span>
-                  </div>
+          {/* VISTA 1: TABLERO VISUAL CON FONDO NÁUTICO (COMPASS MAP) */}
+          {vistaModo === "tablero" ? (
+            <div className="deck-tablero-visual">
+              <div className="deck-grid-visual">
+                {cartasVisiblesDeck.map((carta) => {
+                  return (
+                    <div
+                      key={carta.codigo}
+                      className="deck-visual-card-item"
+                      onClick={() => setCartaInspeccionada(carta)}
+                      title="Haz clic para ver detalles, colección y compra"
+                    >
+                      {/* CONTENEDOR DE LA CARTA (TCG PROPORTIONS) */}
+                      <div className="deck-visual-card-media">
+                        <img
+                          src={carta.imagen}
+                          alt={carta.nombre}
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://www.optcgapi.com/media/static/Card_Images/${carta.codigo}.jpg`;
+                          }}
+                        />
 
-                  {/* DATOS DE LA CARTA */}
-                  <div className="deck-row-info">
-                    <div className="deck-row-title-row">
-                      <h4 className="deck-row-nombre">{carta.nombre}</h4>
-                      <span className="deck-row-codigo">{carta.codigo}</span>
-                    </div>
-                    <div className="deck-row-tags">
-                      <span className="tag-set">📦 {carta.expansion}</span>
-                      {carta.rareza && <span className="tag-rar">⭐ {carta.rareza}</span>}
-                    </div>
-                  </div>
-
-                  {/* ESTADO EN MI COLECCIÓN PERSONAL */}
-                  <div className="deck-row-coleccion-status">
-                    <span className="col-status-label">En tu colección:</span>
-                    {carta.completa ? (
-                      <span className="status-badge status-completa">
-                        <CheckCircle2 size={14} /> {carta.tienes} de {carta.cantidad} (Completa)
-                      </span>
-                    ) : carta.tienes > 0 ? (
-                      <span className="status-badge status-parcial">
-                        <AlertTriangle size={14} /> Tienes {carta.tienes}/{carta.cantidad} (Te faltan {carta.faltan})
-                      </span>
-                    ) : (
-                      <span className="status-badge status-cero">
-                        <XCircle size={14} /> No la tienes (Te faltan {carta.faltan})
-                      </span>
-                    )}
-                  </div>
-
-                  {/* DISPONIBILIDAD EN CAPSULE CORP */}
-                  <div className="deck-row-tienda-status">
-                    <span className="col-status-label">En Capsule Corp:</span>
-                    {carta.enTienda ? (
-                      <div className="tienda-disponible-box">
-                        <div className="tienda-precio">
-                          <span className="precio-val">
-                            ${Number(carta.enTienda.precio).toLocaleString("es-CO")} COP
-                          </span>
-                          <span className="stock-val">Stock: {carta.enTienda.stock}</span>
+                        {/* BADGE DE COLECCIÓN EN ESQUINA SUPERIOR */}
+                        <div className="card-overlay-badge-coleccion">
+                          {carta.completa ? (
+                            <span className="badge-pill pill-completa" title={`Tienes ${carta.tienes} de ${carta.cantidad} copias`}>
+                              <CheckCircle2 size={11} /> {carta.tienes}/{carta.cantidad}
+                            </span>
+                          ) : carta.tienes > 0 ? (
+                            <span className="badge-pill pill-parcial" title={`Tienes ${carta.tienes} de ${carta.cantidad} copias (faltan ${carta.faltan})`}>
+                              <AlertTriangle size={11} /> {carta.tienes}/{carta.cantidad}
+                            </span>
+                          ) : (
+                            <span className="badge-pill pill-cero" title={`No la tienes (faltan ${carta.faltan})`}>
+                              <XCircle size={11} /> 0/{carta.cantidad}
+                            </span>
+                          )}
                         </div>
-                        {carta.faltan > 0 && (
-                          <button
-                            type="button"
-                            className="auth-boton btn-comprar-mini"
-                            onClick={() => {
-                              agregar({ tipo: "carta", id: carta.enTienda.id });
-                              alert(`Se añadió ${carta.nombre} al carrito.`);
-                            }}
-                          >
-                            <ShoppingCart size={13} /> Comprar {carta.faltan}
-                          </button>
+
+                        {/* BADGE DE TIENDA CAPSULE CORP */}
+                        {carta.enTienda && (
+                          <div className="card-overlay-badge-tienda">
+                            <span className="badge-pill pill-tienda" title="Disponible en Capsule Corp">
+                              <ShoppingCart size={11} /> Tienda
+                            </span>
+                          </div>
                         )}
                       </div>
-                    ) : (
-                      <span className="status-no-tienda">
-                        No disponible en tienda
-                      </span>
+
+                      {/* PIE DE CARTA: CANTIDAD 'x4' Y ESTADO / BOTÓN */}
+                      <div className="deck-visual-card-footer">
+                        <span className="deck-cant-label">x{carta.cantidad}</span>
+
+                        {carta.faltan > 0 && carta.enTienda ? (
+                          <button
+                            type="button"
+                            className="btn-comprar-card-visual"
+                            title={`Comprar en Capsule Corp ($${Number(carta.enTienda.precio).toLocaleString("es-CO")} COP)`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              agregar({ tipo: "carta", id: carta.enTienda.id });
+                              alert(`Se añadió "${carta.nombre}" al carrito.`);
+                            }}
+                          >
+                            <ShoppingCart size={11} />
+                            <span>${Number(carta.enTienda.precio).toLocaleString("es-CO")}</span>
+                          </button>
+                        ) : carta.completa ? (
+                          <span className="status-label-visual text-completa">✓ Lista</span>
+                        ) : (
+                          <span className="status-label-visual text-falta">Faltan {carta.faltan}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* VISTA 2: LISTADO DETALLADO */
+            <div className="deck-cards-lista">
+              {cartasVisiblesDeck.map((carta) => {
+                return (
+                  <div key={carta.codigo} className="deck-card-row">
+                    <div className="deck-row-thumb">
+                      <img src={carta.imagen} alt={carta.nombre} loading="lazy" />
+                      <span className="deck-row-badge-cant">{carta.cantidad}x</span>
+                    </div>
+
+                    <div className="deck-row-info">
+                      <div className="deck-row-title-row">
+                        <h4 className="deck-row-nombre">{carta.nombre}</h4>
+                        <span className="deck-row-codigo">{carta.codigo}</span>
+                      </div>
+                      <div className="deck-row-tags">
+                        <span className="tag-set">📦 {carta.expansion}</span>
+                        {carta.rareza && <span className="tag-rar">⭐ {carta.rareza}</span>}
+                      </div>
+                    </div>
+
+                    <div className="deck-row-coleccion-status">
+                      <span className="col-status-label">En tu colección:</span>
+                      {carta.completa ? (
+                        <span className="status-badge status-completa">
+                          <CheckCircle2 size={14} /> {carta.tienes} de {carta.cantidad} (Completa)
+                        </span>
+                      ) : carta.tienes > 0 ? (
+                        <span className="status-badge status-parcial">
+                          <AlertTriangle size={14} /> Tienes {carta.tienes}/{carta.cantidad} (Te faltan {carta.faltan})
+                        </span>
+                      ) : (
+                        <span className="status-badge status-cero">
+                          <XCircle size={14} /> No la tienes (Te faltan {carta.faltan})
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="deck-row-tienda-status">
+                      <span className="col-status-label">En Capsule Corp:</span>
+                      {carta.enTienda ? (
+                        <div className="tienda-disponible-box">
+                          <div className="tienda-precio">
+                            <span className="precio-val">
+                              ${Number(carta.enTienda.precio).toLocaleString("es-CO")} COP
+                            </span>
+                            <span className="stock-val">Stock: {carta.enTienda.stock}</span>
+                          </div>
+                          {carta.faltan > 0 && (
+                            <button
+                              type="button"
+                              className="auth-boton btn-comprar-mini"
+                              onClick={() => {
+                                agregar({ tipo: "carta", id: carta.enTienda.id });
+                                alert(`Se añadió ${carta.nombre} al carrito.`);
+                              }}
+                            >
+                              <ShoppingCart size={13} /> Comprar {carta.faltan}
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="status-no-tienda">
+                          No disponible en tienda
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODAL PARA INSPECCIONAR CARTA INDIVIDUAL */}
+      {cartaInspeccionada && (
+        <div className="coleccion-modal-backdrop" onClick={() => setCartaInspeccionada(null)}>
+          <div
+            className="coleccion-modal-content card-inspector-modal"
+            style={{ maxWidth: "600px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                <Sparkles size={18} style={{ color: "var(--acento, #a855f7)" }} />
+                Detalle de Carta
+              </h3>
+              <button
+                type="button"
+                className="btn-cerrar-modal"
+                onClick={() => setCartaInspeccionada(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="card-inspector-layout">
+              <div className="inspector-img-wrap">
+                <img src={cartaInspeccionada.imagen} alt={cartaInspeccionada.nombre} />
+              </div>
+
+              <div className="inspector-details">
+                <div className="inspector-header">
+                  <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
+                    <span className="deck-row-codigo">{cartaInspeccionada.codigo}</span>
+                    {cartaInspeccionada.rareza && (
+                      <span className="tag-rar">⭐ {cartaInspeccionada.rareza}</span>
                     )}
                   </div>
+                  <h3 style={{ margin: "0 0 6px 0", fontSize: "17px", color: "var(--texto)" }}>
+                    {cartaInspeccionada.nombre}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: "12.5px", color: "var(--texto-suave)" }}>
+                    {cartaInspeccionada.expansion} • {cartaInspeccionada.tipo} {cartaInspeccionada.color ? `• ${cartaInspeccionada.color}` : ""}
+                  </p>
                 </div>
-              );
-            })}
+
+                <div className="inspector-section">
+                  <h5 style={{ margin: "0 0 6px 0", fontSize: "11px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
+                    En tu Colección Física
+                  </h5>
+                  {cartaInspeccionada.completa ? (
+                    <div className="status-badge status-completa" style={{ width: "100%", boxSizing: "border-box" }}>
+                      <CheckCircle2 size={14} /> Tienes todas las copias ({cartaInspeccionada.tienes} de {cartaInspeccionada.cantidad})
+                    </div>
+                  ) : cartaInspeccionada.tienes > 0 ? (
+                    <div className="status-badge status-parcial" style={{ width: "100%", boxSizing: "border-box" }}>
+                      <AlertTriangle size={14} /> Tienes {cartaInspeccionada.tienes} de {cartaInspeccionada.cantidad} (Te faltan {cartaInspeccionada.faltan})
+                    </div>
+                  ) : (
+                    <div className="status-badge status-cero" style={{ width: "100%", boxSizing: "border-box" }}>
+                      <XCircle size={14} /> No la tienes (Necesitas {cartaInspeccionada.cantidad})
+                    </div>
+                  )}
+                </div>
+
+                <div className="inspector-section">
+                  <h5 style={{ margin: "0 0 6px 0", fontSize: "11px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
+                    En Tienda Capsule Corp
+                  </h5>
+                  {cartaInspeccionada.enTienda ? (
+                    <div className="tienda-inspector-box">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                        <div>
+                          <div style={{ fontSize: "15px", fontWeight: 800, color: "#10b981" }}>
+                            ${Number(cartaInspeccionada.enTienda.precio).toLocaleString("es-CO")} COP
+                          </div>
+                          <div style={{ fontSize: "11.5px", color: "var(--texto-suave)" }}>
+                            Stock disponible: {cartaInspeccionada.enTienda.stock}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="auth-boton"
+                          style={{ padding: "8px 12px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                          onClick={() => {
+                            agregar({ tipo: "carta", id: cartaInspeccionada.enTienda.id });
+                            alert(`Se añadió ${cartaInspeccionada.nombre} al carrito.`);
+                          }}
+                        >
+                          <ShoppingCart size={13} /> Añadir al Carrito
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: "12px", color: "var(--texto-suave)", fontStyle: "italic", padding: "8px 12px", background: "var(--t08)", borderRadius: "8px" }}>
+                      Actualmente no está disponible en la tienda Capsule Corp
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PARA DESCARGAR O COPIAR IMAGEN DE CARTAS FALTANTES */}
+      {modalFaltantes && (
+        <div className="coleccion-modal-backdrop" onClick={() => setModalFaltantes(false)}>
+          <div
+            className="coleccion-modal-content modal-faltantes-box"
+            style={{ maxWidth: "720px", width: "95%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                <ImageIcon size={18} style={{ color: "var(--acento, #a855f7)" }} />
+                Cartas que te faltan ({cartasFaltantes.length})
+              </h3>
+              <button
+                type="button"
+                className="btn-cerrar-modal"
+                onClick={() => setModalFaltantes(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-faltantes-body">
+              {generandoImagen ? (
+                <div style={{ padding: "40px 20px", textAlign: "center" }}>
+                  <Loader2 size={36} className="spinner-icon" style={{ margin: "0 auto 12px auto", color: "var(--acento, #a855f7)" }} />
+                  <p style={{ color: "var(--texto-suave)" }}>Generando imagen en alta definición de tus cartas faltantes...</p>
+                </div>
+              ) : canvasFaltantesUrl ? (
+                <>
+                  <p style={{ fontSize: "13px", color: "var(--texto-suave)", margin: "0 0 14px 0" }}>
+                    Descarga o copia esta imagen para compartirla en tus grupos de WhatsApp, redes sociales o torneos:
+                  </p>
+
+                  <div className="preview-canvas-wrap">
+                    <img src={canvasFaltantesUrl} alt="Cartas faltantes" className="preview-canvas-img" />
+                  </div>
+
+                  <div className="modal-faltantes-acciones">
+                    <button
+                      type="button"
+                      className="auth-boton btn-action-faltantes"
+                      onClick={handleDescargarImagen}
+                    >
+                      <Download size={15} /> Descargar Imagen (PNG)
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn-accion-secondary btn-action-faltantes"
+                      onClick={handleCopiarImagen}
+                    >
+                      {copiadoFaltantesImg ? <Check size={15} style={{ color: "#10b981" }} /> : <Copy size={15} />}
+                      {copiadoFaltantesImg ? "¡Imagen Copiada!" : "Copiar Imagen"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn-accion-secondary btn-action-faltantes"
+                      onClick={handleCopiarTextoFaltantes}
+                    >
+                      {copiadoFaltantesTxt ? <Check size={15} style={{ color: "#10b981" }} /> : <FileText size={15} />}
+                      {copiadoFaltantesTxt ? "¡Texto Copiado!" : "Copiar Lista en Texto"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: "20px", textAlign: "center" }}>
+                  <p>No se pudo generar la imagen.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
