@@ -228,8 +228,8 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
   const cols = Math.min(4, Math.max(2, cartasFaltantes.length));
   const rows = Math.ceil(cartasFaltantes.length / cols);
 
-  const headerHeight = 110;
-  const footerHeight = 44;
+  const headerHeight = 68;
+  const footerHeight = 18;
 
   const width = padding * 2 + cols * cardWidth + (cols - 1) * gap;
   const height = headerHeight + rows * (cardHeight + 42) + footerHeight;
@@ -304,23 +304,11 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
   ctx.lineWidth = 2;
   ctx.strokeRect(10, 10, width - 20, height - 20);
 
-  // Cabecera limpia
-  ctx.fillStyle = "#eab308";
-  ctx.font = "bold 12px system-ui, sans-serif";
-  ctx.fillText("CAPSULE CORP GAMING • ONE PIECE TCG", padding, 38);
-
+  // Cabecera: solo el texto indicado por el usuario
+  ctx.textAlign = "left";
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 22px system-ui, sans-serif";
-  ctx.fillText(`Cartas que me faltan: ${deck.nombre}`, padding, 68);
-
-  const totalFaltan = cartasFaltantes.reduce((acc, c) => acc + c.faltan, 0);
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = "13px system-ui, sans-serif";
-  ctx.fillText(
-    `Total: ${totalFaltan} copias en ${cartasFaltantes.length} cartas distintas • ¿Alguien las tiene para venta o cambio?`,
-    padding,
-    92
-  );
+  ctx.fillText("Busco para compra o cambio Desde Cali", padding, 44);
 
   // Dibujar cartas en cuadrícula
   for (let i = 0; i < cartasFaltantes.length; i++) {
@@ -397,11 +385,7 @@ async function generarCanvasFaltantes(deck, cartasFaltantes) {
     ctx.fillText(nom, x, y + cardHeight + 32);
   }
 
-  // Footer Capsule Corp
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#64748b";
-  ctx.font = "11.5px system-ui, sans-serif";
-  ctx.fillText("Generado con el Creador de Decks en www.onepiececc.shop • Capsule Corp Gaming", width / 2, height - 16);
+
 
   return canvas;
 }
