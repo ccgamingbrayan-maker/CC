@@ -109,11 +109,14 @@ CREATE TABLE IF NOT EXISTS public.torneos (
     formato TEXT NOT NULL DEFAULT 'Estándar Suizo',
     fecha TIMESTAMPTZ NOT NULL,
     lugar TEXT NOT NULL DEFAULT 'Sede Capsule Corp Gaming - Cali (Cra 34 # 4-50)',
-    costo_inscripcion NUMERIC(12, 2) NOT NULL DEFAULT 35000,
+    costo_inscripcion NUMERIC(12, 2) NOT NULL DEFAULT 26000,
     cupo_maximo INT NOT NULL DEFAULT 16,
     premios TEXT,
     pozo_premios NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    esquema_premios TEXT DEFAULT 'top4_standard',
+    pozo_coins_cop NUMERIC(12, 2) DEFAULT 0,
+    pool_sobres_cop NUMERIC(12, 2) DEFAULT 0,
+    total_wins INT DEFAULT 0,
+    esquema_premios TEXT DEFAULT 'prizewall_100pct',
     gastos_evento NUMERIC(12, 2) DEFAULT 0,
     estado TEXT NOT NULL DEFAULT 'proximo' CHECK (estado IN ('proximo', 'en_curso', 'finalizado', 'cancelado')),
     notas TEXT,
@@ -142,6 +145,8 @@ CREATE TABLE IF NOT EXISTS public.torneo_participantes (
     telefono TEXT,
     puesto TEXT DEFAULT 'Participante',
     puntos INT DEFAULT 0,
+    wins INT DEFAULT 0,
+    cc_coins INT DEFAULT 0,
     omw TEXT,
     monto_pagado NUMERIC(12, 2) DEFAULT 0,
     estado_pago TEXT DEFAULT 'pagado' CHECK (estado_pago IN ('pagado', 'abono', 'debe')),
@@ -159,11 +164,16 @@ CREATE INDEX IF NOT EXISTS idx_torneo_part_bandai_id ON public.torneo_participan
 -- Migración idéntica para bases de datos existentes: asegurar columnas en tablas ya creadas
 ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS productos_premios JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS pozo_premios NUMERIC(12, 2) DEFAULT 0;
-ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS esquema_premios TEXT DEFAULT 'top4_standard';
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS pozo_coins_cop NUMERIC(12, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS pool_sobres_cop NUMERIC(12, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS total_wins INT DEFAULT 0;
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS esquema_premios TEXT DEFAULT 'prizewall_100pct';
 ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS gastos_evento NUMERIC(12, 2) DEFAULT 0;
 ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS participantes JSONB DEFAULT '[]'::jsonb;
 
 ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS productos_premios JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS wins INT DEFAULT 0;
+ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS cc_coins INT DEFAULT 0;
 ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS monto_pagado NUMERIC(12, 2) DEFAULT 0;
 ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS estado_pago TEXT DEFAULT 'pagado';
 ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS premio_ganado TEXT;
@@ -179,6 +189,9 @@ DECLARE
     v_nick TEXT;
     v_bandai TEXT;
     v_email TEXT;
+    v_pts INT;
+    v_wins INT;
+    v_coins INT;
 BEGIN
     -- Eliminar los participantes actuales del torneo modificado
     DELETE FROM public.torneo_participantes WHERE torneo_id = NEW.id;
@@ -191,6 +204,9 @@ BEGIN
             v_bandai := TRIM(elem->>'bandaiId');
             v_email := LOWER(TRIM(COALESCE(elem->>'email', '')));
             v_user_id := NULL;
+            v_pts := COALESCE((elem->>'puntos')::INT, 0);
+            v_wins := COALESCE((elem->>'wins')::INT, FLOOR(v_pts / 3)::INT);
+            v_coins := COALESCE((elem->>'ccCoins')::INT, v_wins);
 
             -- Intentar encontrar el ID de usuario registrado por Nickname, Bandai ID o Email
             IF v_nick IS NOT NULL AND v_nick <> '' THEN
@@ -217,6 +233,8 @@ BEGIN
                 telefono,
                 puesto,
                 puntos,
+                wins,
+                cc_coins,
                 omw,
                 monto_pagado,
                 estado_pago,
@@ -236,7 +254,9 @@ BEGIN
                 NULLIF(v_email, ''),
                 COALESCE(elem->>'telefono', ''),
                 COALESCE(elem->>'puesto', 'Participante'),
-                COALESCE((elem->>'puntos')::INT, 0),
+                v_pts,
+                v_wins,
+                v_coins,
                 COALESCE(elem->>'omw', ''),
                 COALESCE((elem->>'montoPagado')::NUMERIC, NEW.costo_inscripcion),
                 COALESCE(elem->>'estadoPago', 'pagado'),
@@ -313,6 +333,9 @@ INSERT INTO public.torneos (
     cupo_maximo,
     premios,
     pozo_premios,
+    pozo_coins_cop,
+    pool_sobres_cop,
+    total_wins,
     esquema_premios,
     gastos_evento,
     estado,
@@ -329,27 +352,30 @@ VALUES (
     'Estándar Suizo (4 Rondas)',
     '2026-10-24 15:00:00-05',
     'Sede Capsule Corp Gaming - Cali (Cra 34 # 4-50)',
-    35000,
+    26000,
     24,
-    '1er Lugar: 1 Display OP-09 sellado + Carta Promo Winner. Top 4: Sobres de torneo oficiales. Todos: Sobre de participación.',
-    420000,
-    'top4_standard',
-    100000,
+    '100% de la inscripción en premios ($26.000 COP por jugador): Cada victoria otorga 1 CC Coin ($2.000 COP descontados para el Prize Wall) + Pool restante en Sobres Oficiales OP-09 (11 al Top 4 y 1 a la Rifa) + 1 Winner Pack al 1° y Tournament Packs a todos.',
+    312000,
+    48000,
+    264000,
+    24,
+    'prizewall_100pct',
+    50000,
     'finalizado',
     'Torneo oficial reportado en Bandai TCG+. Registro y emparejamientos automáticos.',
     '[
-      {"id":"p-1","nombre":"[BC] JackPoe","nickname":"[BC] JackPoe","bandaiId":"0000205267","puntos":12,"omw":"52%","deck":"Luffy Red-Purple","montoPagado":35000,"estadoPago":"pagado","puesto":"1","premioGanado":"$210.000 COP + 1 Booster Box OP-09","notas":"Campeón del torneo"},
-      {"id":"p-2","nombre":"danieldlora","nickname":"danieldlora","bandaiId":"0000780406","puntos":9,"omw":"64.5%","deck":"Doflamingo Blue","montoPagado":35000,"estadoPago":"pagado","puesto":"2","premioGanado":"$126.000 COP + Sobres Oficiales","notas":"Subcampeón"},
-      {"id":"p-3","nombre":"Niñojackie","nickname":"Niñojackie","bandaiId":"0000014931","puntos":9,"omw":"52%","deck":"Rob Lucci Black","montoPagado":35000,"estadoPago":"pagado","puesto":"3","premioGanado":"$42.000 COP + Sobres de Torneo","notas":"Top 4"},
-      {"id":"p-4","nombre":"Lythrick","nickname":"Lythrick","bandaiId":"0000934049","puntos":6,"omw":"64.5%","deck":"Enel Yellow","montoPagado":35000,"estadoPago":"pagado","puesto":"4","premioGanado":"$42.000 COP + Sobres de Torneo","notas":"Top 4"},
-      {"id":"p-5","nombre":"SirCrocodile","nickname":"SirCrocodile","bandaiId":"0000138670","puntos":6,"omw":"62.5%","deck":"Crocodile Blue-Yellow","montoPagado":35000,"estadoPago":"pagado","puesto":"5","premioGanado":"Sobre de participación","notas":"Top 8"},
-      {"id":"p-6","nombre":"S3ph1","nickname":"S3ph1","bandaiId":"0000029497","puntos":6,"omw":"52%","deck":"Zoro Red","montoPagado":35000,"estadoPago":"pagado","puesto":"6","premioGanado":"Sobre de participación","notas":"Top 8"},
-      {"id":"p-7","nombre":"[BC] Reikuniga","nickname":"[BC] Reikuniga","bandaiId":"0000569050","puntos":6,"omw":"47.8%","deck":"Law Red-Green","montoPagado":35000,"estadoPago":"pagado","puesto":"7","premioGanado":"Sobre de participación","notas":"Top 8"},
-      {"id":"p-8","nombre":"Spicynuggets73","nickname":"Spicynuggets73","bandaiId":"0000148790","puntos":6,"omw":"45.8%","deck":"Katakuri Yellow","montoPagado":35000,"estadoPago":"pagado","puesto":"8","premioGanado":"Sobre de participación","notas":"Top 8"},
-      {"id":"p-9","nombre":"[BC] Glauser","nickname":"[BC] Glauser","bandaiId":"0000419822","puntos":6,"omw":"41.5%","deck":"Yamato Green-Yellow","montoPagado":35000,"estadoPago":"pagado","puesto":"9","premioGanado":"Sobre de participación","notas":""},
-      {"id":"p-10","nombre":"Nicko22","nickname":"Nicko22","bandaiId":"0001003598","puntos":3,"omw":"62.5%","deck":"Nami Blue","montoPagado":35000,"estadoPago":"pagado","puesto":"10","premioGanado":"Sobre de participación","notas":""},
-      {"id":"p-11","nombre":"Lavendertownboy","nickname":"Lavendertownboy","bandaiId":"0000934053","puntos":3,"omw":"58.3%","deck":"Uta Green","montoPagado":35000,"estadoPago":"pagado","puesto":"11","premioGanado":"Sobre de participación","notas":""},
-      {"id":"p-12","nombre":"[BC] Arenas","nickname":"[BC] Arenas","bandaiId":"0000120197","puntos":0,"omw":"45.8%","deck":"Whitebeard Red","montoPagado":35000,"estadoPago":"pagado","puesto":"12","premioGanado":"Sobre de participación","notas":""}
+      {"id":"p-1","nombre":"[BC] JackPoe","nickname":"[BC] JackPoe","bandaiId":"0000205267","puntos":12,"wins":4,"ccCoins":4,"omw":"52%","deck":"Luffy Red-Purple","montoPagado":26000,"estadoPago":"pagado","puesto":"1","premioGanado":"🪙 4 CC Coins (4 Wins) + 1x Sobre Winner Oficial + 5x Sobres Oficiales OP-09 + 1x Tournament Pack","notas":"Campeón del torneo"},
+      {"id":"p-2","nombre":"danieldlora","nickname":"danieldlora","bandaiId":"0000780406","puntos":9,"wins":3,"ccCoins":3,"omw":"64.5%","deck":"Doflamingo Blue","montoPagado":26000,"estadoPago":"pagado","puesto":"2","premioGanado":"🪙 3 CC Coins (3 Wins) + 3x Sobres Oficiales OP-09 + 1x Tournament Pack","notas":"Subcampeón"},
+      {"id":"p-3","nombre":"Niñojackie","nickname":"Niñojackie","bandaiId":"0000014931","puntos":9,"wins":3,"ccCoins":3,"omw":"52%","deck":"Rob Lucci Black","montoPagado":26000,"estadoPago":"pagado","puesto":"3","premioGanado":"🪙 3 CC Coins (3 Wins) + 2x Sobres Oficiales OP-09 + 1x Tournament Pack","notas":"Top 4"},
+      {"id":"p-4","nombre":"Lythrick","nickname":"Lythrick","bandaiId":"0000934049","puntos":6,"wins":2,"ccCoins":2,"omw":"64.5%","deck":"Enel Yellow","montoPagado":26000,"estadoPago":"pagado","puesto":"4","premioGanado":"🪙 2 CC Coins (2 Wins) + 1x Sobres Oficiales OP-09 + 1x Tournament Pack","notas":"Top 4"},
+      {"id":"p-5","nombre":"SirCrocodile","nickname":"SirCrocodile","bandaiId":"0000138670","puntos":6,"wins":2,"ccCoins":2,"omw":"62.5%","deck":"Crocodile Blue-Yellow","montoPagado":26000,"estadoPago":"pagado","puesto":"5","premioGanado":"🪙 2 CC Coins (2 Wins) + 1x Tournament Pack","notas":"Top 8"},
+      {"id":"p-6","nombre":"S3ph1","nickname":"S3ph1","bandaiId":"0000029497","puntos":6,"wins":2,"ccCoins":2,"omw":"52%","deck":"Zoro Red","montoPagado":26000,"estadoPago":"pagado","puesto":"6","premioGanado":"🪙 2 CC Coins (2 Wins) + 1x Tournament Pack","notas":"Top 8"},
+      {"id":"p-7","nombre":"[BC] Reikuniga","nickname":"[BC] Reikuniga","bandaiId":"0000569050","puntos":6,"wins":2,"ccCoins":2,"omw":"47.8%","deck":"Law Red-Green","montoPagado":26000,"estadoPago":"pagado","puesto":"7","premioGanado":"🪙 2 CC Coins (2 Wins) + 1x Tournament Pack + 1x Sobres Oficiales OP-09 (Ganador Rifa)","notas":"Top 8 - Ganador Rifa"},
+      {"id":"p-8","nombre":"Spicynuggets73","nickname":"Spicynuggets73","bandaiId":"0000148790","puntos":6,"wins":2,"ccCoins":2,"omw":"45.8%","deck":"Katakuri Yellow","montoPagado":26000,"estadoPago":"pagado","puesto":"8","premioGanado":"🪙 2 CC Coins (2 Wins) + 1x Tournament Pack","notas":"Top 8"},
+      {"id":"p-9","nombre":"[BC] Glauser","nickname":"[BC] Glauser","bandaiId":"0000419822","puntos":6,"wins":2,"ccCoins":2,"omw":"41.5%","deck":"Yamato Green-Yellow","montoPagado":26000,"estadoPago":"pagado","puesto":"9","premioGanado":"🪙 2 CC Coins (2 Wins) + 1x Tournament Pack","notas":""},
+      {"id":"p-10","nombre":"Nicko22","nickname":"Nicko22","bandaiId":"0001003598","puntos":3,"wins":1,"ccCoins":1,"omw":"62.5%","deck":"Nami Blue","montoPagado":26000,"estadoPago":"pagado","puesto":"10","premioGanado":"🪙 1 CC Coin (1 Win) + 1x Tournament Pack","notas":""},
+      {"id":"p-11","nombre":"Lavendertownboy","nickname":"Lavendertownboy","bandaiId":"0000934053","puntos":3,"wins":1,"ccCoins":1,"omw":"58.3%","deck":"Uta Green","montoPagado":26000,"estadoPago":"pagado","puesto":"11","premioGanado":"🪙 1 CC Coin (1 Win) + 1x Tournament Pack","notas":""},
+      {"id":"p-12","nombre":"[BC] Arenas","nickname":"[BC] Arenas","bandaiId":"0000120197","puntos":0,"wins":0,"ccCoins":0,"omw":"45.8%","deck":"Whitebeard Red","montoPagado":26000,"estadoPago":"pagado","puesto":"12","premioGanado":"🪙 0 CC Coins (0 Wins) + 1x Tournament Pack","notas":""}
     ]'::jsonb,
     NOW(),
     NOW()
@@ -359,6 +385,10 @@ ON CONFLICT (id) DO UPDATE SET
     juego = EXCLUDED.juego,
     costo_inscripcion = EXCLUDED.costo_inscripcion,
     pozo_premios = EXCLUDED.pozo_premios,
+    pozo_coins_cop = EXCLUDED.pozo_coins_cop,
+    pool_sobres_cop = EXCLUDED.pool_sobres_cop,
+    total_wins = EXCLUDED.total_wins,
+    premios = EXCLUDED.premios,
     participantes = EXCLUDED.participantes,
     actualizado_en = NOW();
 
@@ -545,4 +575,81 @@ ON CONFLICT (id) DO UPDATE SET
     valor_cop = EXCLUDED.valor_cop,
     imagen = EXCLUDED.imagen,
     actualizado_en = NOW();
+
+-- ==============================================================================
+-- 10. TABLAS: PRIZEWALL_ITEMS Y PRIZEWALL_CANJES (MURO DE PREMIOS & CC COINS)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.prizewall_items (
+    id TEXT PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    categoria TEXT DEFAULT 'Accesorios',
+    costo_coins INT NOT NULL DEFAULT 1,
+    valor_cop NUMERIC(12, 2) DEFAULT 0,
+    stock INT NOT NULL DEFAULT 0,
+    imagen TEXT,
+    descripcion TEXT,
+    activo BOOLEAN DEFAULT true,
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_prizewall_items_cat ON public.prizewall_items(categoria);
+CREATE INDEX IF NOT EXISTS idx_prizewall_items_stock ON public.prizewall_items(stock);
+
+ALTER TABLE IF EXISTS public.prizewall_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Lectura publica prizewall_items" ON public.prizewall_items;
+CREATE POLICY "Lectura publica prizewall_items" ON public.prizewall_items
+    FOR SELECT TO public USING (true);
+
+DROP POLICY IF EXISTS "Gestion prizewall_items" ON public.prizewall_items;
+CREATE POLICY "Gestion prizewall_items" ON public.prizewall_items
+    FOR ALL USING (true);
+
+CREATE TABLE IF NOT EXISTS public.prizewall_canjes (
+    id TEXT PRIMARY KEY,
+    item_id TEXT REFERENCES public.prizewall_items(id) ON DELETE SET NULL,
+    item_nombre TEXT NOT NULL,
+    item_imagen TEXT,
+    jugador_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    jugador_nombre TEXT NOT NULL,
+    jugador_key TEXT,
+    cantidad INT NOT NULL DEFAULT 1,
+    costo_total_coins INT NOT NULL DEFAULT 0,
+    equivalente_total_cop NUMERIC(12, 2) DEFAULT 0,
+    fecha TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_prizewall_canjes_fecha ON public.prizewall_canjes(fecha);
+CREATE INDEX IF NOT EXISTS idx_prizewall_canjes_jugador ON public.prizewall_canjes(jugador_key);
+
+ALTER TABLE IF EXISTS public.prizewall_canjes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Lectura publica prizewall_canjes" ON public.prizewall_canjes;
+CREATE POLICY "Lectura publica prizewall_canjes" ON public.prizewall_canjes
+    FOR SELECT TO public USING (true);
+
+DROP POLICY IF EXISTS "Gestion prizewall_canjes" ON public.prizewall_canjes;
+CREATE POLICY "Gestion prizewall_canjes" ON public.prizewall_canjes
+    FOR ALL USING (true);
+
+-- Seed de artículos iniciales del Prize Wall
+INSERT INTO public.prizewall_items (id, nombre, categoria, costo_coins, valor_cop, stock, imagen, descripcion)
+VALUES
+    ('pw-playmat-champ', 'Playmat de Neopreno Oficial Store Championship (Exclusivo)', 'Playmats', 40, 80000, 5, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80', 'Tapete de neopreno premium con costuras cosidas y diseño exclusivo del Prize Wall.'),
+    ('pw-sleeves-op', 'Fundas Oficiales Premium One Piece (Pack x70)', 'Fundas / Sleeves', 15, 30000, 12, 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400&q=80', 'Fundas de torneo oficiales con acabado mate antirreflejo para máxima protección.'),
+    ('pw-deckbox-cc', 'Deck Box Acrílica Magnética Capsule Corp Gaming', 'Deck Boxes', 12, 24000, 10, 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80', 'Caja porta-mazo acrílica con imanes de neodimio y división para dados.'),
+    ('pw-promo-foil', 'Carta Promo Foil Exclusiva Prize Wall One Piece TCG', 'Cartas Promo', 10, 20000, 20, 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&q=80', 'Carta promocional con relieve dorado y sello oficial de evento.'),
+    ('pw-dados-acrilicos', 'Set de Dados y Contadores Acrílicos de Daño', 'Accesorios', 5, 10000, 25, 'https://images.unsplash.com/photo-1578374173705-969cbe6f2d6b?w=400&q=80', 'Set de 6 dados de resina acrílica para contadores de daño y estado.'),
+    ('pw-sobre-tienda-op09', 'Sobre Sellado Oficial OP-09 (Four Emperors)', 'Sobres', 11, 22000, 36, 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=400&q=80', 'Canjea 11 CC Coins por un sobre sellado adicional oficial de la tienda.')
+ON CONFLICT (id) DO UPDATE SET
+    nombre = EXCLUDED.nombre,
+    categoria = EXCLUDED.categoria,
+    costo_coins = EXCLUDED.costo_coins,
+    valor_cop = EXCLUDED.valor_cop,
+    stock = EXCLUDED.stock,
+    imagen = EXCLUDED.imagen,
+    descripcion = EXCLUDED.descripcion,
+    actualizado_en = NOW();
+
 
