@@ -896,11 +896,15 @@ export default function AgregarCarta() {
                     <div className={`tcg-cards-grid densidad-${densidad}`}>
                       {printsFiltrados.map((p, index) => {
                         const tag = getCardTag(p);
-                        const esSeleccionada =
+                        const esSeleccionada = Boolean(
                           seleccionada &&
-                          (seleccionada === p ||
-                            (seleccionada.id && p.id && seleccionada.id === p.id && seleccionada.imagen === p.imagen) ||
-                            (seleccionada.imagen && seleccionada.imagen === p.imagen));
+                            (seleccionada === p ||
+                              (seleccionada.id != null && p.id != null
+                                ? String(seleccionada.id) === String(p.id)
+                                : seleccionada.nombre === p.nombre &&
+                                  seleccionada.set === p.set &&
+                                  String(seleccionada.numero || "") === String(p.numero || "")))
+                        );
 
                         const usdVal = p.precios?.usd;
                         const copEquiv = usdVal ? Math.round(Number(usdVal) * 3500) : null;
