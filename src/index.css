@@ -12358,3 +12358,703 @@ img { display: block; max-width: 100%; }
   color: var(--texto);
 }
 
+/* ========================================================================== */
+/* PRIZE WALL, CC COINS Y ECONOMÍA DE TORNEOS (100% RETORNO)                  */
+/* ========================================================================== */
+
+/* Botón Header Prize Wall */
+.btn-prizewall-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-prizewall-banner:hover {
+  background: var(--t08);
+  border-color: var(--acento);
+}
+
+.badge-prizewall-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--t08);
+  border: 1px solid var(--borde);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+/* Card de Economía Oficial del Torneo */
+.torneo-economic-pool-card {
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.tep-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tep-title-wrap h4 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tep-title-wrap p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.tep-badge-official {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--t05);
+  border: 1px solid var(--borde);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tep-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.tep-stat-box {
+  background: var(--bg);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tep-stat-box.highlight {
+  border-color: var(--acento);
+  background: var(--t04);
+}
+
+.tep-stat-box span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tep-stat-val {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--texto);
+}
+
+.tep-stat-sub {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.tep-payout-split {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 12px;
+}
+
+@media (max-width: 860px) {
+  .tep-payout-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tep-split-block {
+  background: var(--bg);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tep-split-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tep-split-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tep-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  font-size: 11.5px;
+  color: var(--texto);
+}
+
+.tep-split-note {
+  font-size: 11px;
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+.tep-guarantee-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--t05);
+  border: 1px solid var(--borde);
+  font-size: 11.5px;
+  color: var(--texto-suave);
+  flex-wrap: wrap;
+}
+
+.tep-guarantee-strip strong {
+  color: var(--texto);
+}
+
+/* Badges de Wins y CC Coins en Tablas */
+.wins-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--t05);
+  border: 1px solid var(--borde);
+  font-size: 12px;
+  color: var(--texto);
+}
+
+.wins-badge strong {
+  font-weight: 700;
+}
+
+.coin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--borde);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.coin-chip.highlight {
+  border-color: var(--borde-focus);
+  background: var(--t08);
+}
+
+.redeemed-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--borde);
+  font-size: 11.5px;
+  color: var(--texto-suave);
+}
+
+.cc-coins-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coin-fiat-eq {
+  font-size: 10.5px;
+  color: var(--texto-suave);
+}
+
+.btn-quick-canje {
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-quick-canje:hover {
+  background: var(--texto);
+  color: var(--nav);
+  border-color: var(--texto);
+}
+
+/* Import Preview Banner */
+.import-economic-summary-banner {
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ies-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.ies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.ies-item {
+  background: var(--bg);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ies-item span {
+  font-size: 10.5px;
+  color: var(--texto-suave);
+}
+
+.ies-item strong {
+  font-size: 13.5px;
+  color: var(--texto);
+}
+
+/* ========================================================================== */
+/* MODAL PRIZE WALL                                                           */
+/* ========================================================================== */
+.modal-prizewall-dialog {
+  max-width: 1040px !important;
+  width: 95% !important;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pw-subnav-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--borde);
+  padding-bottom: 12px;
+}
+
+.pw-subtab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  color: var(--texto-suave);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pw-subtab-btn.active,
+.pw-subtab-btn:hover {
+  background: var(--texto);
+  color: var(--nav);
+  border-color: var(--texto);
+}
+
+/* Drawer de canje activo */
+.pw-canje-drawer {
+  background: var(--nav);
+  border: 1px solid var(--acento);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.pw-drawer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pw-drawer-item-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pw-drawer-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--borde);
+}
+
+.pw-drawer-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pw-select-player,
+.pw-cant-input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--borde);
+  font-size: 12.5px;
+  color: var(--texto);
+  outline: none;
+}
+
+.pw-cant-input {
+  width: 70px;
+}
+
+.pw-drawer-cost-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pw-drawer-cost-calc span {
+  font-size: 10.5px;
+  color: var(--texto-suave);
+}
+
+.pw-drawer-cost-calc strong {
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.pw-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-confirmar-canje {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: var(--acento);
+  border: 1px solid var(--acento);
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-confirmar-canje:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-confirmar-canje:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Grid de Artículos del Prize Wall */
+.pw-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.pw-card-item {
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s ease;
+}
+
+.pw-card-item:hover {
+  border-color: var(--borde-focus);
+}
+
+.pw-card-thumb-wrap {
+  width: 100%;
+  height: 150px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--borde);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pw-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pw-card-img-placeholder {
+  color: var(--texto-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pw-badge-cat {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #FFFFFF;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.pw-card-content {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.pw-card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto);
+  line-height: 1.3;
+}
+
+.pw-price-tag {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pw-coin-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--texto);
+}
+
+.pw-fiat-val {
+  font-size: 11.5px;
+  color: var(--texto-suave);
+}
+
+.pw-stock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.pw-stock-pill.out {
+  color: var(--texto);
+  font-weight: 700;
+}
+
+.pw-card-desc {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--texto-suave);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.pw-card-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--borde);
+}
+
+.pw-stock-controls {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.btn-pw-stock {
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  color: var(--texto);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-pw-stock:hover:not(:disabled) {
+  background: var(--t08);
+}
+
+.btn-pw-stock:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-pw-canjear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--texto);
+  color: var(--nav);
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-pw-canjear:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-pw-canjear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-pw-del {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.btn-pw-del:hover {
+  color: var(--texto);
+}
+
+/* Saldos de Jugadores en Prize Wall */
+.pw-players-summary-bar {
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.pw-players-summary-bar strong {
+  color: var(--texto);
+}
+
+.pw-players-summary-bar p {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+/* Historial de canjes */
+.pw-history-item-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pw-history-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid var(--borde);
+}
+
+.pw-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--texto-suave);
+}
+
+.pw-empty-state p {
+  margin: 0;
+  font-weight: 700;
+  color: var(--texto);
+}

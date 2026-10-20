@@ -66,6 +66,7 @@ export function parsearTextoBandai(texto) {
         }
 
         if (username) {
+          const wins = Math.floor(puntos / 3);
           participantes.push({
             id: `p-${Date.now()}-${participantes.length + 1}`,
             puesto: String(puesto),
@@ -73,6 +74,8 @@ export function parsearTextoBandai(texto) {
             nombre: username,
             nickname: username,
             puntos,
+            wins,
+            ccCoins: wins,
             omw,
             deck: "",
             montoPagado: 0,
@@ -100,6 +103,7 @@ export function parsearTextoBandai(texto) {
         puntos = Number(subMatch[2]);
       }
 
+      const wins = Math.floor(puntos / 3);
       participantes.push({
         id: `p-${Date.now()}-${participantes.length + 1}`,
         puesto: String(puesto),
@@ -107,6 +111,8 @@ export function parsearTextoBandai(texto) {
         nombre: username,
         nickname: username,
         puntos,
+        wins,
+        ccCoins: wins,
         deck: "",
         montoPagado: 0,
         estadoPago: "pagado",
@@ -130,13 +136,17 @@ export function parsearTextoBandai(texto) {
         }
 
         if (username) {
+          const puntos = Number(tokens[3]) || 0;
+          const wins = Math.floor(puntos / 3);
           participantes.push({
             id: `p-${Date.now()}-${participantes.length + 1}`,
             puesto: String(numPuesto),
             bandaiId,
             nombre: username,
             nickname: username,
-            puntos: Number(tokens[3]) || 0,
+            puntos,
+            wins,
+            ccCoins: wins,
             deck: "",
             montoPagado: 0,
             estadoPago: "pagado",

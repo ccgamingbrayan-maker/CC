@@ -57,6 +57,14 @@ import {
   aplicarPremiacionOficialTorneo,
   sortearRifaTorneo,
   cargarKitsMensualesBandai,
+  listarPrizeWall,
+  guardarItemPrizeWall,
+  eliminarItemPrizeWall,
+  ajustarStockPrizeWall,
+  listarCanjesPrizeWall,
+  obtenerSaldosCcCoinsJugadores,
+  canjearItemPrizeWall,
+  PRIZE_WALL_ITEMS_INICIALES,
 } from "../lib/torneos.js";
 import {
   parsearTextoBandai,
@@ -154,6 +162,29 @@ export default function Torneos() {
   const [sorteandoRifa, setSorteandoRifa] = useState(false);
   const [notifRifa, setNotifRifa] = useState("");
 
+  // Muro de Premios (Prize Wall) & CC Coins
+  const [itemsPrizeWall, setItemsPrizeWall] = useState(PRIZE_WALL_ITEMS_INICIALES);
+  const [saldosCcCoins, setSaldosCcCoins] = useState([]);
+  const [canjesPrizeWall, setCanjesPrizeWall] = useState([]);
+  const [modalPrizeWallAbierto, setModalPrizeWallAbierto] = useState(false);
+  const [subTabPrizeWall, setSubTabPrizeWall] = useState("items"); // "items" | "jugadores" | "historial"
+  const [busquedaPW, setBusquedaPW] = useState("");
+  const [canjeItemActivo, setCanjeItemActivo] = useState(null);
+  const [canjeJugadorKey, setCanjeJugadorKey] = useState("");
+  const [canjeCantidad, setCanjeCantidad] = useState("1");
+  const [canjeando, setCanjeando] = useState(false);
+  const [mensajeCanje, setMensajeCanje] = useState("");
+
+  // Formulario nuevo artículo Prize Wall
+  const [mostrarFormNuevoPW, setMostrarFormNuevoPW] = useState(false);
+  const [pwNombre, setPwNombre] = useState("");
+  const [pwCategoria, setPwCategoria] = useState("Accesorios");
+  const [pwCostoCoins, setPwCostoCoins] = useState("10");
+  const [pwStock, setPwStock] = useState("5");
+  const [pwImagen, setPwImagen] = useState("");
+  const [pwDescripcion, setPwDescripcion] = useState("");
+  const [guardandoPWItem, setGuardandoPWItem] = useState(false);
+
   // Modal Importador Automático Bandai TCG+ / Riftbound
   const [modalImportarAbierto, setModalImportarAbierto] = useState(false);
   const [importTexto, setImportTexto] = useState("");
@@ -249,7 +280,11 @@ export default function Torneos() {
     const stockWinner = prodWinner?.stock ?? 7;
     const stockPacks = prodPack?.stock ?? 56;
 
-    const calculo = calcularPremiacionOficialOnePiece(participantesParseados.length);
+    const calculo = calcularPremiacionOficialOnePiece(
+      participantesParseados.length,
+      participantesParseados,
+      prodSobres?.valorCop || 22000
+    );
 
     // Construir lista de productos de premiación del torneo
     const productosPremiosTorneo = [];
@@ -307,7 +342,14 @@ export default function Torneos() {
 
     const participantesConPremios = participantesParseados.map((p) => {
       const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
+      const wins = p.wins !== undefined && p.wins !== null
+        ? Number(p.wins)
+        : Math.floor((Number(p.puntos) || 0) / 3);
+      const ccCoins = Math.max(0, wins);
+
       const items = [];
+      // CC Coins por victorias para el Prize Wall (1 win = 1 CC Coin = $2.000 COP)
+      items.push(`🪙 ${ccCoins} CC Coin${ccCoins === 1 ? "" : "s"} (${wins} win${wins === 1 ? "" : "s"})`);
 
       if (numP === 1 && stockWinner > 0) {
         items.push(prodWinner ? `1x ${prodWinner.nombre}` : "1x Sobre Winner Oficial");
@@ -322,10 +364,12 @@ export default function Torneos() {
         items.push(prodPack ? `1x ${prodPack.nombre}` : "1x Tournament Pack");
       }
 
-      const premioTexto = items.join(" + ") || "1x Tournament Pack";
+      const premioTexto = items.join(" + ");
 
       return {
         ...p,
+        wins,
+        ccCoins,
         montoPagado: costo,
         estadoPago: "pagado",
         premioGanado: premioTexto,
@@ -354,9 +398,9 @@ export default function Torneos() {
       lugar: importLugar.trim(),
       costoInscripcion: costo,
       cupoMaximo: Math.max(participantesParseados.length, 16),
-      premios: `Premiación oficial: ${calculo.puestosPremiados > 4 ? `Top ${calculo.puestosPremiados}` : "Top 4"} en Sobres OP, Winner al 1°, Tournament Packs a participantes y 1 Sobre de Rifa.`,
+      premios: `100% de la inscripción en premios ($26.000 COP por jugador): Cada victoria otorga 1 CC Coin ($2.000 COP descontados para el Prize Wall) + Pool restante en Sobres Oficiales OP-09 (${calculo.sobresTop} al Top ${calculo.puestosPremiados} y ${calculo.sobresRifa} a la Rifa) + 1 Winner Pack al 1° y Tournament Packs a todos.`,
       estado: "finalizado",
-      notas: `Importado automáticamente desde Bandai TCG+ (${participantesParseados.length} jugadores). Incluye 1 Sobre de Rifa para sortear.`,
+      notas: `Importado automáticamente desde Bandai TCG+ (${participantesParseados.length} jugadores). 100% entregado en premios entre CC Coins y sobres.`,
       productosPremios: productosPremiosTorneo,
       participantes: participantesConPremios,
     };
@@ -369,16 +413,87 @@ export default function Torneos() {
     }
   }
 
-
   async function cargarDatos() {
     setCargando(true);
-    const [dataTorneos, dataCatalogo] = await Promise.all([
+    const [dataTorneos, dataCatalogo, dataPW, dataSaldos, dataCanjes] = await Promise.all([
       listarTorneos(),
       listarCatalogoPremios(),
+      listarPrizeWall(),
+      obtenerSaldosCcCoinsJugadores(),
+      listarCanjesPrizeWall(),
     ]);
     setTorneos(dataTorneos);
     setCatalogoPremios(dataCatalogo);
+    setItemsPrizeWall(dataPW);
+    setSaldosCcCoins(dataSaldos);
+    setCanjesPrizeWall(dataCanjes);
     setCargando(false);
+  }
+
+  async function handleCanjearItem(e) {
+    if (e) e.preventDefault();
+    if (!canjeItemActivo || !canjeJugadorKey) {
+      alert("Por favor selecciona el jugador para procesar el canje.");
+      return;
+    }
+    const cant = Math.max(1, parseInt(canjeCantidad, 10) || 1);
+    setCanjeando(true);
+    setMensajeCanje("");
+
+    const res = await canjearItemPrizeWall({
+      itemId: canjeItemActivo.id,
+      jugadorIdentificador: canjeJugadorKey,
+      cantidad: cant,
+    });
+
+    if (res.error) {
+      alert(res.error);
+      setCanjeando(false);
+      return;
+    }
+
+    setMensajeCanje(`¡Canje exitoso! Se entregó "${res.item.nombre}" (${cant}x) por ${res.canje.costoTotalCoins} CC Coins.`);
+    setCanjeItemActivo(null);
+    setCanjeJugadorKey("");
+    setCanjeCantidad("1");
+    setCanjeando(false);
+    await cargarDatos();
+  }
+
+  async function handleGuardarItemPW(e) {
+    e.preventDefault();
+    if (!pwNombre.trim()) {
+      alert("El nombre del artículo es obligatorio.");
+      return;
+    }
+    setGuardandoPWItem(true);
+    await guardarItemPrizeWall({
+      nombre: pwNombre,
+      categoria: pwCategoria,
+      costoCcCoins: pwCostoCoins,
+      stock: pwStock,
+      imagen: pwImagen,
+      descripcion: pwDescripcion,
+    });
+    setPwNombre("");
+    setPwCostoCoins("10");
+    setPwStock("5");
+    setPwImagen("");
+    setPwDescripcion("");
+    setMostrarFormNuevoPW(false);
+    setGuardandoPWItem(false);
+    await cargarDatos();
+  }
+
+  async function handleEliminarItemPW(id) {
+    if (!window.confirm("¿Seguro que deseas eliminar este artículo del Prize Wall?")) return;
+    await eliminarItemPrizeWall(id);
+    await cargarDatos();
+  }
+
+  async function handleAjustarStockPW(id, delta) {
+    await ajustarStockPrizeWall(id, delta);
+    await cargarDatos();
   }
 
   function abrirModalCrear() {
@@ -850,6 +965,16 @@ export default function Torneos() {
           </button>
           <button
             type="button"
+            className="btn-prizewall-banner"
+            onClick={() => setModalPrizeWallAbierto(true)}
+            title="Muro de Premios (Prize Wall): Canjea productos exclusivos con tus CC Coins ganadas por victorias"
+          >
+            <Coins size={16} />
+            <span>Muro de Premios (Prize Wall)</span>
+            <span className="badge-prizewall-chip">1 Win = 1 CC Coin</span>
+          </button>
+          <button
+            type="button"
             className="btn-importar-bandai"
             onClick={() => abrirModalImportar(null)}
           >
@@ -1222,6 +1347,77 @@ export default function Torneos() {
                     <div className="m-metric-box highlight">
                       <span className="m-label">Ganancia Neta</span>
                       <strong className="m-val text-cyan">${m.gananciaNeta.toLocaleString("es-CO")} COP</strong>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Banner de Modelo Oficial de Premiación 100% Retorno & CC Coins */}
+              {(() => {
+                const calculoPremios = calcularPremiacionOficialOnePiece(
+                  torneoDetalle.participantes?.length || 0,
+                  torneoDetalle.participantes || []
+                );
+                return (
+                  <div className="torneo-economic-pool-card">
+                    <div className="tep-header">
+                      <div className="tep-title-group">
+                        <div className="tep-icon-wrap">
+                          <Coins size={20} />
+                        </div>
+                        <div>
+                          <div className="tep-title-row">
+                            <strong>Modelo Oficial de Premiación • 100% Retorno</strong>
+                            <span className="badge-tep-guarantee">
+                              <CheckCircle2 size={13} />
+                              <span>100% de la Inscripción en Premios</span>
+                            </span>
+                          </div>
+                          <p>
+                            Inscripción de ${calculoPremios.costoInscripcionUnitario.toLocaleString("es-CO")} COP por jugador entregada íntegramente en premios: 1 victoria = 1 CC Coin ($2.000 COP) para el Prize Wall y el saldo restante financia el pool de sobres oficiales de tienda y la rifa.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="tep-grid">
+                      <div className="tep-col">
+                        <span className="tep-label">Recaudo Total ({calculoPremios.numJugadores} jugadores)</span>
+                        <strong className="tep-value">${calculoPremios.totalInscripcionCOP.toLocaleString("es-CO")} COP</strong>
+                        <small className="tep-sub">Inscripción $26.000 COP c/u</small>
+                      </div>
+
+                      <div className="tep-col highlight-coins">
+                        <span className="tep-label">Asignado a CC Coins (Prize Wall)</span>
+                        <strong className="tep-value">${calculoPremios.montoCcCoinsCOP.toLocaleString("es-CO")} COP</strong>
+                        <small className="tep-sub">🪙 {calculoPremios.totalWins} Wins acumuladas ($2.000 COP/win)</small>
+                      </div>
+
+                      <div className="tep-col highlight-packs">
+                        <span className="tep-label">Pozo Restante en Sobres Tienda</span>
+                        <strong className="tep-value">${calculoPremios.poolRestanteCOP.toLocaleString("es-CO")} COP</strong>
+                        <small className="tep-sub">📦 {calculoPremios.totalSobresTienda} Sobres ({calculoPremios.sobresRifa} Rifa + {calculoPremios.sobresTop} Top {calculoPremios.puestosPremiados})</small>
+                      </div>
+
+                      <div className="tep-col">
+                        <span className="tep-label">Kits Bandai Oficiales</span>
+                        <strong className="tep-value">1 Winner + {calculoPremios.numJugadores} Packs</strong>
+                        <small className="tep-sub">1 Winner Pack (1°) + Tournament Packs (Todos)</small>
+                      </div>
+                    </div>
+
+                    <div className="tep-footer-bar">
+                      <span className="tep-footer-note">
+                        Total entregado a jugadores: <strong>${calculoPremios.retornoPremiosTotalCOP.toLocaleString("es-CO")} COP</strong> ({calculoPremios.porcentajeRetorno}% exacto del recaudo).
+                      </span>
+                      <button
+                        type="button"
+                        className="btn-open-pw-inline"
+                        onClick={() => setModalPrizeWallAbierto(true)}
+                      >
+                        <Coins size={14} />
+                        <span>Abrir Muro de Premios (Prize Wall)</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -1711,8 +1907,10 @@ export default function Torneos() {
                         <th>#</th>
                         <th>Jugador / Perfil</th>
                         <th>Puesto</th>
+                        <th>Victorias (Wins)</th>
+                        <th>🪙 CC Coins</th>
                         <th>Mazo</th>
-                        <th>Premio Ganado</th>
+                        <th>Premio Total Ganado</th>
                         <th>Pagado</th>
                         <th>Deuda</th>
                         <th>Estado Pago</th>
@@ -1730,6 +1928,13 @@ export default function Torneos() {
                         const es2 = pVal === "2" || pVal.includes("2°");
                         const es3 = pVal === "3" || pVal.includes("3°");
                         const es4 = pVal === "4" || pVal.includes("4°");
+
+                        const playerWins = p.wins !== undefined && p.wins !== null
+                          ? Number(p.wins)
+                          : Math.floor((Number(p.puntos) || 0) / 3);
+                        const playerCoins = p.ccCoins !== undefined && p.ccCoins !== null
+                          ? Number(p.ccCoins)
+                          : playerWins;
 
                         return (
                           <tr key={p.id}>
@@ -1766,6 +1971,26 @@ export default function Torneos() {
                                 <option value="Top 8">Top 8</option>
                                 <option value="Top 16">Top 16</option>
                               </select>
+                            </td>
+
+                            {/* VICTORIAS (WINS) */}
+                            <td className="col-wins">
+                              <div className="wins-badge-wrap">
+                                <span className="wins-badge">
+                                  <strong>{playerWins}</strong> {playerWins === 1 ? "win" : "wins"}
+                                </span>
+                                {p.puntos !== undefined && <small className="wins-pts">{p.puntos} pts</small>}
+                              </div>
+                            </td>
+
+                            {/* CC COINS */}
+                            <td className="col-cc-coins">
+                              <div className="cc-coins-cell">
+                                <span className="coin-chip">
+                                  🪙 <strong>{playerCoins}</strong>
+                                </span>
+                                <small className="coin-fiat-eq">${(playerCoins * 2000).toLocaleString("es-CO")}</small>
+                              </div>
                             </td>
 
                             <td className="col-deck">{p.deck || "—"}</td>
@@ -2262,6 +2487,34 @@ export default function Torneos() {
                   </div>
                 ) : (
                   <div className="parsed-table-wrap">
+                    {/* Resumen Económico del Torneo a Importar */}
+                    {(() => {
+                      const calculoPrev = calcularPremiacionOficialOnePiece(
+                        participantesParseados.length,
+                        participantesParseados
+                      );
+                      return (
+                        <div className="import-economic-summary-banner">
+                          <div className="ies-item">
+                            <span>Recaudo Total ({calculoPrev.numJugadores} jugadores)</span>
+                            <strong>${calculoPrev.totalInscripcionCOP.toLocaleString("es-CO")} COP</strong>
+                          </div>
+                          <div className="ies-item highlight-coins">
+                            <span>🪙 CC Coins Prize Wall</span>
+                            <strong>${calculoPrev.montoCcCoinsCOP.toLocaleString("es-CO")} COP ({calculoPrev.totalWins} Wins)</strong>
+                          </div>
+                          <div className="ies-item highlight-packs">
+                            <span>📦 Pool Sobres Tienda</span>
+                            <strong>${calculoPrev.poolRestanteCOP.toLocaleString("es-CO")} COP ({calculoPrev.totalSobresTienda} Sobres)</strong>
+                          </div>
+                          <div className="ies-item highlight-payout">
+                            <span>Retorno de Premios</span>
+                            <strong className="text-green">100% (${calculoPrev.retornoPremiosTotalCOP.toLocaleString("es-CO")} COP)</strong>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     <table className="parsed-table">
                       <thead>
                         <tr>
@@ -2269,17 +2522,27 @@ export default function Torneos() {
                           <th>Bandai ID</th>
                           <th>Nickname / Usuario</th>
                           <th>Puntos</th>
+                          <th>Victorias</th>
+                          <th>🪙 CC Coins</th>
                           <th>OMW %</th>
-                          <th>Premio en Producto Físico</th>
+                          <th>Premio Total Asignado</th>
                         </tr>
                       </thead>
                       <tbody>
                         {(() => {
-                          const calculoPrev = calcularPremiacionOficialOnePiece(participantesParseados.length);
+                          const calculoPrev = calcularPremiacionOficialOnePiece(
+                            participantesParseados.length,
+                            participantesParseados
+                          );
                           return participantesParseados.map((p, idx) => {
                             const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
                             const isTop = numP && numP <= calculoPrev.puestosPremiados;
                             const sobresTop = calculoPrev.sobresPorPuesto[numP] || 0;
+                            const wins = p.wins !== undefined && p.wins !== null
+                              ? Number(p.wins)
+                              : Math.floor((Number(p.puntos) || 0) / 3);
+                            const ccCoins = Math.max(0, wins);
+
                             return (
                               <tr key={idx} className={isTop ? "row-top" : ""}>
                                 <td className="cell-rank">
@@ -2294,13 +2557,21 @@ export default function Torneos() {
                                   <span className="player-tag-name">{p.nickname || p.nombre}</span>
                                 </td>
                                 <td className="cell-pts">{p.puntos ?? 0} pts</td>
+                                <td className="cell-wins">
+                                  <span className="wins-badge">
+                                    <strong>{wins}</strong> {wins === 1 ? "win" : "wins"}
+                                  </span>
+                                </td>
+                                <td className="cell-coins">
+                                  <span className="coin-chip">🪙 <strong>{ccCoins}</strong></span>
+                                </td>
                                 <td className="cell-omw">{p.omw || "-"}</td>
                                 <td className="cell-prize">
                                   <span className="prize-preview-badge">
-                                    {numP === 1
-                                      ? `🏆 1x Winner Oficial + ${sobresTop}x Sobres OP-09 + 1x Pack`
+                                    🪙 {ccCoins} Coins + {numP === 1
+                                      ? `🏆 Winner + ${sobresTop}x Sobres + Pack`
                                       : isTop
-                                      ? `${numP === 2 ? "🥈" : numP === 3 ? "🥉" : "⭐"} ${sobresTop}x Sobres OP-09 + 1x Pack`
+                                      ? `${numP === 2 ? "🥈" : numP === 3 ? "🥉" : "⭐"} ${sobresTop}x Sobres + Pack`
                                       : "🎁 1x Tournament Pack (Elegible Rifa)"}
                                   </span>
                                 </td>
@@ -2659,6 +2930,515 @@ export default function Torneos() {
                 onClick={() => setModalCatalogoAbierto(false)}
               >
                 Cerrar Catálogo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: MURO DE PREMIOS (PRIZE WALL) & CC COINS            */}
+      {/* ========================================================= */}
+      {modalPrizeWallAbierto && (
+        <div className="modal-overlay" onClick={() => setModalPrizeWallAbierto(false)}>
+          <div
+            className="modal-container modal-prizewall-dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div className="modal-title-wrap">
+                <div className="modal-icon-badge pw-coin-badge">
+                  <Coins size={22} />
+                </div>
+                <div>
+                  <h3 className="modal-title">Muro de Premios Oficial • Prize Wall</h3>
+                  <p className="modal-subtitle">
+                    1 Win en torneo = 1 CC Coin ($2.000 COP de inscripción) • Acumula tus CC Coins y reclama productos exclusivos que no se venden en tienda.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-close-modal"
+                onClick={() => setModalPrizeWallAbierto(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body modal-prizewall-body">
+              {/* Notificación de canje */}
+              {mensajeCanje && (
+                <div className="pw-toast-notification">
+                  <CheckCircle2 size={16} />
+                  <span>{mensajeCanje}</span>
+                </div>
+              )}
+
+              {/* Sub-pestañas del Prize Wall */}
+              <div className="pw-subtabs-toolbar">
+                <div className="pw-tabs-group">
+                  <button
+                    type="button"
+                    className={`pw-tab-btn ${subTabPrizeWall === "items" ? "active" : ""}`}
+                    onClick={() => setSubTabPrizeWall("items")}
+                  >
+                    <Package size={15} />
+                    <span>Artículos del Prize Wall ({itemsPrizeWall.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`pw-tab-btn ${subTabPrizeWall === "jugadores" ? "active" : ""}`}
+                    onClick={() => setSubTabPrizeWall("jugadores")}
+                  >
+                    <Users size={15} />
+                    <span>Saldos de CC Coins ({saldosCcCoins.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`pw-tab-btn ${subTabPrizeWall === "historial" ? "active" : ""}`}
+                    onClick={() => setSubTabPrizeWall("historial")}
+                  >
+                    <Award size={15} />
+                    <span>Historial de Canjes ({canjesPrizeWall.length})</span>
+                  </button>
+                </div>
+
+                <div className="pw-toolbar-right">
+                  <div className="pw-search-box">
+                    <Search size={14} />
+                    <input
+                      type="text"
+                      placeholder="Buscar en el Prize Wall..."
+                      value={busquedaPW}
+                      onChange={(e) => setBusquedaPW(e.target.value)}
+                    />
+                    {busquedaPW && (
+                      <button type="button" onClick={() => setBusquedaPW("")}>
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-toggle-new-pw"
+                    onClick={() => setMostrarFormNuevoPW(!mostrarFormNuevoPW)}
+                  >
+                    <Plus size={14} />
+                    <span>{mostrarFormNuevoPW ? "Cerrar Formulario" : "Nuevo Artículo"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Formulario nuevo artículo Prize Wall (Admin) */}
+              {mostrarFormNuevoPW && (
+                <form onSubmit={handleGuardarItemPW} className="pw-new-item-form">
+                  <div className="form-cols-row">
+                    <label className="form-field">
+                      <span>Nombre del Artículo Exclusivo *</span>
+                      <input
+                        type="text"
+                        placeholder="Ej: Playmat Store Championship OP-09"
+                        value={pwNombre}
+                        onChange={(e) => setPwNombre(e.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Categoría</span>
+                      <select value={pwCategoria} onChange={(e) => setPwCategoria(e.target.value)}>
+                        <option value="Playmats">Playmats</option>
+                        <option value="Fundas / Sleeves">Fundas / Sleeves</option>
+                        <option value="Deck Boxes">Deck Boxes</option>
+                        <option value="Cartas Promo">Cartas Promo</option>
+                        <option value="Accesorios">Accesorios</option>
+                        <option value="Sobres">Sobres</option>
+                      </select>
+                    </label>
+
+                    <label className="form-field">
+                      <span>Costo en 🪙 CC Coins *</span>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="10"
+                        value={pwCostoCoins}
+                        onChange={(e) => setPwCostoCoins(e.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Stock Disponible</span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="5"
+                        value={pwStock}
+                        onChange={(e) => setPwStock(e.target.value)}
+                        required
+                      />
+                    </label>
+                  </div>
+
+                  <div className="form-cols-row">
+                    <label className="form-field">
+                      <span>URL de Imagen del Producto</span>
+                      <input
+                        type="url"
+                        placeholder="https://..."
+                        value={pwImagen}
+                        onChange={(e) => setPwImagen(e.target.value)}
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Descripción / Exclusividad</span>
+                      <input
+                        type="text"
+                        placeholder="Ej: Edición limitada para jugadores con victorias en torneos oficiales"
+                        value={pwDescripcion}
+                        onChange={(e) => setPwDescripcion(e.target.value)}
+                      />
+                    </label>
+
+                    <div className="pw-form-actions-inline">
+                      <button
+                        type="submit"
+                        className="btn-save-pw-item"
+                        disabled={guardandoPWItem}
+                      >
+                        <Check size={14} />
+                        <span>{guardandoPWItem ? "Guardando..." : "Guardar en Prize Wall"}</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              {/* MODAL SUB-TAB: ARTÍCULOS CANJEABLES */}
+              {subTabPrizeWall === "items" && (
+                <div className="pw-items-section">
+                  {/* Modal / Card de confirmación de canje si hay un item seleccionado */}
+                  {canjeItemActivo && (
+                    <div className="pw-redeem-modal-box">
+                      <div className="pw-rm-header">
+                        <Coins size={18} className="text-accent" />
+                        <div>
+                          <strong>Canjear: {canjeItemActivo.nombre}</strong>
+                          <span className="pw-rm-cost">
+                            Costo: 🪙 <strong>{canjeItemActivo.costoCcCoins} CC Coins</strong> c/u (Equiv. ${(canjeItemActivo.costoCcCoins * 2000).toLocaleString("es-CO")} COP)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-close-redeem"
+                          onClick={() => setCanjeItemActivo(null)}
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleCanjearItem} className="pw-rm-form">
+                        <div className="pw-rm-fields">
+                          <label className="form-field">
+                            <span>Selecciona el Jugador que Canjea:</span>
+                            <select
+                              value={canjeJugadorKey}
+                              onChange={(e) => setCanjeJugadorKey(e.target.value)}
+                              required
+                            >
+                              <option value="">-- Seleccionar jugador con saldo --</option>
+                              {saldosCcCoins.map((j) => (
+                                <option
+                                  key={j.key}
+                                  value={j.key}
+                                  disabled={j.saldoActualCoins < canjeItemActivo.costoCcCoins * (Number(canjeCantidad) || 1)}
+                                >
+                                  {j.nombre} ({j.nickname}) — Saldo: 🪙 {j.saldoActualCoins} CC Coins (${j.saldoActualCOP.toLocaleString("es-CO")} COP)
+                                  {j.saldoActualCoins < canjeItemActivo.costoCcCoins * (Number(canjeCantidad) || 1) ? " [Insuficiente]" : ""}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+
+                          <label className="form-field pw-rm-qty">
+                            <span>Cantidad:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max={canjeItemActivo.stock}
+                              value={canjeCantidad}
+                              onChange={(e) => setCanjeCantidad(e.target.value)}
+                              required
+                            />
+                          </label>
+
+                          <button
+                            type="submit"
+                            className="btn-confirm-redeem"
+                            disabled={canjeando || !canjeJugadorKey}
+                          >
+                            <Sparkles size={14} />
+                            <span>{canjeando ? "Procesando..." : `Confirmar Canje (🪙 ${canjeItemActivo.costoCcCoins * (Number(canjeCantidad) || 1)} Coins)`}</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  <div className="pw-items-grid">
+                    {itemsPrizeWall
+                      .filter((item) => {
+                        if (!busquedaPW.trim()) return true;
+                        const q = busquedaPW.toLowerCase();
+                        return (
+                          item.nombre.toLowerCase().includes(q) ||
+                          item.categoria.toLowerCase().includes(q) ||
+                          (item.descripcion || "").toLowerCase().includes(q)
+                        );
+                      })
+                      .map((item) => (
+                        <div key={item.id} className="pw-item-card">
+                          <div className="pw-card-thumb-wrap">
+                            {item.imagen ? (
+                              <img src={item.imagen} alt={item.nombre} className="pw-card-img" />
+                            ) : (
+                              <div className="pw-card-fallback-thumb">
+                                <Package size={26} />
+                              </div>
+                            )}
+                            <span className="pw-category-pill">{item.categoria}</span>
+                            <span className={`pw-stock-pill ${item.stock > 0 ? "in-stock" : "out-of-stock"}`}>
+                              {item.stock > 0 ? `${item.stock} en stock` : "Agotado"}
+                            </span>
+                          </div>
+
+                          <div className="pw-card-content">
+                            <h4 className="pw-card-title">{item.nombre}</h4>
+                            {item.descripcion && (
+                              <p className="pw-card-desc">{item.descripcion}</p>
+                            )}
+
+                            <div className="pw-card-price-row">
+                              <div className="pw-coin-cost-badge">
+                                <Coins size={16} />
+                                <strong>{item.costoCcCoins} CC Coins</strong>
+                              </div>
+                              <span className="pw-fiat-equiv">
+                                ${(item.costoCcCoins * 2000).toLocaleString("es-CO")} COP
+                              </span>
+                            </div>
+
+                            <div className="pw-card-actions">
+                              <button
+                                type="button"
+                                className="btn-redeem-item-primary"
+                                onClick={() => {
+                                  setCanjeItemActivo(item);
+                                  setCanjeCantidad("1");
+                                }}
+                                disabled={item.stock <= 0}
+                              >
+                                <Sparkles size={13} />
+                                <span>{item.stock > 0 ? "Canjear / Reclamar" : "Sin Stock"}</span>
+                              </button>
+
+                              <div className="pw-admin-stepper">
+                                <button
+                                  type="button"
+                                  className="btn-stepper-pw minus"
+                                  onClick={() => handleAjustarStockPW(item.id, -1)}
+                                  disabled={item.stock <= 0}
+                                  title="Restar stock"
+                                >
+                                  <Minus size={11} />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-stepper-pw plus"
+                                  onClick={() => handleAjustarStockPW(item.id, 1)}
+                                  title="Sumar stock"
+                                >
+                                  <Plus size={11} />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-del-pw"
+                                  onClick={() => handleEliminarItemPW(item.id)}
+                                  title="Eliminar artículo"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* MODAL SUB-TAB: SALDOS DE CC COINS DE JUGADORES */}
+              {subTabPrizeWall === "jugadores" && (
+                <div className="pw-players-section">
+                  <div className="pw-players-summary-bar">
+                    <div>
+                      <strong>Bolsa de CC Coins de la Comunidad</strong>
+                      <p>
+                        Total ganado por victorias: <strong>🪙 {saldosCcCoins.reduce((a, b) => a + b.totalGanadoCoins, 0)} CC Coins</strong> (${(saldosCcCoins.reduce((a, b) => a + b.totalGanadoCoins, 0) * 2000).toLocaleString("es-CO")} COP) • Saldo actual disponible: <strong>🪙 {saldosCcCoins.reduce((a, b) => a + b.saldoActualCoins, 0)} CC Coins</strong>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <table className="torneo-table pw-players-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Jugador / Nickname</th>
+                        <th>Bandai ID</th>
+                        <th>Torneos</th>
+                        <th>Victorias (Wins)</th>
+                        <th>CC Coins Ganadas</th>
+                        <th>Canjeadas</th>
+                        <th>Saldo Disponible</th>
+                        <th style={{ textAlign: "right" }}>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {saldosCcCoins
+                        .filter((j) => {
+                          if (!busquedaPW.trim()) return true;
+                          const q = busquedaPW.toLowerCase();
+                          return (
+                            j.nombre.toLowerCase().includes(q) ||
+                            j.nickname.toLowerCase().includes(q) ||
+                            j.bandaiId.includes(q) ||
+                            j.email.toLowerCase().includes(q)
+                          );
+                        })
+                        .map((j, idx) => (
+                          <tr key={j.key}>
+                            <td>{idx + 1}</td>
+                            <td>
+                              <div className="player-name-cell">
+                                <strong>{j.nombre}</strong>
+                                {j.nickname && <span className="player-tag-name">@{j.nickname}</span>}
+                                {j.email && <small className="player-note">{j.email}</small>}
+                              </div>
+                            </td>
+                            <td>
+                              <code>{j.bandaiId || "—"}</code>
+                            </td>
+                            <td>{j.torneosJugados}</td>
+                            <td>
+                              <span className="wins-badge">
+                                <strong>{j.totalWins}</strong> wins
+                              </span>
+                            </td>
+                            <td>
+                              <span className="coin-chip">
+                                🪙 {j.totalGanadoCoins}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="redeemed-chip">
+                                {j.totalCanjeadoCoins}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="cc-coins-cell">
+                                <span className="coin-chip highlight">
+                                  🪙 <strong>{j.saldoActualCoins} CC Coins</strong>
+                                </span>
+                                <small className="coin-fiat-eq">${j.saldoActualCOP.toLocaleString("es-CO")} COP</small>
+                              </div>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <button
+                                type="button"
+                                className="btn-quick-canje"
+                                onClick={() => {
+                                  setSubTabPrizeWall("items");
+                                  setCanjeJugadorKey(j.key);
+                                }}
+                              >
+                                Canjear Producto
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* MODAL SUB-TAB: HISTORIAL DE CANJES */}
+              {subTabPrizeWall === "historial" && (
+                <div className="pw-history-section">
+                  {canjesPrizeWall.length === 0 ? (
+                    <div className="pw-empty-state">
+                      <Award size={36} />
+                      <p>Aún no se han realizado canjes en el Prize Wall.</p>
+                      <small>Cuando un jugador canjee sus CC Coins acumuladas por playmats, fundas o promos, el registro aparecerá aquí.</small>
+                    </div>
+                  ) : (
+                    <table className="torneo-table pw-history-table">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Jugador</th>
+                          <th>Artículo Reclamado</th>
+                          <th>Cantidad</th>
+                          <th>CC Coins Usadas</th>
+                          <th>Equivalente COP</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {canjesPrizeWall.map((c) => (
+                          <tr key={c.id}>
+                            <td>{new Date(c.fecha).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
+                            <td>
+                              <strong>{c.jugadorNombre}</strong>
+                            </td>
+                            <td>
+                              <div className="pw-history-item-cell">
+                                {c.itemImagen && (
+                                  <img src={c.itemImagen} alt={c.itemNombre} className="pw-history-thumb" />
+                                )}
+                                <span>{c.itemNombre}</span>
+                              </div>
+                            </td>
+                            <td>{c.cantidad}x</td>
+                            <td>
+                              <span className="coin-chip">
+                                🪙 <strong>{c.costoTotalCoins}</strong> Coins
+                              </span>
+                            </td>
+                            <td>${Number(c.equivalenteTotalCOP || c.costoTotalCoins * 2000).toLocaleString("es-CO")} COP</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer cat-modal-footer">
+              <div className="cat-footer-summary">
+                <span>Total de artículos en Prize Wall: <strong>{itemsPrizeWall.length}</strong></span>
+                <span>•</span>
+                <span>Saldos de jugadores: <strong>{saldosCcCoins.length}</strong></span>
+              </div>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setModalPrizeWallAbierto(false)}
+              >
+                Cerrar Prize Wall
               </button>
             </div>
           </div>

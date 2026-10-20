@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 
-const LOCAL_STORAGE_KEY = "cc_torneos_db_v2";
+const LOCAL_STORAGE_KEY = "cc_torneos_db_v3";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const TORNEOS_INICIALES = [
@@ -14,7 +14,7 @@ const TORNEOS_INICIALES = [
     lugar: "Sede Capsule Corp Gaming - Cali (Cra 34 # 4-50)",
     costoInscripcion: 26000,
     cupoMaximo: 24,
-    premios: "Premiación oficial One Piece: Top 4 en Sobres OP-09 (1°: Winner + 5 sobres, 2°: 3 sobres, 3°: 2 sobres, 4°: 1 sobre), 1 Tournament Pack oficial a todos y 1 Sobre OP-09 rifado entre los no-top.",
+    premios: "100% de la inscripción en premios ($26.000 COP por jugador): Cada victoria otorga 1 CC Coin ($2.000 COP descontados para el Prize Wall) + Pool restante en Sobres Oficiales OP-09 (11 al Top 4 y 1 a la Rifa) + 1 Winner Pack al 1° y Tournament Packs a todos.",
     pozoPremios: 0,
     esquemaPremios: "top4_standard",
     gastosEvento: 50000,
@@ -33,12 +33,14 @@ const TORNEOS_INICIALES = [
         nickname: "[BC] JackPoe",
         bandaiId: "0000205267",
         puntos: 12,
+        wins: 4,
+        ccCoins: 4,
         omw: "52%",
         deck: "Luffy Red-Purple",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "1",
-        premioGanado: "1x Sobre Winner Oficial + 5x Sobres Oficiales OP-09 + 1x Tournament Pack",
+        premioGanado: "🪙 4 CC Coins (4 Wins) + 1x Sobre Winner Oficial + 5x Sobres Oficiales OP-09 + 1x Tournament Pack",
         notas: "Campeón del torneo"
       },
       {
@@ -47,12 +49,14 @@ const TORNEOS_INICIALES = [
         nickname: "danieldlora",
         bandaiId: "0000780406",
         puntos: 9,
+        wins: 3,
+        ccCoins: 3,
         omw: "64.5%",
         deck: "Doflamingo Blue",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "2",
-        premioGanado: "3x Sobres Oficiales OP-09 + 1x Tournament Pack",
+        premioGanado: "🪙 3 CC Coins (3 Wins) + 3x Sobres Oficiales OP-09 + 1x Tournament Pack",
         notas: "Subcampeón"
       },
       {
@@ -61,12 +65,14 @@ const TORNEOS_INICIALES = [
         nickname: "Niñojackie",
         bandaiId: "0000014931",
         puntos: 9,
+        wins: 3,
+        ccCoins: 3,
         omw: "52%",
         deck: "Rob Lucci Black",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "3",
-        premioGanado: "2x Sobres Oficiales OP-09 + 1x Tournament Pack",
+        premioGanado: "🪙 3 CC Coins (3 Wins) + 2x Sobres Oficiales OP-09 + 1x Tournament Pack",
         notas: "Top 4"
       },
       {
@@ -75,12 +81,14 @@ const TORNEOS_INICIALES = [
         nickname: "Lythrick",
         bandaiId: "0000934049",
         puntos: 6,
+        wins: 2,
+        ccCoins: 2,
         omw: "64.5%",
         deck: "Zoro Green",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "4",
-        premioGanado: "1x Sobres Oficiales OP-09 + 1x Tournament Pack",
+        premioGanado: "🪙 2 CC Coins (2 Wins) + 1x Sobres Oficiales OP-09 + 1x Tournament Pack",
         notas: "Top 4"
       },
       {
@@ -89,12 +97,14 @@ const TORNEOS_INICIALES = [
         nickname: "SirCrocodile",
         bandaiId: "0000138670",
         puntos: 6,
+        wins: 2,
+        ccCoins: 2,
         omw: "62.5%",
         deck: "Crocodile Yellow",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "5",
-        premioGanado: "1x Tournament Pack",
+        premioGanado: "🪙 2 CC Coins (2 Wins) + 1x Tournament Pack",
         notas: "Top 8"
       },
       {
@@ -103,12 +113,14 @@ const TORNEOS_INICIALES = [
         nickname: "S3ph1",
         bandaiId: "0000029497",
         puntos: 6,
+        wins: 2,
+        ccCoins: 2,
         omw: "52%",
         deck: "Enel Yellow",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "6",
-        premioGanado: "1x Tournament Pack",
+        premioGanado: "🪙 2 CC Coins (2 Wins) + 1x Tournament Pack",
         notas: "Top 8"
       },
       {
@@ -117,12 +129,14 @@ const TORNEOS_INICIALES = [
         nickname: "[BC] Reikuniga",
         bandaiId: "0000569050",
         puntos: 6,
+        wins: 2,
+        ccCoins: 2,
         omw: "47.8%",
         deck: "Law Red-Green",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "7",
-        premioGanado: "1x Tournament Pack + 1x Sobres Oficiales OP-09 (Ganador Rifa)",
+        premioGanado: "🪙 2 CC Coins (2 Wins) + 1x Tournament Pack + 1x Sobres Oficiales OP-09 (Ganador Rifa)",
         notas: "Top 8 - Ganador de la Rifa de Sobre"
       },
       {
@@ -131,12 +145,14 @@ const TORNEOS_INICIALES = [
         nickname: "Spicynuggets73",
         bandaiId: "0000148790",
         puntos: 6,
+        wins: 2,
+        ccCoins: 2,
         omw: "45.8%",
         deck: "Katakuri Yellow",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "8",
-        premioGanado: "1x Tournament Pack",
+        premioGanado: "🪙 2 CC Coins (2 Wins) + 1x Tournament Pack",
         notas: "Top 8"
       },
       {
@@ -145,12 +161,14 @@ const TORNEOS_INICIALES = [
         nickname: "[BC] Glauser",
         bandaiId: "0000419822",
         puntos: 6,
+        wins: 2,
+        ccCoins: 2,
         omw: "41.5%",
         deck: "Yamato Green-Yellow",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "9",
-        premioGanado: "1x Tournament Pack",
+        premioGanado: "🪙 2 CC Coins (2 Wins) + 1x Tournament Pack",
         notas: ""
       },
       {
@@ -159,12 +177,14 @@ const TORNEOS_INICIALES = [
         nickname: "Nicko22",
         bandaiId: "0001003598",
         puntos: 3,
+        wins: 1,
+        ccCoins: 1,
         omw: "62.5%",
         deck: "Nami Blue",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "10",
-        premioGanado: "1x Tournament Pack",
+        premioGanado: "🪙 1 CC Coin (1 Win) + 1x Tournament Pack",
         notas: ""
       },
       {
@@ -173,12 +193,14 @@ const TORNEOS_INICIALES = [
         nickname: "Lavendertownboy",
         bandaiId: "0000934053",
         puntos: 3,
+        wins: 1,
+        ccCoins: 1,
         omw: "58.3%",
         deck: "Uta Green",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "11",
-        premioGanado: "1x Tournament Pack",
+        premioGanado: "🪙 1 CC Coin (1 Win) + 1x Tournament Pack",
         notas: ""
       },
       {
@@ -187,12 +209,14 @@ const TORNEOS_INICIALES = [
         nickname: "[BC] Arenas",
         bandaiId: "0000120197",
         puntos: 0,
+        wins: 0,
+        ccCoins: 0,
         omw: "45.8%",
         deck: "Whitebeard Red",
         montoPagado: 26000,
         estadoPago: "pagado",
         puesto: "12",
-        premioGanado: "1x Tournament Pack",
+        premioGanado: "🪙 0 CC Coins (0 Wins) + 1x Tournament Pack",
         notas: ""
       }
     ],
@@ -270,6 +294,27 @@ const TORNEOS_INICIALES = [
   },
 ];
 
+function normalizarTorneo(t) {
+  if (!t) return t;
+  const parts = Array.isArray(t.participantes) ? t.participantes : [];
+  const normalizados = parts.map((p) => {
+    let wins = p.wins;
+    if (wins === undefined || wins === null || isNaN(wins)) {
+      wins = Math.floor((Number(p.puntos) || 0) / 3);
+    }
+    const ccCoins = Math.max(0, Number(p.ccCoins ?? wins ?? 0));
+    return {
+      ...p,
+      wins: Math.max(0, Number(wins) || 0),
+      ccCoins,
+    };
+  });
+  return {
+    ...t,
+    participantes: normalizados,
+  };
+}
+
 function cargarLocal() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -278,7 +323,8 @@ function cargarLocal() {
       return TORNEOS_INICIALES;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : TORNEOS_INICIALES;
+    const list = Array.isArray(parsed) && parsed.length > 0 ? parsed : TORNEOS_INICIALES;
+    return list.map(normalizarTorneo);
   } catch (e) {
     return TORNEOS_INICIALES;
   }
@@ -884,37 +930,398 @@ export async function asignarProductosPremiosTorneo(torneoId, { descontarStock =
   return { torneo, itemsDescontados };
 }
 
+// ============================================================================
+// PRIZE WALL (MURO DE PREMIOS) & CC COINS POR VICTORIA
+// ============================================================================
+
+export const PRIZE_WALL_ITEMS_INICIALES = [
+  {
+    id: "pw-playmat-champ",
+    nombre: "Playmat de Neopreno Oficial Store Championship (Exclusivo)",
+    categoria: "Playmats",
+    costoCcCoins: 40,
+    equivalenteCop: 80000,
+    stock: 5,
+    imagen: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80",
+    descripcion: "Tapete de neopreno premium con costuras cosidas y diseño exclusivo del Prize Wall.",
+  },
+  {
+    id: "pw-sleeves-op",
+    nombre: "Fundas Oficiales Premium One Piece (Pack x70)",
+    categoria: "Fundas / Sleeves",
+    costoCcCoins: 15,
+    equivalenteCop: 30000,
+    stock: 12,
+    imagen: "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400&q=80",
+    descripcion: "Fundas de torneo oficiales con acabado mate antirreflejo para máxima protección.",
+  },
+  {
+    id: "pw-deckbox-cc",
+    nombre: "Deck Box Acrílica Magnética Capsule Corp Gaming",
+    categoria: "Deck Boxes",
+    costoCcCoins: 12,
+    equivalenteCop: 24000,
+    stock: 10,
+    imagen: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80",
+    descripcion: "Caja porta-mazo acrílica con imanes de neodimio y división para dados.",
+  },
+  {
+    id: "pw-promo-foil",
+    nombre: "Carta Promo Foil Exclusiva Prize Wall One Piece TCG",
+    categoria: "Cartas Promo",
+    costoCcCoins: 10,
+    equivalenteCop: 20000,
+    stock: 20,
+    imagen: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&q=80",
+    descripcion: "Carta promocional con relieve dorado y sello oficial de evento.",
+  },
+  {
+    id: "pw-dados-acrilicos",
+    nombre: "Set de Dados y Contadores Acrílicos de Daño",
+    categoria: "Accesorios",
+    costoCcCoins: 5,
+    equivalenteCop: 10000,
+    stock: 25,
+    imagen: "https://images.unsplash.com/photo-1578374173705-969cbe6f2d6b?w=400&q=80",
+    descripcion: "Set de 6 dados de resina acrílica para contadores de daño y estado.",
+  },
+  {
+    id: "pw-sobre-tienda-op09",
+    nombre: "Sobre Sellado Oficial OP-09 (Four Emperors)",
+    categoria: "Sobres",
+    costoCcCoins: 11,
+    equivalenteCop: 22000,
+    stock: 36,
+    imagen: "https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=400&q=80",
+    descripcion: "Canjea 11 CC Coins por un sobre sellado adicional oficial de la tienda.",
+  },
+];
+
+const PRIZE_WALL_KEY = "cc_prizewall_items_v1";
+const PRIZE_WALL_CANJES_KEY = "cc_prizewall_canjes_v1";
+
+function cargarPrizeWallLocal() {
+  try {
+    const raw = localStorage.getItem(PRIZE_WALL_KEY);
+    if (!raw) {
+      localStorage.setItem(PRIZE_WALL_KEY, JSON.stringify(PRIZE_WALL_ITEMS_INICIALES));
+      return PRIZE_WALL_ITEMS_INICIALES;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : PRIZE_WALL_ITEMS_INICIALES;
+  } catch (e) {
+    return PRIZE_WALL_ITEMS_INICIALES;
+  }
+}
+
+function guardarPrizeWallLocal(data) {
+  try {
+    localStorage.setItem(PRIZE_WALL_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+export function listarCanjesPrizeWall() {
+  try {
+    const raw = localStorage.getItem(PRIZE_WALL_CANJES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function guardarCanjePrizeWallLocal(canje) {
+  try {
+    const canjes = listarCanjesPrizeWall();
+    canjes.unshift(canje);
+    localStorage.setItem(PRIZE_WALL_CANJES_KEY, JSON.stringify(canjes));
+  } catch (e) {}
+}
+
+export async function listarPrizeWall() {
+  const local = cargarPrizeWallLocal();
+  try {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("prizewall_items")
+        .select("*")
+        .order("costo_cc_coins", { ascending: true });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const mapeados = data.map((d) => ({
+          id: d.id,
+          nombre: d.nombre,
+          categoria: d.categoria || "Accesorios",
+          costoCcCoins: Number(d.costo_cc_coins || d.costoCcCoins || 10),
+          equivalenteCop: Number(d.equivalente_cop || d.equivalenteCop || 0),
+          stock: Number(d.stock ?? 0),
+          imagen: d.imagen || "",
+          descripcion: d.descripcion || "",
+        }));
+        guardarPrizeWallLocal(mapeados);
+        return mapeados;
+      }
+    }
+  } catch (e) {}
+  return local;
+}
+
+export async function guardarItemPrizeWall(item) {
+  const lista = cargarPrizeWallLocal();
+  const id = item.id || `pw-${Date.now()}`;
+  const costoCoins = Math.max(1, parseInt(item.costoCcCoins, 10) || 10);
+  const registro = {
+    ...item,
+    id,
+    nombre: (item.nombre || "").trim(),
+    categoria: item.categoria || "Accesorios",
+    costoCcCoins: costoCoins,
+    equivalenteCop: Number(item.equivalenteCop || costoCoins * 2000),
+    stock: Math.max(0, parseInt(item.stock, 10) || 0),
+    imagen: item.imagen || "",
+    descripcion: (item.descripcion || "").trim(),
+    actualizadoEn: new Date().toISOString(),
+  };
+
+  const idx = lista.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    lista[idx] = registro;
+  } else {
+    lista.unshift(registro);
+  }
+
+  guardarPrizeWallLocal(lista);
+
+  try {
+    if (supabase) {
+      await supabase.from("prizewall_items").upsert({
+        id: registro.id,
+        nombre: registro.nombre,
+        categoria: registro.categoria,
+        costo_cc_coins: registro.costoCcCoins,
+        equivalente_cop: registro.equivalenteCop,
+        stock: registro.stock,
+        imagen: registro.imagen,
+        descripcion: registro.descripcion,
+        actualizado_en: new Date().toISOString(),
+      });
+    }
+  } catch (e) {}
+
+  return registro;
+}
+
+export async function eliminarItemPrizeWall(id) {
+  let lista = cargarPrizeWallLocal();
+  lista = lista.filter((p) => p.id !== id);
+  guardarPrizeWallLocal(lista);
+
+  try {
+    if (supabase) {
+      await supabase.from("prizewall_items").delete().eq("id", id);
+    }
+  } catch (e) {}
+
+  return lista;
+}
+
+export async function ajustarStockPrizeWall(id, delta) {
+  const lista = cargarPrizeWallLocal();
+  const idx = lista.findIndex((p) => p.id === id);
+  if (idx < 0) return null;
+
+  lista[idx].stock = Math.max(0, (lista[idx].stock || 0) + delta);
+  guardarPrizeWallLocal(lista);
+
+  try {
+    if (supabase) {
+      await supabase.from("prizewall_items").update({
+        stock: lista[idx].stock,
+        actualizado_en: new Date().toISOString(),
+      }).eq("id", id);
+    }
+  } catch (e) {}
+
+  return lista[idx];
+}
+
+/**
+ * Calcula los saldos acumulados de CC Coins de todos los jugadores a partir de sus victorias
+ * en torneos y deduce los canjes realizados en el Prize Wall.
+ */
+export async function obtenerSaldosCcCoinsJugadores() {
+  const todosTorneos = await listarTorneos();
+  const todosCanjes = listarCanjesPrizeWall();
+
+  const jugadoresMap = {};
+
+  for (const t of todosTorneos) {
+    const participantes = t.participantes || [];
+    for (const p of participantes) {
+      const key = (p.email || p.bandaiId || p.nickname || p.nombre || "").toLowerCase().trim();
+      if (!key) continue;
+
+      if (!jugadoresMap[key]) {
+        jugadoresMap[key] = {
+          key,
+          id: p.id,
+          nombre: p.nombre || p.nickname,
+          nickname: p.nickname || p.nombre,
+          bandaiId: p.bandaiId || "",
+          email: p.email || "",
+          telefono: p.telefono || "",
+          totalWins: 0,
+          totalGanadoCoins: 0,
+          totalCanjeadoCoins: 0,
+          saldoActualCoins: 0,
+          torneosJugados: 0,
+        };
+      }
+
+      const wins = p.wins !== undefined && p.wins !== null
+        ? Number(p.wins)
+        : Math.floor((Number(p.puntos) || 0) / 3);
+
+      jugadoresMap[key].torneosJugados += 1;
+      jugadoresMap[key].totalWins += Math.max(0, wins);
+      jugadoresMap[key].totalGanadoCoins += Math.max(0, wins);
+    }
+  }
+
+  // Restar canjes realizados
+  for (const c of todosCanjes) {
+    const key = (c.jugadorIdentificador || "").toLowerCase().trim();
+    if (key && jugadoresMap[key]) {
+      jugadoresMap[key].totalCanjeadoCoins += Number(c.costoTotalCoins || 0);
+    }
+  }
+
+  const lista = Object.values(jugadoresMap).map((j) => ({
+    ...j,
+    saldoActualCoins: Math.max(0, j.totalGanadoCoins - j.totalCanjeadoCoins),
+    saldoActualCOP: Math.max(0, (j.totalGanadoCoins - j.totalCanjeadoCoins) * 2000),
+  }));
+
+  lista.sort((a, b) => b.saldoActualCoins - a.saldoActualCoins);
+  return lista;
+}
+
+/**
+ * Realiza el canje de un producto del Prize Wall con CC Coins
+ */
+export async function canjearItemPrizeWall({ itemId, jugadorIdentificador, jugadorNombre, cantidad = 1 }) {
+  const lista = cargarPrizeWallLocal();
+  const item = lista.find((i) => i.id === itemId);
+  if (!item) return { error: "Artículo no encontrado en el Prize Wall" };
+
+  if (item.stock < cantidad) {
+    return { error: `Stock insuficiente en el Prize Wall (quedan ${item.stock} unidades)` };
+  }
+
+  const costoTotalCoins = item.costoCcCoins * cantidad;
+  const saldos = await obtenerSaldosCcCoinsJugadores();
+  const key = (jugadorIdentificador || "").toLowerCase().trim();
+  const jugador = saldos.find((j) => j.key === key);
+
+  if (!jugador || jugador.saldoActualCoins < costoTotalCoins) {
+    const actual = jugador ? jugador.saldoActualCoins : 0;
+    return { error: `Saldo insuficiente. Tiene ${actual} CC Coins y se requieren ${costoTotalCoins} CC Coins.` };
+  }
+
+  item.stock = Math.max(0, item.stock - cantidad);
+  guardarPrizeWallLocal(lista);
+
+  const nuevoCanje = {
+    id: `canje-${Date.now()}`,
+    itemId: item.id,
+    itemNombre: item.nombre,
+    itemImagen: item.imagen,
+    jugadorIdentificador: key,
+    jugadorNombre: jugadorNombre || jugador.nombre || jugador.nickname,
+    cantidad,
+    costoUnitarioCoins: item.costoCcCoins,
+    costoTotalCoins,
+    equivalenteTotalCOP: costoTotalCoins * 2000,
+    fecha: new Date().toISOString(),
+  };
+
+  guardarCanjePrizeWallLocal(nuevoCanje);
+
+  try {
+    if (supabase) {
+      await supabase.from("prizewall_items").update({ stock: item.stock }).eq("id", item.id);
+    }
+  } catch (e) {}
+
+  return {
+    exito: true,
+    item,
+    canje: nuevoCanje,
+    nuevoSaldo: jugador.saldoActualCoins - costoTotalCoins,
+  };
+}
+
 /**
  * REGLAS OFICIALES DE PREMIACIÓN CAPSULE CORP GAMING (ONE PIECE TCG):
- * - 7 Kits oficiales mensuales de Bandai: cada kit = 1 sobre Winner + 8 tournament packs de participante (56 al mes).
- *   Se entregan hasta agotar el stock mensual de kits.
- * - Inscripción base de One Piece: $26.000 COP (1 sobre de tienda por jugador inscrito al pozo).
- * - RIFA OBLIGATORIA: En TODOS los torneos se reserva 1 sobre de tienda para rifarse entre los que NO quedaron en Top 4.
+ * - 100% DE LA INSCRIPCIÓN SE RETORNA EN PREMIOS ($26.000 COP por jugador inscrito).
+ * - PRIZE WALL & CC COINS: Cada victoria (win) en el torneo otorga 1 CC Coin al jugador.
+ *   Cada victoria equivale a $2.000 COP que se deducen de la inscripción para alimentar el saldo de CC Coins.
+ * - POZO DE PRODUCTO FÍSICO (SOBRES DE TIENDA):
+ *   El pozo restante (Recaudo Total - CC Coins) se traduce íntegramente en Sobres de Tienda (a $22.000 COP c/u).
+ * - RIFA OBLIGATORIA: En TODOS los torneos se reserva 1 sobre de tienda para rifarse entre los que NO quedaron en el Top premiado.
  * - Premiación al Top:
- *   - Si <= 12 jugadores: Se premia al Top 4 con los sobres de tienda restantes.
- *     El 1er lugar recibe además 1 Sobre Winner Oficial (del kit).
- *   - Si > 12 jugadores: La premiación en sobres de tienda se extiende hasta Top 5 o Top 6.
- * - Participación: Todos los participantes reciben 1 Tournament Pack oficial (del kit mensual).
+ *   - Si <= 12 jugadores: Sobres al Top 4 (1°: 5 sobres + Sobre Winner Oficial, 2°: 3 sobres, 3°: 2 sobres, 4°: 1 sobre).
+ *   - Si > 12 jugadores: La premiación en sobres se extiende a Top 5 o Top 6.
+ * - Participación: Todos los participantes reciben 1 Tournament Pack oficial del Kit Mensual Bandai.
  */
-export function calcularPremiacionOficialOnePiece(numJugadores, stockCatalogo = {}) {
+export function calcularPremiacionOficialOnePiece(numJugadores, participantes = [], precioSobre = 22000) {
   const n = Math.max(0, parseInt(numJugadores, 10) || 0);
   if (n === 0) {
     return {
       numJugadores: 0,
+      costoInscripcionUnitario: 26000,
+      valorPorWinCcCoin: 2000,
+      totalInscripcionCOP: 0,
+      totalWins: 0,
+      montoCcCoinsCOP: 0,
+      poolRestanteCOP: 0,
+      precioSobre,
       totalSobresTienda: 0,
       sobresRifa: 0,
       sobresTop: 0,
       puestosPremiados: 4,
       esTopExtendido: false,
       sobresPorPuesto: {},
+      retornoPremiosTotalCOP: 0,
+      porcentajeRetorno: 100,
     };
   }
 
-  // 1 sobre de tienda por jugador inscrito ($26.000 COP c/u)
-  const totalSobresTienda = n;
+  const costoInscripcionUnitario = 26000;
+  const valorPorWinCcCoin = 2000;
+  const totalInscripcionCOP = n * costoInscripcionUnitario;
 
-  // 1 sobre siempre reservado para la rifa (si hay al menos 4 jugadores)
-  const sobresRifa = n >= 4 ? 1 : 0;
+  // Calcular total de victorias (wins) de los participantes
+  let totalWins = 0;
+  if (Array.isArray(participantes) && participantes.length > 0) {
+    totalWins = participantes.reduce((acc, p) => {
+      let w = p.wins;
+      if (w === undefined || w === null || isNaN(w)) {
+        w = Math.floor((Number(p.puntos) || 0) / 3);
+      }
+      return acc + Math.max(0, Number(w) || 0);
+    }, 0);
+  } else {
+    // Estimación teórica: formato suizo estándar de 4 rondas (promedio 2 victorias por jugador)
+    totalWins = Math.round(n * 2);
+  }
+
+  const montoCcCoinsCOP = totalWins * valorPorWinCcCoin;
+  const poolRestanteCOP = Math.max(0, totalInscripcionCOP - montoCcCoinsCOP);
+
+  // Cantidad de sobres de tienda oficiales que financia el pozo restante (a $22.000 COP c/u)
+  const totalSobresTienda = Math.floor(poolRestanteCOP / precioSobre);
+
+  // 1 sobre siempre reservado para la rifa obligatoria (si hay al menos 4 jugadores)
+  const sobresRifa = n >= 4 && totalSobresTienda >= 1 ? 1 : 0;
   const sobresTop = Math.max(0, totalSobresTienda - sobresRifa);
 
   // Si > 12 personas, alcanza hasta top 5 o top 6
@@ -923,10 +1330,7 @@ export function calcularPremiacionOficialOnePiece(numJugadores, stockCatalogo = 
 
   const sobresPorPuesto = {};
 
-  if (puestosPremiados === 4) {
-    // Para 12 jugadores (11 sobres top): 1°=5, 2°=3, 3°=2, 4°=1 (5+3+2+1 = 11)
-    // Para 8 jugadores (7 sobres top): 1°=3, 2°=2, 3°=1, 4°=1 (3+2+1+1 = 7)
-    // Para 10 jugadores (9 sobres top): 1°=4, 2°=3, 3°=1, 4°=1 (4+3+1+1 = 9)
+  if (puestosPremiados <= 4) {
     if (sobresTop <= 4) {
       sobresPorPuesto[1] = Math.max(1, sobresTop - 1);
       sobresPorPuesto[2] = sobresTop >= 2 ? 1 : 0;
@@ -939,14 +1343,12 @@ export function calcularPremiacionOficialOnePiece(numJugadores, stockCatalogo = 
       sobresPorPuesto[4] = Math.max(1, sobresTop - (sobresPorPuesto[1] + sobresPorPuesto[2] + sobresPorPuesto[3]));
     }
   } else if (puestosPremiados === 5) {
-    // Para 13-15 jugadores (ej: 14 jugadores -> 13 sobres top): 1°=5, 2°=3, 3°=2, 4°=2, 5°=1
     sobresPorPuesto[1] = Math.max(1, Math.round(sobresTop * 0.40));
     sobresPorPuesto[2] = Math.max(1, Math.round(sobresTop * 0.25));
     sobresPorPuesto[3] = Math.max(1, Math.round(sobresTop * 0.16));
     sobresPorPuesto[4] = Math.max(1, Math.round(sobresTop * 0.12));
     sobresPorPuesto[5] = Math.max(1, sobresTop - (sobresPorPuesto[1] + sobresPorPuesto[2] + sobresPorPuesto[3] + sobresPorPuesto[4]));
   } else {
-    // Top 6 para 16+ jugadores (ej: 16 jugadores -> 15 sobres top): 1°=6, 2°=3, 3°=2, 4°=2, 5°=1, 6°=1
     sobresPorPuesto[1] = Math.max(1, Math.round(sobresTop * 0.38));
     sobresPorPuesto[2] = Math.max(1, Math.round(sobresTop * 0.22));
     sobresPorPuesto[3] = Math.max(1, Math.round(sobresTop * 0.15));
@@ -966,19 +1368,38 @@ export function calcularPremiacionOficialOnePiece(numJugadores, stockCatalogo = 
     suma++;
   }
 
+  const retornoPremiosTotalCOP = montoCcCoinsCOP + (totalSobresTienda * precioSobre);
+  const porcentajeRetorno = totalInscripcionCOP > 0
+    ? Math.round((retornoPremiosTotalCOP / totalInscripcionCOP) * 100)
+    : 100;
+
   return {
     numJugadores: n,
+    costoInscripcionUnitario,
+    valorPorWinCcCoin,
+    totalInscripcionCOP,
+    totalWins,
+    montoCcCoinsCOP,
+    poolRestanteCOP,
+    precioSobre,
     totalSobresTienda,
     sobresRifa,
     sobresTop,
     puestosPremiados,
     esTopExtendido,
     sobresPorPuesto,
+    retornoPremiosTotalCOP,
+    porcentajeRetorno,
   };
 }
 
 /**
- * Aplica la premiación oficial al torneo según puestos, kits mensuales y sobres de tienda
+ * Aplica la premiación oficial al torneo:
+ * - 1 CC Coin por cada Win a cada jugador ($2.000 COP) para el Prize Wall
+ * - Winner pack al 1° lugar
+ * - Sobres de tienda al Top premiado
+ * - Tournament packs oficiales a todos
+ * - Rifa obligatoria mantenida
  */
 export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock = false } = {}) {
   const torneos = cargarLocal();
@@ -995,12 +1416,21 @@ export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock 
 
   const stockWinner = prodWinner?.stock ?? 7;
   const stockPacks = prodPack?.stock ?? 56;
+  const precioSobre = prodSobres?.valorCop || 22000;
 
-  const calculo = calcularPremiacionOficialOnePiece(participantes.length);
+  const calculo = calcularPremiacionOficialOnePiece(participantes.length, participantes, precioSobre);
 
   const actualizados = participantes.map((p) => {
     const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
+    const wins = p.wins !== undefined && p.wins !== null
+      ? Number(p.wins)
+      : Math.floor((Number(p.puntos) || 0) / 3);
+    const ccCoins = Math.max(0, wins);
+
     const premiosItems = [];
+
+    // CC Coins por victorias para el Prize Wall
+    premiosItems.push(`🪙 ${ccCoins} CC Coin${ccCoins === 1 ? "" : "s"} (${wins} win${wins === 1 ? "" : "s"})`);
 
     // Sobre Winner exclusivo para 1er lugar
     if (numP === 1 && stockWinner > 0) {
@@ -1023,10 +1453,12 @@ export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock 
       premiosItems.push(`1x ${prodSobres?.nombre || "Sobre Oficial OP-09"} (Ganador Rifa)`);
     }
 
-    const textoPremio = premiosItems.join(" + ") || "1x Tournament Pack";
+    const textoPremio = premiosItems.join(" + ");
 
     return {
       ...p,
+      wins,
+      ccCoins,
       montoPagado: Number(torneo.costoInscripcion || 26000),
       premioGanado: textoPremio,
     };
@@ -1057,7 +1489,11 @@ export async function sortearRifaTorneo(torneoId) {
 
   const torneo = torneos[tIndex];
   const participantes = torneo.participantes || [];
-  const calculo = calcularPremiacionOficialOnePiece(participantes.length);
+  const catalogo = cargarCatalogoLocal();
+  const prodSobres = catalogo.find((p) => p.categoria === "Sobres" && p.juego === "One Piece TCG") || catalogo.find((p) => p.categoria === "Sobres");
+  const precioSobre = prodSobres?.valorCop || 22000;
+
+  const calculo = calcularPremiacionOficialOnePiece(participantes.length, participantes, precioSobre);
 
   // Jugadores elegibles: aquellos que NO están en los puestos premiados del Top
   const elegibles = participantes.filter((p) => {
@@ -1072,9 +1508,6 @@ export async function sortearRifaTorneo(torneoId) {
   // Selección aleatoria
   const ganadorIndex = Math.floor(Math.random() * elegibles.length);
   const ganador = elegibles[ganadorIndex];
-
-  const catalogo = cargarCatalogoLocal();
-  const prodSobres = catalogo.find((p) => p.categoria === "Sobres" && p.juego === "One Piece TCG") || catalogo.find((p) => p.categoria === "Sobres");
   const nombreSobre = prodSobres?.nombre || "Sobre Oficial OP-09";
 
   torneo.ganadorRifa = {
