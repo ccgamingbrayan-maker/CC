@@ -39,81 +39,73 @@ function formatRiftboundCardWithPrint(c) {
   };
 }
 
-async function fetchRiftboundJson(url) {
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  return res.json();
-}
-
-async function fetchRiftboundAllPages(baseUrl, pageSize) {
-  const size = Math.min(Math.max(1, pageSize), 100);
-  let page = 1;
-  let items = [];
-  let totalPages = 1;
-
-  while (page <= totalPages) {
-    const separator = baseUrl.includes("?") ? "&" : "?";
-    const url = `${baseUrl}${separator}size=${size}&page=${page}`;
-    const json = await fetchRiftboundJson(url);
-    const pageItems = json?.items ?? [];
-    items = items.concat(pageItems);
-
-    const pagesField = Number(json?.pages ?? 0);
-    const totalField = Number(json?.total ?? 0);
-
-    if (pagesField > 0) {
-      totalPages = pagesField;
-    } else if (totalField > 0) {
-      totalPages = Math.ceil(totalField / size);
-    } else if (pageItems.length < size) {
-      break;
-    } else {
-      // If the API doesn't provide total/pages and still returns a full page,
-      // keep fetching until a smaller page is found, but cap to avoid an infinite loop.
-      totalPages = page + 5;
-    }
-
-    if (pageItems.length === 0) {
-      break;
-    }
-
-    page += 1;
-  }
-
-  return items;
-}
-
-export async function buscarCartasRiftbound(query, pageSize = 100) {
-  if (!query) return [];
-  const size = Math.min(Math.max(1, pageSize), 100);
-
-  const exactUrl = `https://api.riftcodex.com/cards/name?exact=${encodeURIComponent(query)}`;
+async function fetchRiftboundJson(url, timeoutMs = 4500) {
   try {
-    const exactItems = await fetchRiftboundAllPages(exactUrl, size);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    // Timeout o error de red
+    return null;
+  }
+}
+
+async function fetchRiftboundSinglePage(baseUrl, size = 30) {
+  try {
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    const url = `${baseUrl}${separator}size=${size}&page=1`;
+    const json = await fetchRiftboundJson(url, 4500);
+    return json?.items ?? [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function buscarCartasRiftbound(query, pageSize = 30) {
+  if (!query || !query.trim()) return [];
+  const q = query.trim();
+  const size = Math.min(Math.max(1, pageSize), 50);
+
+  // 1) Intentar por nombre exacto
+  try {
+    const exactUrl = `https://api.riftcodex.com/cards/name?exact=${encodeURIComponent(q)}`;
+    const exactItems = await fetchRiftboundSinglePage(exactUrl, size);
     if (exactItems.length > 0) {
       return exactItems.map(formatRiftboundCardWithPrint);
     }
   } catch (e) {
-    // fall back to fuzzy/search
+    // Continuar con fallback
   }
 
-  const fuzzyUrl = `https://api.riftcodex.com/cards/name?fuzzy=${encodeURIComponent(query)}`;
+  // 2) Intentar por búsqueda difusa (fuzzy)
   try {
-    const fuzzyItems = await fetchRiftboundAllPages(fuzzyUrl, size);
+    const fuzzyUrl = `https://api.riftcodex.com/cards/name?fuzzy=${encodeURIComponent(q)}`;
+    const fuzzyItems = await fetchRiftboundSinglePage(fuzzyUrl, size);
     if (fuzzyItems.length > 0) {
       return fuzzyItems.map(formatRiftboundCardWithPrint);
     }
   } catch (e) {
-    // fall back to search
+    // Continuar con fallback
   }
 
-  const searchUrl = `https://api.riftcodex.com/cards/search?query=${encodeURIComponent(query)}`;
+  // 3) Intentar por búsqueda general (query)
   try {
-    const searchItems = await fetchRiftboundAllPages(searchUrl, size);
-    return searchItems.map(formatRiftboundCardWithPrint);
+    const searchUrl = `https://api.riftcodex.com/cards/search?query=${encodeURIComponent(q)}`;
+    const searchItems = await fetchRiftboundSinglePage(searchUrl, size);
+    if (searchItems.length > 0) {
+      return searchItems.map(formatRiftboundCardWithPrint);
+    }
   } catch (e) {
-    return [];
+    // Retornar vacío
   }
+
+  return [];
 }
 
 export async function buscarCartaRiftbound(nombre) {
@@ -121,6 +113,7 @@ export async function buscarCartaRiftbound(nombre) {
   return resultados.length > 0 ? resultados[0] : null;
 }
 
-export async function buscarPrintsRiftbound(query, pageSize = 100) {
+export async function buscarPrintsRiftbound(query, pageSize = 30) {
   return buscarCartasRiftbound(query, pageSize);
 }
+

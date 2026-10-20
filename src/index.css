@@ -3516,6 +3516,94 @@ img { display: block; max-width: 100%; }
   line-height: 1.4;
 }
 
+/* Tarjeta de búsqueda sin resultados con acciones directas */
+.tcg-empty-search-card {
+  background: var(--fondo-panel);
+  border: 1.5px dashed var(--borde);
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.tcg-empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--t08);
+  color: var(--texto-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tcg-empty-search-card h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tcg-empty-search-card p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--texto-suave);
+  max-width: 480px;
+  line-height: 1.45;
+}
+
+.tcg-empty-suggestions {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.tcg-suggestions-label {
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.tcg-suggested-games {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tcg-btn-suggested {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tcg-btn-suggested:hover {
+  border-color: var(--acento);
+  background: var(--t08);
+}
+
+.suggested-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--t12);
+}
+
 /* Compatibilidad de formularios accesorios existentes (usados también en DetalleAccesorio) */
 .agregar-accesorio {
   display: flex;

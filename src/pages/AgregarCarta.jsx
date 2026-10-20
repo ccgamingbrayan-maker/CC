@@ -153,6 +153,8 @@ export default function AgregarCarta() {
     setMensaje("");
   }
 
+  const [busquedaRealizada, setBusquedaRealizada] = useState("");
+
   // Búsqueda modular unificada según la fuente elegida
   async function ejecutarBusqueda(targetFuente = fuenteActiva) {
     const query = nombre.trim();
@@ -160,97 +162,110 @@ export default function AgregarCarta() {
 
     setBuscando(true);
     setMensaje("");
+    setBusquedaRealizada(query);
     setFiltroPrints("");
     setDatosApi(null);
     setSeleccionada(null);
 
+    // Timeout de seguridad máximo de 8 segundos para evitar bloqueos infinitos de APIs externas
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("TIMEOUT_BUSQUEDA")), 8000)
+    );
+
     try {
-      if (targetFuente === "onepiece") {
-        const [printsMain, decks, dons, promos] = await Promise.all([
-          buscarPrintsOnePiece(query),
-          buscarDecksFiltered(query),
-          buscarDonFiltered(query),
-          buscarPromosFiltered(query),
-        ]);
+      await Promise.race([
+        (async () => {
+          if (targetFuente === "onepiece") {
+            const [printsMain, decks, dons, promos] = await Promise.all([
+              buscarPrintsOnePiece(query).catch(() => []),
+              buscarDecksFiltered(query).catch(() => []),
+              buscarDonFiltered(query).catch(() => []),
+              buscarPromosFiltered(query).catch(() => []),
+            ]);
 
-        const merged = [
-          ...(printsMain || []).map((p) => ({ ...p, source: "onepiece" })),
-          ...(decks || []).map((p) => ({ ...p, source: "onepiece-deck" })),
-          ...(dons || []).map((p) => ({ ...p, source: "onepiece-don" })),
-          ...(promos || []).map((p) => ({ ...p, source: "onepiece-promo" })),
-        ];
+            const merged = [
+              ...(printsMain || []).map((p) => ({ ...p, source: "onepiece" })),
+              ...(decks || []).map((p) => ({ ...p, source: "onepiece-deck" })),
+              ...(dons || []).map((p) => ({ ...p, source: "onepiece-don" })),
+              ...(promos || []).map((p) => ({ ...p, source: "onepiece-promo" })),
+            ];
 
-        if (!merged || merged.length === 0) {
-          setPrints([]);
-          setMensaje(`No se encontraron cartas en One Piece para "${query}".`);
-          setMensajeTipo("error");
-        } else {
-          // Deduplicar por id / imagen
-          const seen = new Set();
-          const dedup = [];
-          for (const p of merged) {
-            const key = p.id ?? p.nombre ?? p.imagen ?? JSON.stringify(p);
-            if (!seen.has(key)) {
-              seen.add(key);
-              dedup.push(p);
+            if (!merged || merged.length === 0) {
+              setPrints([]);
+              setMensaje(`No se encontraron cartas en One Piece para "${query}".`);
+              setMensajeTipo("error");
+            } else {
+              const seen = new Set();
+              const dedup = [];
+              for (const p of merged) {
+                const key = p.id ?? p.nombre ?? p.imagen ?? JSON.stringify(p);
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  dedup.push(p);
+                }
+              }
+              setPrints(dedup);
+              seleccionarVersion(dedup[0]);
+              setJuegoId(1);
+              setFuente("onepiece");
+            }
+          } else if (targetFuente === "pokemon") {
+            const versiones = await buscarPrintsPokemon(query);
+            if (!versiones || versiones.length === 0) {
+              setPrints([]);
+              setMensaje(`No se encontraron cartas en Pokémon para "${query}".`);
+              setMensajeTipo("error");
+            } else {
+              const mapped = versiones.map((v) => ({ ...v, source: "pokemon" }));
+              setPrints(mapped);
+              seleccionarVersion(mapped[0]);
+              setJuegoId(3);
+              setFuente("pokemon");
+            }
+          } else if (targetFuente === "scryfall") {
+            const carta = await buscarCartaScryfall(query);
+            if (!carta) {
+              setPrints([]);
+              setMensaje(`No se encontró carta en Magic (Scryfall) para "${query}".`);
+              setMensajeTipo("error");
+            } else {
+              setJuegoId(4);
+              setFuente("scryfall");
+              if (carta.printsSearchUri) {
+                const versiones = await buscarPrintsDesdeUri(carta.printsSearchUri).catch(() => []);
+                const mapped = (versiones || []).map((v) => ({ ...v, source: "scryfall" }));
+                setPrints(mapped.length > 0 ? mapped : [carta]);
+                seleccionarVersion(mapped[0] || carta);
+              } else {
+                setPrints([carta]);
+                seleccionarVersion(carta);
+              }
+            }
+          } else if (targetFuente === "riftbound") {
+            const versiones = await buscarPrintsRiftbound(query);
+            if (!versiones || versiones.length === 0) {
+              setPrints([]);
+              setMensaje(`No se encontraron cartas en Riftbound para "${query}".`);
+              setMensajeTipo("error");
+            } else {
+              const mapped = versiones.map((v) => ({ ...v, source: "riftbound" }));
+              setPrints(mapped);
+              seleccionarVersion(mapped[0]);
+              setJuegoId(2);
+              setFuente("riftbound");
             }
           }
-          setPrints(dedup);
-          seleccionarVersion(dedup[0]);
-          setJuegoId(1);
-          setFuente("onepiece");
-        }
-      } else if (targetFuente === "pokemon") {
-        const versiones = await buscarPrintsPokemon(query);
-        if (!versiones || versiones.length === 0) {
-          setPrints([]);
-          setMensaje(`No se encontraron cartas en Pokémon para "${query}".`);
-          setMensajeTipo("error");
-        } else {
-          const mapped = versiones.map((v) => ({ ...v, source: "pokemon" }));
-          setPrints(mapped);
-          seleccionarVersion(mapped[0]);
-          setJuegoId(3);
-          setFuente("pokemon");
-        }
-      } else if (targetFuente === "scryfall") {
-        const carta = await buscarCartaScryfall(query);
-        if (!carta) {
-          setPrints([]);
-          setMensaje(`No se encontró carta en Magic (Scryfall) para "${query}".`);
-          setMensajeTipo("error");
-        } else {
-          setJuegoId(4);
-          setFuente("scryfall");
-          if (carta.printsSearchUri) {
-            const versiones = await buscarPrintsDesdeUri(carta.printsSearchUri);
-            const mapped = (versiones || []).map((v) => ({ ...v, source: "scryfall" }));
-            setPrints(mapped.length > 0 ? mapped : [carta]);
-            seleccionarVersion(mapped[0] || carta);
-          } else {
-            setPrints([carta]);
-            seleccionarVersion(carta);
-          }
-        }
-      } else if (targetFuente === "riftbound") {
-        const carta = await buscarCartaRiftbound(query);
-        if (!carta) {
-          setPrints([]);
-          setMensaje(`No se encontró carta en Riftbound para "${query}".`);
-          setMensajeTipo("error");
-        } else {
-          setJuegoId(2);
-          setFuente("riftbound");
-          const versiones = await buscarPrintsRiftbound(query);
-          const mapped = (versiones || []).map((v) => ({ ...v, source: "riftbound" }));
-          setPrints(mapped.length > 0 ? mapped : [carta]);
-          seleccionarVersion(mapped[0] || carta);
-        }
-      }
+        })(),
+        timeoutPromise,
+      ]);
     } catch (err) {
       console.error("Error en búsqueda:", err);
       setPrints([]);
-      setMensaje("Ocurrió un error al consultar la API. Verifica tu conexión e inténtalo de nuevo.");
+      if (err.message === "TIMEOUT_BUSQUEDA") {
+        setMensaje(`El servidor externo de ${fuenteConfig.label} no respondió a tiempo. Prueba con otro término o franquicia.`);
+      } else {
+        setMensaje("Ocurrió un error al consultar la API externa. Intenta con otro término o juego.");
+      }
       setMensajeTipo("error");
     } finally {
       setBuscando(false);
@@ -500,7 +515,12 @@ export default function AgregarCarta() {
                       <button
                         type="button"
                         className="btn-clear-search"
-                        onClick={() => setNombre("")}
+                        onClick={() => {
+                          setNombre("");
+                          setBusquedaRealizada("");
+                          setPrints([]);
+                          setMensaje("");
+                        }}
                         title="Borrar texto"
                       >
                         <X size={14} />
@@ -964,6 +984,36 @@ export default function AgregarCarta() {
                       })}
                     </div>
                   )}
+                </div>
+              ) : busquedaRealizada ? (
+                /* ESTADO: BÚSQUEDA SIN RESULTADOS EN LA API EXTERNA */
+                <div className="tcg-empty-search-card">
+                  <div className="tcg-empty-icon-wrap">
+                    <Search size={32} />
+                  </div>
+                  <h3>Sin resultados para "{busquedaRealizada}" en {fuenteConfig.label}</h3>
+                  <p>
+                    No se encontraron cartas oficiales con este término o el servidor externo de la franquicia no reporta existencias en este momento.
+                  </p>
+                  <div className="tcg-empty-suggestions">
+                    <span className="tcg-suggestions-label">Prueba buscar "{busquedaRealizada}" en otra franquicia:</span>
+                    <div className="tcg-suggested-games">
+                      {FUENTES_JUEGOS.filter((f) => f.id !== fuenteActiva).map((f) => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          className="tcg-btn-suggested"
+                          onClick={() => {
+                            setFuenteActiva(f.id);
+                            ejecutarBusqueda(f.id);
+                          }}
+                        >
+                          <span className="suggested-badge">{f.badge}</span>
+                          <span>Buscar en {f.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 /* ESTADO INICIAL / GUÍA PARA EL ADMINISTRADOR */
