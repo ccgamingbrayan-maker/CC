@@ -30,6 +30,11 @@ import {
   Percent,
   Mail,
   UserCheck,
+  Upload,
+  FileText,
+  Camera,
+  Download,
+  RefreshCw,
 } from "lucide-react";
 import {
   listarTorneos,
@@ -40,13 +45,16 @@ import {
   calcularMetricasTorneo,
   distribuirPremiosTorneo,
 } from "../lib/torneos.js";
+import {
+  parsearTextoBandai,
+  ocrImagenBandai,
+  EJEMPLO_BANDAI_TEXTO,
+} from "../lib/bandaiParser.js";
 import { useAuth } from "../lib/AuthContext.jsx";
 
 const JUEGOS_FILTRO = [
   { id: "todos", label: "Todos los juegos", badge: "ALL" },
   { id: "One Piece TCG", label: "One Piece TCG", badge: "OP TCG" },
-  { id: "Pokémon TCG", label: "Pokémon TCG", badge: "PKMN" },
-  { id: "Magic: The Gathering", label: "Magic: The Gathering", badge: "MTG" },
   { id: "Riftbound TCG", label: "Riftbound TCG", badge: "RIFT" },
 ];
 
@@ -104,9 +112,179 @@ export default function Torneos() {
   const [editandoPremioId, setEditandoPremioId] = useState(null);
   const [textoPremioEdicion, setTextoPremioEdicion] = useState("");
 
+  // Modal Importador Automático Bandai TCG+ / Riftbound
+  const [modalImportarAbierto, setModalImportarAbierto] = useState(false);
+  const [importTexto, setImportTexto] = useState("");
+  const [importJuego, setImportJuego] = useState("One Piece TCG");
+  const [importNombre, setImportNombre] = useState("Torneo Store Championship OP-09 (Bandai TCG+)");
+  const [importFormato, setImportFormato] = useState("Estándar Suizo (4 Rondas)");
+  const [importFecha, setImportFecha] = useState(() => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  });
+  const [importLugar, setImportLugar] = useState("Sede Capsule Corp Gaming - Cali (Cra 34 # 4-50)");
+  const [importCosto, setImportCosto] = useState("35000");
+  const [importEsquema, setImportEsquema] = useState("top4_standard");
+  const [importPremioFisico1, setImportPremioFisico1] = useState("1 Booster Box OP-09");
+  const [importPremioFisico2, setImportPremioFisico2] = useState("12 Sobres Oficiales");
+  const [importPremioFisico3, setImportPremioFisico3] = useState("4 Sobres de Torneo");
+  const [importPremioFisico4, setImportPremioFisico4] = useState("2 Sobres de Torneo");
+  const [participantesParseados, setParticipantesParseados] = useState([]);
+  const [procesandoOcr, setProcesandoOcr] = useState(false);
+  const [estadoOcr, setEstadoOcr] = useState("");
+  const [modoEntrada, setModoEntrada] = useState("texto"); // "texto" | "imagen"
+  const [torneoDestinoImportacion, setTorneoDestinoImportacion] = useState(null);
+
   useEffect(() => {
     cargarDatos();
   }, []);
+
+  useEffect(() => {
+    if (importTexto.trim()) {
+      const parsed = parsearTextoBandai(importTexto);
+      setParticipantesParseados(parsed);
+    } else {
+      setParticipantesParseados([]);
+    }
+  }, [importTexto]);
+
+  function abrirModalImportar(torneoExistente = null) {
+    setTorneoDestinoImportacion(torneoExistente);
+    if (torneoExistente) {
+      setImportNombre(torneoExistente.nombre || "");
+      setImportJuego(torneoExistente.juego || "One Piece TCG");
+      setImportCosto(String(torneoExistente.costoInscripcion || 35000));
+      setImportEsquema(torneoExistente.esquemaPremios || "top4_standard");
+    } else {
+      setImportNombre("Torneo Store Championship OP-09 (Bandai TCG+)");
+      setImportJuego("One Piece TCG");
+      setImportCosto("35000");
+      setImportEsquema("top4_standard");
+    }
+    setImportTexto("");
+    setParticipantesParseados([]);
+    setEstadoOcr("");
+    setModoEntrada("texto");
+    setModalImportarAbierto(true);
+  }
+
+  function cargarEjemploBandai() {
+    setImportTexto(EJEMPLO_BANDAI_TEXTO);
+    setImportNombre("Torneo Store Championship OP-09 (Bandai TCG+)");
+    setImportJuego("One Piece TCG");
+    setImportCosto("35000");
+    setImportEsquema("top4_standard");
+  }
+
+  async function handleSubirImagenBandai(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProcesandoOcr(true);
+    setEstadoOcr("Leyendo captura de Bandai TCG+ con OCR...");
+    try {
+      const texto = await ocrImagenBandai(file, (msg) => setEstadoOcr(msg));
+      setImportTexto(texto);
+      const parsed = parsearTextoBandai(texto);
+      if (parsed.length > 0) {
+        setEstadoOcr(`¡Se detectaron ${parsed.length} participantes automáticamente!`);
+      } else {
+        setEstadoOcr("OCR completado. Revisa o ajusta el texto si hay caracteres confusos.");
+      }
+    } catch (err) {
+      setEstadoOcr("Error al procesar la imagen con OCR. Puedes copiar y pegar el texto de la tabla.");
+    } finally {
+      setProcesandoOcr(false);
+    }
+  }
+
+  async function handleConfirmarImportacion(e) {
+    e.preventDefault();
+    if (participantesParseados.length === 0) {
+      alert("Por favor pega o sube la tabla de Bandai TCG+ para detectar los participantes.");
+      return;
+    }
+
+    const costo = Number(importCosto) || 0;
+    const pozoTotal = costo * participantesParseados.length;
+
+    const porcentajes = {
+      top4_standard: { 1: 0.50, 2: 0.30, 3: 0.10, 4: 0.10 },
+      top4_split: { 1: 0.50, 2: 0.25, 3: 0.125, 4: 0.125 },
+      top8_premier: { 1: 0.40, 2: 0.20, 3: 0.10, 4: 0.10, 5: 0.05, 6: 0.05, 7: 0.05, 8: 0.05 },
+      top2: { 1: 0.70, 2: 0.30 },
+      winner: { 1: 1.00 },
+    };
+    const tabla = porcentajes[importEsquema] || porcentajes.top4_standard;
+
+    const premiosFisicos = {};
+    if (importPremioFisico1.trim()) premiosFisicos[1] = importPremioFisico1.trim();
+    if (importPremioFisico2.trim()) premiosFisicos[2] = importPremioFisico2.trim();
+    if (importPremioFisico3.trim()) premiosFisicos[3] = importPremioFisico3.trim();
+    if (importPremioFisico4.trim()) premiosFisicos[4] = importPremioFisico4.trim();
+
+    const participantesConPremios = participantesParseados.map((p) => {
+      const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
+      let premio = "";
+      if (numP && tabla[numP]) {
+        const partePozo = Math.round(pozoTotal * tabla[numP]);
+        premio = `$${partePozo.toLocaleString("es-CO")} COP`;
+        if (premiosFisicos[numP]) {
+          premio += ` + ${premiosFisicos[numP]}`;
+        }
+      } else {
+        premio = "Sobre de participación oficial";
+      }
+
+      return {
+        ...p,
+        montoPagado: costo,
+        estadoPago: "pagado",
+        premioGanado: premio,
+      };
+    });
+
+    if (torneoDestinoImportacion) {
+      const actualizado = await guardarTorneo({
+        ...torneoDestinoImportacion,
+        costoInscripcion: costo,
+        pozoPremios: pozoTotal,
+        esquemaPremios: importEsquema,
+        participantes: participantesConPremios,
+        estado: "finalizado",
+      });
+      setModalImportarAbierto(false);
+      await cargarDatos();
+      if (actualizado) setTorneoDetalle(actualizado);
+      return;
+    }
+
+    const nuevoTorneo = {
+      nombre: importNombre.trim(),
+      juego: importJuego,
+      formato: importFormato.trim(),
+      fecha: importFecha,
+      lugar: importLugar.trim(),
+      costoInscripcion: costo,
+      cupoMaximo: Math.max(participantesParseados.length, 16),
+      premios: `Pozo de $${pozoTotal.toLocaleString("es-CO")} COP distribuido automáticamente entre los mejores puestos.`,
+      pozoPremios: pozoTotal,
+      esquemaPremios: importEsquema,
+      gastosEvento: Math.round(pozoTotal * 0.2),
+      estado: "finalizado",
+      notas: `Importado automáticamente desde Bandai TCG+ (${participantesParseados.length} jugadores).`,
+      participantes: participantesConPremios,
+    };
+
+    const guardado = await guardarTorneo(nuevoTorneo);
+    setModalImportarAbierto(false);
+    await cargarDatos();
+    if (guardado) {
+      setTorneoDetalle(guardado);
+    }
+  }
+
+  // Al abrir torneo detalle, inicializar valores del pozo
 
   // Al abrir torneo detalle, inicializar valores del pozo
   useEffect(() => {
@@ -354,12 +532,9 @@ export default function Torneos() {
   }
 
   function getJuegoBadge(juego) {
-    if (!juego) return "TCG";
-    if (juego.includes("One Piece")) return "OP TCG";
-    if (juego.includes("Pokémon")) return "PKMN";
-    if (juego.includes("Magic")) return "MTG";
+    if (!juego) return "OP TCG";
     if (juego.includes("Riftbound")) return "RIFT";
-    return "TCG";
+    return "OP TCG";
   }
 
   return (
@@ -369,15 +544,24 @@ export default function Torneos() {
         <div className="torneos-header-left">
           <div className="torneos-tag-badge">
             <Trophy size={13} />
-            <span>Eventos y Comunidad</span>
+            <span>Eventos Oficiales</span>
           </div>
-          <h1 className="torneos-main-title">Torneos y Eventos TCG</h1>
+          <h1 className="torneos-main-title">Torneos One Piece y Riftbound</h1>
           <p className="torneos-main-subtitle">
-            Organiza, inscribe y participa en los torneos oficiales de One Piece, Pokémon, Magic y Riftbound de Capsule Corp Gaming en Cali.
+            Organiza, inscribe y consulta las posiciones oficiales de One Piece TCG (Bandai TCG+) y Riftbound TCG de Capsule Corp Gaming en Cali.
           </p>
         </div>
 
         <div className="torneos-header-actions">
+          <button
+            type="button"
+            className="btn-importar-bandai"
+            onClick={() => abrirModalImportar(null)}
+            title="Importar automáticamente torneo desde tabla de Bandai TCG+ o captura"
+          >
+            <Sparkles size={16} />
+            <span>Importar desde Bandai TCG+</span>
+          </button>
           <button
             type="button"
             className="btn-nuevo-torneo"
@@ -671,13 +855,24 @@ export default function Torneos() {
                   {formatearFecha(torneoDetalle.fecha)} • {torneoDetalle.lugar}
                 </p>
               </div>
-              <button
-                type="button"
-                className="btn-modal-close"
-                onClick={() => setTorneoDetalle(null)}
-              >
-                <X size={18} />
-              </button>
+              <div className="torneo-modal-header-actions">
+                <button
+                  type="button"
+                  className="btn-import-table-btn"
+                  onClick={() => abrirModalImportar(torneoDetalle)}
+                  title="Importar resultados oficiales desde Bandai TCG+ o captura"
+                >
+                  <Sparkles size={14} />
+                  <span>Importar Tabla Bandai</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-modal-close"
+                  onClick={() => setTorneoDetalle(null)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Contenido modal */}
@@ -1240,10 +1435,7 @@ export default function Torneos() {
                     onChange={(e) => setFormJuego(e.target.value)}
                   >
                     <option value="One Piece TCG">One Piece TCG</option>
-                    <option value="Pokémon TCG">Pokémon TCG</option>
-                    <option value="Magic: The Gathering">Magic: The Gathering</option>
                     <option value="Riftbound TCG">Riftbound TCG</option>
-                    <option value="Otro TCG">Otro TCG</option>
                   </select>
                 </label>
 
@@ -1362,6 +1554,296 @@ export default function Torneos() {
                 <button type="submit" className="btn-save-torneo">
                   <Check size={16} />
                   <span>{torneoEditando ? "Guardar Cambios" : "Crear Torneo"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 3: IMPORTADOR AUTOMÁTICO BANDAI TCG+ / RIFTBOUND   */}
+      {/* ========================================================= */}
+      {modalImportarAbierto && (
+        <div className="torneo-modal-backdrop" onClick={() => setModalImportarAbierto(false)}>
+          <div
+            className="torneo-modal-dialog modal-large modal-import-bandai"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="torneo-modal-header">
+              <div>
+                <span className="modal-badge badge-sparkles">
+                  <Sparkles size={12} /> Auto-Importador Bandai / Riftbound
+                </span>
+                <h2 className="modal-title">
+                  {torneoDestinoImportacion
+                    ? `Importar Resultados a: ${torneoDestinoImportacion.nombre}`
+                    : "Crear Torneo desde Tabla Bandai TCG+ / Riftbound"}
+                </h2>
+                <p className="modal-subtitle">
+                  Pega el texto copiado de la tabla de Bandai TCG+ o sube la captura de pantalla de los resultados.
+                  Detectaremos automáticamente los Nicknames, IDs de Bandai, puestos y asignaremos los premios.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={() => setModalImportarAbierto(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmarImportacion} className="torneo-modal-body form-body">
+              {/* Opciones de captura / ejemplo */}
+              <div className="import-source-toolbar">
+                <div className="import-method-tabs">
+                  <button
+                    type="button"
+                    className={`btn-import-tab ${modoEntrada === "texto" ? "active" : ""}`}
+                    onClick={() => setModoEntrada("texto")}
+                  >
+                    <FileText size={15} />
+                    <span>Pegar Tabla / Texto</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn-import-tab ${modoEntrada === "imagen" ? "active" : ""}`}
+                    onClick={() => setModoEntrada("imagen")}
+                  >
+                    <Camera size={15} />
+                    <span>Subir Captura (OCR Inteligente)</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn-import-sample"
+                  onClick={cargarEjemploBandai}
+                  title="Cargar los 12 jugadores del torneo de ejemplo de Bandai"
+                >
+                  <Sparkles size={14} />
+                  <span>Cargar Ejemplo de tu Captura (12 Jugadores)</span>
+                </button>
+              </div>
+
+              {/* Modo Texto */}
+              {modoEntrada === "texto" && (
+                <div className="import-text-box">
+                  <label className="form-field full-width">
+                    <span className="import-label-flex">
+                      <span>Pega aquí la tabla de posiciones copiada de Bandai TCG+ o texto</span>
+                      <small>Formato: Posición | Membership Number | Nickname | Puntos | OMW %</small>
+                    </span>
+                    <textarea
+                      rows={6}
+                      className="import-textarea"
+                      placeholder={`Posición\tMembership Number\tUsuarioname\tPuntos de victoria\tOMW %\n1\t0000205267\t[BC] JackPoe\t12\t52%\n2\t0000780406\tdanieldlora\t9\t64.5%\n3\t0000014931\tNiñojackie\t9\t52%`}
+                      value={importTexto}
+                      onChange={(e) => setImportTexto(e.target.value)}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {/* Modo Imagen con OCR */}
+              {modoEntrada === "imagen" && (
+                <div className="import-image-dropzone">
+                  <label className="dropzone-label">
+                    <Upload size={28} className="dropzone-icon" />
+                    <span className="dropzone-title">Arrastra o selecciona la captura de Bandai TCG+</span>
+                    <span className="dropzone-subtitle">Formatos PNG, JPG, WebP. Tesseract.js extraerá el texto automáticamente.</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleSubirImagenBandai}
+                      className="dropzone-input"
+                      disabled={procesandoOcr}
+                    />
+                  </label>
+                  {procesandoOcr && (
+                    <div className="ocr-progress-box">
+                      <RefreshCw size={16} className="spin" />
+                      <span>{estadoOcr || "Procesando imagen con OCR..."}</span>
+                    </div>
+                  )}
+                  {!procesandoOcr && estadoOcr && (
+                    <div className="ocr-status-result">
+                      <CheckCircle2 size={16} className="text-green" />
+                      <span>{estadoOcr}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Datos Generales del Torneo */}
+              {!torneoDestinoImportacion && (
+                <div className="import-tournament-fields">
+                  <h4 className="import-section-heading">Configuración del Evento</h4>
+                  <div className="form-cols-row">
+                    <label className="form-field">
+                      <span>Nombre del Torneo *</span>
+                      <input
+                        type="text"
+                        value={importNombre}
+                        onChange={(e) => setImportNombre(e.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Juego Oficial *</span>
+                      <select
+                        value={importJuego}
+                        onChange={(e) => setImportJuego(e.target.value)}
+                      >
+                        <option value="One Piece TCG">One Piece TCG</option>
+                        <option value="Riftbound TCG">Riftbound TCG</option>
+                      </select>
+                    </label>
+
+                    <label className="form-field">
+                      <span>Inscripción por Jugador (COP)</span>
+                      <input
+                        type="number"
+                        value={importCosto}
+                        onChange={(e) => setImportCosto(e.target.value)}
+                        required
+                      />
+                    </label>
+                  </div>
+
+                  <div className="form-cols-row">
+                    <label className="form-field">
+                      <span>Esquema de Pozo de Premios</span>
+                      <select
+                        value={importEsquema}
+                        onChange={(e) => setImportEsquema(e.target.value)}
+                      >
+                        <option value="top4_standard">Top 4 Estándar (1º 50%, 2º 30%, 3º-4º 10%)</option>
+                        <option value="top4_split">Top 4 Split (1º 50%, 2º 25%, 3º-4º 12.5%)</option>
+                        <option value="top8_premier">Top 8 Premier (1º 40%, 2º 20%, 3º-4º 10%, 5º-8º 5%)</option>
+                        <option value="top2">Top 2 (1º 70%, 2º 30%)</option>
+                        <option value="winner">Ganador se lleva todo (100%)</option>
+                      </select>
+                    </label>
+
+                    <label className="form-field">
+                      <span>Premio Físico 1er Lugar (Opcional)</span>
+                      <input
+                        type="text"
+                        placeholder="Ej: 1 Booster Box sellada OP-09"
+                        value={importPremioFisico1}
+                        onChange={(e) => setImportPremioFisico1(e.target.value)}
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Premio Físico 2do Lugar (Opcional)</span>
+                      <input
+                        type="text"
+                        placeholder="Ej: 12 Sobres oficiales"
+                        value={importPremioFisico2}
+                        onChange={(e) => setImportPremioFisico2(e.target.value)}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Vista Previa de Participantes Detectados */}
+              <div className="parsed-preview-box">
+                <div className="parsed-preview-header">
+                  <div className="pp-count-wrap">
+                    <UserCheck size={18} className="text-cyan" />
+                    <strong>{participantesParseados.length} Jugadores Detectados</strong>
+                  </div>
+                  {participantesParseados.length > 0 && (
+                    <span className="parsed-pool-calc">
+                      Pozo Total Estimado: ${(
+                        (Number(importCosto) || 0) * participantesParseados.length
+                      ).toLocaleString("es-CO")} COP
+                    </span>
+                  )}
+                </div>
+
+                {participantesParseados.length === 0 ? (
+                  <div className="parsed-empty-state">
+                    <AlertCircle size={20} className="text-amber" />
+                    <p>Aún no se han detectado jugadores. Haz clic en "Cargar Ejemplo de tu Captura" o pega el texto arriba.</p>
+                  </div>
+                ) : (
+                  <div className="parsed-table-wrap">
+                    <table className="parsed-table">
+                      <thead>
+                        <tr>
+                          <th>Puesto</th>
+                          <th>Bandai ID</th>
+                          <th>Nickname / Usuario</th>
+                          <th>Puntos</th>
+                          <th>OMW %</th>
+                          <th>Premio Calculado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {participantesParseados.map((p, idx) => {
+                          const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
+                          const isTop = numP && numP <= 4;
+                          return (
+                            <tr key={idx} className={isTop ? "row-top" : ""}>
+                              <td className="cell-rank">
+                                <span className={`rank-badge ${numP === 1 ? "rank-1" : numP === 2 ? "rank-2" : numP === 3 ? "rank-3" : ""}`}>
+                                  #{p.puesto || idx + 1}
+                                </span>
+                              </td>
+                              <td className="cell-id">
+                                <code>{p.bandaiId || "N/A"}</code>
+                              </td>
+                              <td className="cell-user">
+                                <span className="player-tag-name">{p.nickname || p.nombre}</span>
+                              </td>
+                              <td className="cell-pts">{p.puntos ?? 0} pts</td>
+                              <td className="cell-omw">{p.omw || "-"}</td>
+                              <td className="cell-prize">
+                                <span className="prize-preview-badge">
+                                  {numP === 1
+                                    ? `$${Math.round(((Number(importCosto) || 0) * participantesParseados.length) * 0.50).toLocaleString("es-CO")} COP ${importPremioFisico1 ? `+ ${importPremioFisico1}` : ""}`
+                                    : numP === 2
+                                    ? `$${Math.round(((Number(importCosto) || 0) * participantesParseados.length) * 0.30).toLocaleString("es-CO")} COP ${importPremioFisico2 ? `+ ${importPremioFisico2}` : ""}`
+                                    : (numP === 3 || numP === 4)
+                                    ? `$${Math.round(((Number(importCosto) || 0) * participantesParseados.length) * 0.10).toLocaleString("es-CO")} COP`
+                                    : "Sobre de participación oficial"}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Botones de acción modal */}
+              <div className="modal-form-actions">
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => setModalImportarAbierto(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-confirm-import"
+                  disabled={participantesParseados.length === 0}
+                >
+                  <Sparkles size={16} />
+                  <span>
+                    {torneoDestinoImportacion
+                      ? `Actualizar Torneo con ${participantesParseados.length} Jugadores`
+                      : `Crear Torneo Automático (${participantesParseados.length} Jugadores)`}
+                  </span>
                 </button>
               </div>
             </form>
