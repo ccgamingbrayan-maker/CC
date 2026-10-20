@@ -156,6 +156,18 @@ CREATE INDEX IF NOT EXISTS idx_torneo_part_user ON public.torneo_participantes(u
 CREATE INDEX IF NOT EXISTS idx_torneo_part_nickname ON public.torneo_participantes(LOWER(nickname));
 CREATE INDEX IF NOT EXISTS idx_torneo_part_bandai_id ON public.torneo_participantes(bandai_id);
 
+-- Migración idéntica para bases de datos existentes: asegurar columnas en tablas ya creadas
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS productos_premios JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS pozo_premios NUMERIC(12, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS esquema_premios TEXT DEFAULT 'top4_standard';
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS gastos_evento NUMERIC(12, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS public.torneos ADD COLUMN IF NOT EXISTS participantes JSONB DEFAULT '[]'::jsonb;
+
+ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS productos_premios JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS monto_pagado NUMERIC(12, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS estado_pago TEXT DEFAULT 'pagado';
+ALTER TABLE IF EXISTS public.torneo_participantes ADD COLUMN IF NOT EXISTS premio_ganado TEXT;
+
 -- ==============================================================================
 -- 6. TRIGGER: SINCRONIZACIÓN AUTOMÁTICA TORNEOS JSONB -> TORNEO_PARTICIPANTES
 -- ==============================================================================
