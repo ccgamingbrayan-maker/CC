@@ -133,48 +133,49 @@
 /* ===== Tema claro ===== */
 
 :root[data-tema="claro"] {
-  --fondo: #F8FAFC;
-  --fondo-panel: #FFFFFF;
-  --nav: #FFFFFF;
-  --footer: #F1F5F9;
-  --texto: #0F172A;
-  --texto-suave: #475569;
-  --borde: #E2E8F0;
-  --img-fondo: rgba(15, 23, 42, 0.04);
-  --btn-fondo: #F1F5F9;
-  --btn-texto: #0F172A;
-  --t03: rgba(15, 23, 42, 0.03);
-  --t04: rgba(15, 23, 42, 0.04);
-  --t05: rgba(15, 23, 42, 0.05);
-  --t06: rgba(15, 23, 42, 0.06);
-  --t07: rgba(15, 23, 42, 0.07);
-  --t08: rgba(15, 23, 42, 0.08);
-  --t10: rgba(15, 23, 42, 0.10);
-  --t12: rgba(15, 23, 42, 0.12);
-  --t14: rgba(15, 23, 42, 0.14);
-  --t15: rgba(15, 23, 42, 0.15);
-  --t20: rgba(15, 23, 42, 0.20);
-  --background: #F8FAFC;
-  --foreground: #0F172A;
-  --card: #FFFFFF;
-  --card-foreground: #0F172A;
-  --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  --secondary: #F1F5F9;
-  --secondary-foreground: #0F172A;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: #F1F5F9;
-  --accent-foreground: #0F172A;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F172A;
-  --sidebar-accent: #F1F5F9;
-  --sidebar-accent-foreground: #0F172A;
-  --sidebar-border: #E2E8F0;
+  --fondo:        #F4F1EC;  /* warm off-white — fondo general */
+  --fondo-panel:  #FFFFFF;  /* blanco puro — paneles y tarjetas */
+  --nav:          #FFFFFF;  /* barra superior */
+  --footer:       #E8E2D8;  /* bloque inferior */
+  --texto:        #2C2417;  /* marrón cálido oscuro — texto principal */
+  --texto-suave:  #78716C;  /* gris cálido — texto secundario */
+  --borde:        #DAD3C6;  /* beige medio — bordes */
+  --img-fondo:    rgba(44, 36, 23, 0.04);
+  --btn-fondo:    #E8E2D8;  /* beige claro — botones */
+  --btn-texto:    #2C2417;
+  --t03: rgba(44, 36, 23, 0.03);
+  --t04: rgba(44, 36, 23, 0.04);
+  --t05: rgba(44, 36, 23, 0.05);
+  --t06: rgba(44, 36, 23, 0.06);
+  --t07: rgba(44, 36, 23, 0.07);
+  --t08: rgba(44, 36, 23, 0.08);
+  --t10: rgba(44, 36, 23, 0.10);
+  --t12: rgba(44, 36, 23, 0.12);
+  --t14: rgba(44, 36, 23, 0.14);
+  --t15: rgba(44, 36, 23, 0.15);
+  --t20: rgba(44, 36, 23, 0.20);
+  --background:              #F4F1EC;
+  --foreground:              #2C2417;
+  --card:                    #FFFFFF;
+  --card-foreground:         #2C2417;
+  --popover:                 #FFFFFF;
+  --popover-foreground:      #2C2417;
+  --secondary:               #E8E2D8;
+  --secondary-foreground:    #2C2417;
+  --muted:                   #E8E2D8;
+  --muted-foreground:        #78716C;
+  --accent:                  #CFC7B8;
+  --accent-foreground:       #2C2417;
+  --border:                  #DAD3C6;
+  --input:                   #DAD3C6;
+  --sidebar:                 #FFFFFF;
+  --sidebar-foreground:      #2C2417;
+  --sidebar-accent:          #E8E2D8;
+  --sidebar-accent-foreground: #2C2417;
+  --sidebar-border:          #DAD3C6;
   color-scheme: light;
 }
+
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -7743,20 +7744,20 @@ img { display: block; max-width: 100%; }
 }
 
 .kpi-icon-wrap.kpi-blue {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: var(--t06);
+  color: var(--texto-suave);
 }
 .kpi-icon-wrap.kpi-purple {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
+  background: var(--t06);
+  color: var(--texto-suave);
 }
 .kpi-icon-wrap.kpi-green {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: var(--t06);
+  color: var(--texto-suave);
 }
 .kpi-icon-wrap.kpi-amber {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
+  background: var(--t06);
+  color: var(--texto-suave);
 }
 
 .kpi-info {
@@ -8342,10 +8343,11 @@ img { display: block; max-width: 100%; }
   color: var(--texto);
 }
 
-.text-green { color: #4ade80 !important; }
-.text-amber { color: #fbbf24 !important; }
-.text-rose { color: #f87171 !important; }
-.text-cyan { color: #38bdf8 !important; }
+.text-green  { color: var(--texto); }
+.text-amber  { color: var(--texto); }
+.text-rose   { color: var(--texto); }
+.text-cyan   { color: var(--texto-suave); }
+.text-muted  { color: var(--texto-suave); }
 
 /* Formulario inline de participantes */
 .torneo-add-player-box {
@@ -9885,9 +9887,9 @@ img { display: block; max-width: 100%; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: var(--texto-suave);
+  background: var(--t06);
+  border: 1px solid var(--borde);
   padding: 4px 10px;
   border-radius: 999px;
   margin-bottom: 8px;
@@ -9925,12 +9927,11 @@ img { display: block; max-width: 100%; }
   border-radius: 12px;
   background: var(--nav);
   border: 1px solid var(--borde);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .kpi-icon-wrap.kpi-rose {
-  background: rgba(244, 63, 94, 0.15);
-  color: #fb7185;
+  background: var(--t06);
+  color: var(--texto-suave);
 }
 
 .crm-alert-toast {
@@ -9939,9 +9940,9 @@ img { display: block; max-width: 100%; }
   gap: 8px;
   padding: 10px 18px;
   border-radius: 8px;
-  background: rgba(34, 197, 94, 0.15);
-  border: 1px solid rgba(34, 197, 94, 0.35);
-  color: #4ade80;
+  background: var(--t05);
+  border: 1px solid var(--borde);
+  color: var(--texto);
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 18px;
@@ -9981,7 +9982,7 @@ img { display: block; max-width: 100%; }
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--t05);
   border: 1px solid var(--borde);
   border-radius: 8px;
   padding: 8px 12px;
@@ -10020,7 +10021,7 @@ img { display: block; max-width: 100%; }
   padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid var(--borde);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--t04);
   color: var(--texto-suave);
   font-size: 11.5px;
   font-weight: 600;
@@ -10029,14 +10030,14 @@ img { display: block; max-width: 100%; }
 }
 
 .filter-chip:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--t08);
   color: var(--texto);
 }
 
 .filter-chip.active {
   background: var(--btn-fondo);
   color: var(--btn-texto);
-  border-color: transparent;
+  border-color: var(--borde);
   font-weight: 700;
 }
 
@@ -10056,29 +10057,28 @@ img { display: block; max-width: 100%; }
   gap: 12px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--t04);
   border: 1px solid var(--borde);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .crm-client-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(168, 85, 247, 0.3);
+  background: var(--t05);
+  border-color: var(--acento);
   transform: translateX(2px);
 }
 
 .crm-client-card.active {
-  background: rgba(168, 85, 247, 0.14);
-  border-color: #a855f7;
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.2);
+  background: var(--t12);
+  border-color: var(--acento);
 }
 
 .client-card-avatar {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: var(--acento);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10121,9 +10121,9 @@ img { display: block; max-width: 100%; }
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--t05);
+  color: var(--texto-suave);
+  border: 1px solid var(--borde);
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -10137,7 +10137,7 @@ img { display: block; max-width: 100%; }
 }
 
 .client-card-nick {
-  color: #38bdf8;
+  color: var(--texto-suave);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -10159,9 +10159,9 @@ img { display: block; max-width: 100%; }
 .badge-torneos-count {
   font-size: 10.5px;
   font-weight: 600;
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  color: var(--texto-suave);
+  background: var(--t05);
+  border: 1px solid var(--borde);
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -10169,9 +10169,9 @@ img { display: block; max-width: 100%; }
 .badge-compras-count {
   font-size: 10.5px;
   font-weight: 600;
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.1);
-  border: 1px solid rgba(74, 222, 128, 0.2);
+  color: var(--texto-suave);
+  background: var(--t05);
+  border: 1px solid var(--borde);
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -10179,9 +10179,9 @@ img { display: block; max-width: 100%; }
 .badge-deuda-pill {
   font-size: 10.5px;
   font-weight: 700;
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--texto);
+  background: var(--t08);
+  border: 1px solid var(--borde);
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -10193,7 +10193,7 @@ img { display: block; max-width: 100%; }
 }
 
 .crm-client-card.active .client-card-arrow {
-  color: #a855f7;
+  color: var(--acento);
   opacity: 1;
   transform: translateX(3px);
 }
@@ -10208,11 +10208,10 @@ img { display: block; max-width: 100%; }
   border: 1px solid var(--borde);
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
 .dossier-header-banner {
-  background: linear-gradient(135deg, rgba(30, 27, 75, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+  background: var(--fondo-panel);
   border-bottom: 1px solid var(--borde);
   padding: 24px;
 }
@@ -10228,7 +10227,7 @@ img { display: block; max-width: 100%; }
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  background: var(--acento);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10236,7 +10235,7 @@ img { display: block; max-width: 100%; }
   font-weight: 800;
   color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 0 16px rgba(139, 92, 246, 0.4);
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -10273,9 +10272,9 @@ img { display: block; max-width: 100%; }
   gap: 5px;
   font-size: 11px;
   font-weight: 800;
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--texto-suave);
+  background: var(--t05);
+  border: 1px solid var(--borde);
   padding: 3px 9px;
   border-radius: 6px;
   text-transform: uppercase;
@@ -10287,9 +10286,9 @@ img { display: block; max-width: 100%; }
   gap: 5px;
   font-size: 11.5px;
   font-weight: 700;
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.12);
-  border: 1px solid rgba(74, 222, 128, 0.25);
+  color: var(--texto-suave);
+  background: var(--t05);
+  border: 1px solid var(--borde);
   padding: 3px 9px;
   border-radius: 6px;
 }
@@ -10308,9 +10307,9 @@ img { display: block; max-width: 100%; }
   gap: 6px;
   font-size: 12.5px;
   font-weight: 700;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--texto);
+  background: var(--t08);
+  border: 1px solid var(--borde);
   padding: 4px 10px;
   border-radius: 7px;
 }
@@ -10323,7 +10322,7 @@ img { display: block; max-width: 100%; }
   font-weight: 600;
   font-family: monospace;
   color: var(--texto);
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--t05);
   border: 1px solid var(--borde);
   padding: 4px 10px;
   border-radius: 7px;
@@ -10332,8 +10331,8 @@ img { display: block; max-width: 100%; }
 }
 
 .dossier-chip-bandai-id:hover {
-  border-color: #38bdf8;
-  background: rgba(56, 189, 248, 0.08);
+  border-color: var(--acento);
+  background: var(--t08);
 }
 
 .dossier-chip-city {
@@ -10358,7 +10357,7 @@ img { display: block; max-width: 100%; }
   font-size: 12.5px;
   color: var(--texto-suave);
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--t04);
   padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid var(--borde);
@@ -10367,7 +10366,7 @@ img { display: block; max-width: 100%; }
 
 .dossier-contact-link:hover {
   color: var(--texto);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--t08);
 }
 
 .dossier-whatsapp-btn {
@@ -10376,9 +10375,9 @@ img { display: block; max-width: 100%; }
   gap: 6px;
   font-size: 12px;
   font-weight: 700;
-  color: #4ade80;
-  background: rgba(34, 197, 94, 0.15);
-  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: var(--texto);
+  background: var(--t08);
+  border: 1px solid var(--borde);
   padding: 4px 12px;
   border-radius: 6px;
   text-decoration: none;
@@ -10386,8 +10385,8 @@ img { display: block; max-width: 100%; }
 }
 
 .dossier-whatsapp-btn:hover {
-  background: rgba(34, 197, 94, 0.25);
-  transform: translateY(-1px);
+  background: var(--t12);
+  border-color: var(--acento);
 }
 
 /* Mini KPIs */
@@ -10396,7 +10395,7 @@ img { display: block; max-width: 100%; }
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   padding: 18px 24px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--t05);
   border-bottom: 1px solid var(--borde);
 }
 
@@ -10406,7 +10405,7 @@ img { display: block; max-width: 100%; }
   gap: 3px;
   padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--t03);
   border: 1px solid var(--borde);
 }
 
@@ -10430,20 +10429,25 @@ img { display: block; max-width: 100%; }
 }
 
 .d-kpi-item.highlight-debt {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: var(--t08);
+  border-color: var(--borde);
 }
 
 .d-kpi-item.highlight-trophy {
-  background: rgba(251, 191, 36, 0.08);
-  border-color: rgba(251, 191, 36, 0.3);
+  background: var(--t05);
+  border-color: var(--borde);
+}
+
+.d-kpi-item.highlight-ok {
+  background: var(--t03);
+  border-color: var(--borde);
 }
 
 /* Tabs de Navegación del Dossier */
 .dossier-tabs-nav {
   display: flex;
   border-bottom: 1px solid var(--borde);
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--t04);
   padding: 0 16px;
   overflow-x: auto;
 }
@@ -10469,8 +10473,8 @@ img { display: block; max-width: 100%; }
 }
 
 .d-tab-btn.active {
-  color: #c084fc;
-  border-bottom-color: #c084fc;
+  color: var(--texto);
+  border-bottom-color: var(--acento);
   font-weight: 700;
 }
 
@@ -10486,7 +10490,7 @@ img { display: block; max-width: 100%; }
 }
 
 .dossier-torneo-card {
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--t04);
   border: 1px solid var(--borde);
   border-radius: 12px;
   padding: 18px;
@@ -10514,15 +10518,15 @@ img { display: block; max-width: 100%; }
 }
 
 .dtc-game-tag.op {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--t05);
+  color: var(--texto-suave);
+  border: 1px solid var(--borde);
 }
 
 .dtc-game-tag.rift {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: var(--t08);
+  color: var(--texto-suave);
+  border: 1px solid var(--acento);
 }
 
 .dtc-title {
@@ -10555,24 +10559,27 @@ img { display: block; max-width: 100%; }
   border-radius: 6px;
   font-size: 13px;
   font-weight: 800;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--t08);
+  border: 1px solid var(--borde);
   color: var(--texto);
 }
 
 .dtc-rank-pill.oro {
-  background: #eab308;
-  color: #000;
-  box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
 }
 
 .dtc-rank-pill.plata {
-  background: #94a3b8;
-  color: #000;
+  background: var(--t14);
+  color: var(--texto);
+  border-color: var(--borde);
 }
 
 .dtc-rank-pill.bronce {
-  background: #b45309;
-  color: #fff;
+  background: var(--t08);
+  color: var(--texto);
+  border-color: var(--borde);
 }
 
 .dtc-score-details {
@@ -10609,7 +10616,7 @@ img { display: block; max-width: 100%; }
 .dtc-payment-selector {
   display: inline-flex;
   gap: 4px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--t05);
   padding: 2px;
   border-radius: 6px;
   border: 1px solid var(--borde);
@@ -10629,32 +10636,33 @@ img { display: block; max-width: 100%; }
 }
 
 .btn-pay-chip.active-pagado {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
+  background: var(--t14);
+  color: var(--texto);
+  border-radius: 4px;
 }
 
 .btn-pay-chip.active-abono {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+  background: var(--t08);
+  color: var(--texto);
 }
 
 .btn-pay-chip.active-debe {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  background: var(--t12);
+  color: var(--texto);
 }
 
 .dtc-premio-banner {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.12) 0%, rgba(202, 138, 4, 0.05) 100%);
-  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: var(--t05);
+  border: 1px solid var(--borde);
   border-radius: 8px;
   padding: 10px 14px;
 }
 
 .dtc-premio-icon {
-  color: #eab308;
+  color: var(--texto-suave);
   flex-shrink: 0;
 }
 
@@ -10663,12 +10671,12 @@ img { display: block; max-width: 100%; }
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #fbbf24;
+  color: var(--texto-suave);
 }
 
 .dtc-premio-text {
   font-size: 13.5px;
-  color: #fef08a;
+  color: var(--texto);
 }
 
 /* Compras & Pedidos */
@@ -10679,7 +10687,7 @@ img { display: block; max-width: 100%; }
 }
 
 .dossier-pedido-card {
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--t04);
   border: 1px solid var(--borde);
   border-radius: 10px;
   padding: 16px;
@@ -10718,21 +10726,21 @@ img { display: block; max-width: 100%; }
 }
 
 .dpc-status.entregado {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: var(--t06);
+  color: var(--texto);
+  border: 1px solid var(--borde);
 }
 
 .dpc-status.pagado {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: var(--t06);
+  color: var(--texto);
+  border: 1px solid var(--borde);
 }
 
 .dpc-status.pendiente {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: var(--t10);
+  color: var(--texto-suave);
+  border: 1px solid var(--borde);
 }
 
 .dpc-date {
@@ -10754,11 +10762,11 @@ img { display: block; max-width: 100%; }
 .dpc-total-val {
   font-size: 16px;
   font-weight: 800;
-  color: #4ade80;
+  color: var(--texto);
 }
 
 .dpc-items-box {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--t05);
   border-radius: 8px;
   padding: 10px 14px;
 }
@@ -10790,7 +10798,7 @@ img { display: block; max-width: 100%; }
 
 .item-qty {
   font-weight: 800;
-  color: #38bdf8;
+  color: var(--texto-suave);
   margin-right: 8px;
 }
 
@@ -10806,7 +10814,7 @@ img { display: block; max-width: 100%; }
 
 /* Notas Administrativas */
 .notas-card {
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--t04);
   border: 1px solid var(--borde);
   border-radius: 12px;
   padding: 20px;
@@ -10828,7 +10836,7 @@ img { display: block; max-width: 100%; }
 .notas-textarea {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--t05);
   border: 1px solid var(--borde);
   border-radius: 8px;
   padding: 12px;
@@ -10841,8 +10849,8 @@ img { display: block; max-width: 100%; }
 
 .notas-textarea:focus {
   outline: none;
-  border-color: #a855f7;
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+  border-color: var(--acento);
+  box-shadow: none;
 }
 
 .btn-guardar-notas {
