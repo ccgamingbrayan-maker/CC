@@ -109,16 +109,19 @@ export default function Torneos() {
 
   // Formulario de Participante dentro de modal detalle
   const [pNombre, setPNombre] = useState("");
+  const [pBandaiId, setPBandaiId] = useState("");
   const [pEmail, setPEmail] = useState("");
   const [pTelefono, setPTelefono] = useState("");
   const [pDeck, setPDeck] = useState("");
   const [pPuesto, setPPuesto] = useState("Participante");
+  const [pWins, setPWins] = useState("0");
   const [pPremioGanado, setPPremioGanado] = useState("");
   const [pMontoPagado, setPMontoPagado] = useState("");
   const [pEstadoPago, setPEstadoPago] = useState("pagado");
   const [pNotas, setPNotas] = useState("");
+  const [mostrarFormNuevoJugador, setMostrarFormNuevoJugador] = useState(false);
 
-  // Pestaña de Gestión del Torneo ("participantes" | "productos_premios")
+  // Pestaña de Gestión del Torneo ("participantes" | "economia" | "productos_premios")
   const [tabGestionTorneo, setTabGestionTorneo] = useState("participantes");
 
   // Catálogo General de Premios e Inventario
@@ -567,16 +570,21 @@ export default function Torneos() {
     e.preventDefault();
     if (!torneoDetalle || !pNombre.trim()) return;
 
-    const costo = Number(torneoDetalle.costoInscripcion || 0);
+    const costo = Number(torneoDetalle.costoInscripcion || 26000);
     const pagado = pMontoPagado === "" ? costo : Number(pMontoPagado);
+    const winsVal = Math.max(0, parseInt(pWins, 10) || 0);
 
     const participante = {
       nombre: pNombre.trim(),
+      nickname: pNombre.trim(),
+      bandaiId: pBandaiId.trim(),
       email: pEmail.trim(),
       telefono: pTelefono.trim(),
       deck: pDeck.trim(),
       puesto: pPuesto || "Participante",
-      premioGanado: pPremioGanado.trim(),
+      wins: winsVal,
+      ccCoins: winsVal,
+      premioGanado: pPremioGanado.trim() || `🪙 ${winsVal} CC Coins (${winsVal} wins)`,
       montoPagado: pagado,
       estadoPago: pEstadoPago,
       notas: pNotas.trim(),
@@ -586,14 +594,17 @@ export default function Torneos() {
     if (actualizado) {
       setTorneoDetalle(actualizado);
       setPNombre("");
+      setPBandaiId("");
       setPEmail("");
       setPTelefono("");
       setPDeck("");
       setPPuesto("Participante");
+      setPWins("0");
       setPPremioGanado("");
       setPMontoPagado("");
       setPEstadoPago("pagado");
       setPNotas("");
+      setMostrarFormNuevoJugador(false);
       await cargarDatos();
     }
   }
@@ -1294,8 +1305,11 @@ export default function Torneos() {
           >
             {/* Header modal */}
             <div className="torneo-modal-header">
-              <div>
-                <span className="modal-badge">{torneoDetalle.juego}</span>
+              <div className="torneo-modal-header-info">
+                <div className="modal-badge-row">
+                  <span className="modal-badge">{torneoDetalle.juego || "One Piece TCG"}</span>
+                  <span className="modal-state-badge">{torneoDetalle.estado === "finalizado" ? "Finalizado" : torneoDetalle.estado === "en_curso" ? "En Curso" : "Próximo"}</span>
+                </div>
                 <h2 className="modal-title">{torneoDetalle.nombre}</h2>
                 <p className="modal-subtitle">
                   {formatearFecha(torneoDetalle.fecha)} • {torneoDetalle.lugar}
@@ -1304,17 +1318,39 @@ export default function Torneos() {
               <div className="torneo-modal-header-actions">
                 <button
                   type="button"
-                  className="btn-import-table-btn"
+                  className="btn-tm-action primary"
+                  onClick={() => {
+                    setTabGestionTorneo("participantes");
+                    setMostrarFormNuevoJugador(true);
+                  }}
+                  title="Inscribir un nuevo jugador al torneo"
+                >
+                  <Plus size={14} />
+                  <span>+ Inscribir Jugador</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-tm-action secondary"
                   onClick={() => abrirModalImportar(torneoDetalle)}
                   title="Importar resultados oficiales desde Bandai TCG+ o captura"
                 >
                   <Sparkles size={14} />
-                  <span>Importar Tabla Bandai</span>
+                  <span>Importar Bandai</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-tm-action secondary"
+                  onClick={() => setModalPrizeWallAbierto(true)}
+                  title="Abrir el Muro de Premios (Prize Wall)"
+                >
+                  <Coins size={14} />
+                  <span>Prize Wall</span>
                 </button>
                 <button
                   type="button"
                   className="btn-modal-close"
                   onClick={() => setTorneoDetalle(null)}
+                  title="Cerrar ventana"
                 >
                   <X size={18} />
                 </button>
@@ -1323,107 +1359,43 @@ export default function Torneos() {
 
             {/* Contenido modal */}
             <div className="torneo-modal-body">
-              {/* Resumen financiero del torneo */}
-              {(() => {
-                const m = calcularMetricasTorneo(torneoDetalle);
-                return (
-                  <div className="modal-metrics-banner">
-                    <div className="m-metric-box">
-                      <span className="m-label">Inscripción Oficial</span>
-                      <strong className="m-val">${(torneoDetalle.costoInscripcion || 0).toLocaleString("es-CO")} COP</strong>
-                    </div>
-                    <div className="m-metric-box">
-                      <span className="m-label">Total Recaudado</span>
-                      <strong className="m-val text-green">${m.totalRecaudado.toLocaleString("es-CO")} COP</strong>
-                    </div>
-                    <div className="m-metric-box">
-                      <span className="m-label">Por Cobrar (Deuda)</span>
-                      <strong className="m-val text-amber">${m.totalDeuda.toLocaleString("es-CO")} COP</strong>
-                    </div>
-                    <div className="m-metric-box">
-                      <span className="m-label">Gastos del Torneo</span>
-                      <strong className="m-val text-rose">${m.gastos.toLocaleString("es-CO")} COP</strong>
-                    </div>
-                    <div className="m-metric-box highlight">
-                      <span className="m-label">Ganancia Neta</span>
-                      <strong className="m-val text-cyan">${m.gananciaNeta.toLocaleString("es-CO")} COP</strong>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Banner de Modelo Oficial de Premiación 100% Retorno & CC Coins */}
+              {/* Barra Compacta de Métricas Oficiales 100% Retorno (1 sola fila limpia) */}
               {(() => {
                 const calculoPremios = calcularPremiacionOficialOnePiece(
                   torneoDetalle.participantes?.length || 0,
                   torneoDetalle.participantes || []
                 );
                 return (
-                  <div className="torneo-economic-pool-card">
-                    <div className="tep-header">
-                      <div className="tep-title-group">
-                        <div className="tep-icon-wrap">
-                          <Coins size={20} />
-                        </div>
-                        <div>
-                          <div className="tep-title-row">
-                            <strong>Modelo Oficial de Premiación • 100% Retorno</strong>
-                            <span className="badge-tep-guarantee">
-                              <CheckCircle2 size={13} />
-                              <span>100% de la Inscripción en Premios</span>
-                            </span>
-                          </div>
-                          <p>
-                            Inscripción de ${calculoPremios.costoInscripcionUnitario.toLocaleString("es-CO")} COP por jugador entregada íntegramente en premios: 1 victoria = 1 CC Coin ($2.000 COP) para el Prize Wall y el saldo restante financia el pool de sobres oficiales de tienda y la rifa.
-                          </p>
-                        </div>
-                      </div>
+                  <div className="torneo-compact-kpi-bar">
+                    <div className="tck-pill">
+                      <span className="tck-label">Inscripción</span>
+                      <strong className="tck-val">${(torneoDetalle.costoInscripcion || 26000).toLocaleString("es-CO")}</strong>
                     </div>
-
-                    <div className="tep-grid">
-                      <div className="tep-col">
-                        <span className="tep-label">Recaudo Total ({calculoPremios.numJugadores} jugadores)</span>
-                        <strong className="tep-value">${calculoPremios.totalInscripcionCOP.toLocaleString("es-CO")} COP</strong>
-                        <small className="tep-sub">Inscripción $26.000 COP c/u</small>
-                      </div>
-
-                      <div className="tep-col highlight-coins">
-                        <span className="tep-label">Asignado a CC Coins (Prize Wall)</span>
-                        <strong className="tep-value">${calculoPremios.montoCcCoinsCOP.toLocaleString("es-CO")} COP</strong>
-                        <small className="tep-sub">🪙 {calculoPremios.totalWins} Wins acumuladas ($2.000 COP/win)</small>
-                      </div>
-
-                      <div className="tep-col highlight-packs">
-                        <span className="tep-label">Pozo Restante en Sobres Tienda</span>
-                        <strong className="tep-value">${calculoPremios.poolRestanteCOP.toLocaleString("es-CO")} COP</strong>
-                        <small className="tep-sub">📦 {calculoPremios.totalSobresTienda} Sobres ({calculoPremios.sobresRifa} Rifa + {calculoPremios.sobresTop} Top {calculoPremios.puestosPremiados})</small>
-                      </div>
-
-                      <div className="tep-col">
-                        <span className="tep-label">Kits Bandai Oficiales</span>
-                        <strong className="tep-value">1 Winner + {calculoPremios.numJugadores} Packs</strong>
-                        <small className="tep-sub">1 Winner Pack (1°) + Tournament Packs (Todos)</small>
-                      </div>
+                    <div className="tck-pill">
+                      <span className="tck-label">Inscritos</span>
+                      <strong className="tck-val text-accent">{calculoPremios.numJugadores} Jugadores</strong>
                     </div>
-
-                    <div className="tep-footer-bar">
-                      <span className="tep-footer-note">
-                        Total entregado a jugadores: <strong>${calculoPremios.retornoPremiosTotalCOP.toLocaleString("es-CO")} COP</strong> ({calculoPremios.porcentajeRetorno}% exacto del recaudo).
-                      </span>
-                      <button
-                        type="button"
-                        className="btn-open-pw-inline"
-                        onClick={() => setModalPrizeWallAbierto(true)}
-                      >
-                        <Coins size={14} />
-                        <span>Abrir Muro de Premios (Prize Wall)</span>
-                      </button>
+                    <div className="tck-pill">
+                      <span className="tck-label">Recaudo 100%</span>
+                      <strong className="tck-val text-green">${calculoPremios.totalInscripcionCOP.toLocaleString("es-CO")}</strong>
+                    </div>
+                    <div className="tck-pill">
+                      <span className="tck-label">Bolsa CC Coins</span>
+                      <strong className="tck-val text-gold">🪙 {calculoPremios.totalWins} Coins (${calculoPremios.montoCcCoinsCOP.toLocaleString("es-CO")})</strong>
+                    </div>
+                    <div className="tck-pill">
+                      <span className="tck-label">Sobres Tienda</span>
+                      <strong className="tck-val text-cyan">📦 {calculoPremios.totalSobresTienda} Sobres (${calculoPremios.poolRestanteCOP.toLocaleString("es-CO")})</strong>
+                    </div>
+                    <div className="tck-pill tck-guarantee">
+                      <CheckCircle2 size={13} className="text-green" />
+                      <span>100% Retorno en Premios</span>
                     </div>
                   </div>
                 );
               })()}
 
-              {/* Pestañas de Gestión del Torneo */}
+              {/* Pestañas de Gestión del Torneo (3 pestañas limpias) */}
               <div className="torneo-modal-tabs">
                 <button
                   type="button"
@@ -1431,7 +1403,16 @@ export default function Torneos() {
                   onClick={() => setTabGestionTorneo("participantes")}
                 >
                   <Users size={15} />
-                  <span>Participantes ({torneoDetalle.participantes?.length || 0})</span>
+                  <span>Jugadores & Posiciones ({torneoDetalle.participantes?.length || 0})</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`torneo-tab-btn ${tabGestionTorneo === "economia" ? "active" : ""}`}
+                  onClick={() => setTabGestionTorneo("economia")}
+                >
+                  <Coins size={15} />
+                  <span>Economía Oficial 100% & Rifa</span>
                 </button>
 
                 <button
@@ -1441,7 +1422,7 @@ export default function Torneos() {
                 >
                   <Gift size={15} />
                   <span>
-                    Premios & Catálogo
+                    Premios de Tienda & Inventario
                     {torneoDetalle.productosPremios?.length > 0 && (
                       <span className="tab-counter-badge">{torneoDetalle.productosPremios.length}</span>
                     )}
@@ -1450,7 +1431,629 @@ export default function Torneos() {
               </div>
 
               {/* ========================================================= */}
-              {/* APARTADO DE PREMIOS & CATÁLOGO DE INVENTARIO              */}
+              {/* PESTAÑA 1: PARTICIPANTES, POSICIONES Y ESTADO DE PAGO    */}
+              {/* ========================================================= */}
+              {tabGestionTorneo === "participantes" && (
+                <div className="torneo-tab-content">
+                  {/* Cajón desplegable para inscribir participante */}
+                  {mostrarFormNuevoJugador && (
+                    <div className="torneo-add-player-box">
+                      <div className="tpa-drawer-header">
+                        <div className="tpa-drawer-title">
+                          <Plus size={16} className="text-accent" />
+                          <div>
+                            <strong>Inscribir Nuevo Participante</strong>
+                            <span>Ingresa los datos del jugador. Se vinculará su mazo, Bandai ID y victorias.</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-close-drawer"
+                          onClick={() => setMostrarFormNuevoJugador(false)}
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleAgregarParticipante} className="add-player-form">
+                        <div className="form-cols-row">
+                          <label className="form-field">
+                            <span>Nombre o Nickname Bandai *</span>
+                            <input
+                              type="text"
+                              placeholder="Ej: Carlos Méndez / Mugiwara99"
+                              value={pNombre}
+                              onChange={(e) => setPNombre(e.target.value)}
+                              required
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>ID Bandai TCG+</span>
+                            <input
+                              type="text"
+                              placeholder="Ej: BN-84920"
+                              value={pBandaiId}
+                              onChange={(e) => setPBandaiId(e.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>Teléfono / WhatsApp</span>
+                            <input
+                              type="text"
+                              placeholder="Ej: 3101234567"
+                              value={pTelefono}
+                              onChange={(e) => setPTelefono(e.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>Correo Electrónico</span>
+                            <input
+                              type="email"
+                              placeholder="ejemplo@correo.com"
+                              value={pEmail}
+                              onChange={(e) => setPEmail(e.target.value)}
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-cols-row">
+                          <label className="form-field">
+                            <span>Mazo / Arquetipo</span>
+                            <input
+                              type="text"
+                              placeholder="Ej: Luffy Red-Purple / Doflamingo"
+                              value={pDeck}
+                              onChange={(e) => setPDeck(e.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>Puesto Inicial</span>
+                            <select
+                              value={pPuesto}
+                              onChange={(e) => setPPuesto(e.target.value)}
+                            >
+                              <option value="Participante">Participante</option>
+                              <option value="1">1° Lugar (Campeón)</option>
+                              <option value="2">2° Lugar (Subcampeón)</option>
+                              <option value="3">3° Lugar</option>
+                              <option value="4">4° Lugar</option>
+                              <option value="Top 8">Top 8</option>
+                              <option value="Top 16">Top 16</option>
+                            </select>
+                          </label>
+
+                          <label className="form-field">
+                            <span>Victorias (1 Win = 1 CC Coin)</span>
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              value={pWins}
+                              onChange={(e) => setPWins(e.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>Premio Ganado</span>
+                            <input
+                              type="text"
+                              placeholder="Ej: 4 Sobres + 1 Winner"
+                              value={pPremioGanado}
+                              onChange={(e) => setPPremioGanado(e.target.value)}
+                            />
+                          </label>
+                        </div>
+
+                        <div className="form-cols-row">
+                          <label className="form-field">
+                            <span>Monto Pagado (COP)</span>
+                            <input
+                              type="number"
+                              placeholder={String(torneoDetalle.costoInscripcion || 26000)}
+                              value={pMontoPagado}
+                              onChange={(e) => setPMontoPagado(e.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>Estado del Pago</span>
+                            <select
+                              value={pEstadoPago}
+                              onChange={(e) => setPEstadoPago(e.target.value)}
+                            >
+                              <option value="pagado">Pagado Completo ($26.000)</option>
+                              <option value="abono">Abono Parcial</option>
+                              <option value="debe">Pendiente (Debe)</option>
+                            </select>
+                          </label>
+
+                          <label className="form-field" style={{ gridColumn: "span 2" }}>
+                            <span>Notas Adicionales</span>
+                            <input
+                              type="text"
+                              placeholder="Ej: Pagó por Nequi / Llegó a segunda ronda"
+                              value={pNotas}
+                              onChange={(e) => setPNotas(e.target.value)}
+                            />
+                          </label>
+                        </div>
+
+                        <div className="drawer-actions-row">
+                          <button type="submit" className="btn-add-player-submit">
+                            <Plus size={15} />
+                            <span>Guardar e Inscribir</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-add-player-cancel"
+                            onClick={() => setMostrarFormNuevoJugador(false)}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Barra de acción de la tabla de posiciones */}
+                  <div className="torneo-players-action-bar">
+                    <div className="tpa-left">
+                      <h4 className="tpa-title">Tabla Oficial de Posiciones ({torneoDetalle.participantes?.length || 0})</h4>
+                      <span className="tpa-subtitle">
+                        Cada victoria suma 1 CC Coin al Prize Wall. Haz clic en el estado de pago para alternar rápidamente entre Pagado y Debe.
+                      </span>
+                    </div>
+                    <div className="tpa-actions">
+                      <button
+                        type="button"
+                        className="btn-tm-action primary"
+                        onClick={() => setMostrarFormNuevoJugador(!mostrarFormNuevoJugador)}
+                      >
+                        <Plus size={14} />
+                        <span>{mostrarFormNuevoJugador ? "Ocultar Formulario" : "Inscribir Jugador"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-tm-action secondary"
+                        onClick={handleRecalcularPremiacionOficial}
+                        title="Aplica la premiación oficial: Sobres al Top según cantidad de jugadores, Winner al 1° y Tournament Packs"
+                      >
+                        <Sparkles size={14} />
+                        <span>Premiación Oficial 100%</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tabla de participantes */}
+                  <div className="torneo-players-table-wrapper">
+                    {(!torneoDetalle.participantes || torneoDetalle.participantes.length === 0) ? (
+                      <div className="table-empty-notice">
+                        <Users size={32} className="text-muted" />
+                        <p>Aún no hay jugadores inscritos en este torneo.</p>
+                        <button
+                          type="button"
+                          className="btn-tm-action primary"
+                          onClick={() => setMostrarFormNuevoJugador(true)}
+                        >
+                          <Plus size={14} />
+                          <span>Inscribir el Primer Jugador</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <table className="torneo-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: "50px", textAlign: "center" }}>Pos</th>
+                            <th>Jugador / Bandai ID</th>
+                            <th style={{ width: "150px" }}>Puesto</th>
+                            <th style={{ width: "100px", textAlign: "center" }}>Wins</th>
+                            <th style={{ width: "110px", textAlign: "center" }}>🪙 CC Coins</th>
+                            <th>Mazo</th>
+                            <th>Premio Ganado</th>
+                            <th style={{ width: "95px" }}>Pagado</th>
+                            <th style={{ width: "85px" }}>Deuda</th>
+                            <th style={{ width: "160px", textAlign: "center" }}>Estado Pago</th>
+                            <th style={{ width: "65px", textAlign: "right" }}>Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {torneoDetalle.participantes.map((p, idx) => {
+                            const costo = Number(torneoDetalle.costoInscripcion || 26000);
+                            const pagado = Number(p.montoPagado || 0);
+                            const pendiente = Math.max(0, costo - pagado);
+
+                            const pVal = String(p.puesto || "Participante");
+                            const es1 = pVal === "1" || pVal.includes("1°");
+                            const es2 = pVal === "2" || pVal.includes("2°");
+                            const es3 = pVal === "3" || pVal.includes("3°");
+                            const es4 = pVal === "4" || pVal.includes("4°");
+
+                            const playerWins = p.wins !== undefined && p.wins !== null
+                              ? Number(p.wins)
+                              : Math.floor((Number(p.puntos) || 0) / 3);
+                            const playerCoins = p.ccCoins !== undefined && p.ccCoins !== null
+                              ? Number(p.ccCoins)
+                              : playerWins;
+
+                            return (
+                              <tr key={p.id}>
+                                <td className="col-idx" style={{ textAlign: "center" }}>
+                                  <span className={`puesto-rank-pill ${es1 ? "rank-1" : es2 ? "rank-2" : es3 ? "rank-3" : es4 ? "rank-4" : ""}`}>
+                                    {idx + 1}
+                                  </span>
+                                </td>
+                                <td className="col-name">
+                                  <div className="player-name-cell">
+                                    <div className="player-title-row">
+                                      <strong className="player-name">{p.nombre}</strong>
+                                      {p.bandaiId && (
+                                        <span className="player-bandai-tag" title="ID Oficial Bandai TCG+">
+                                          {p.bandaiId}
+                                        </span>
+                                      )}
+                                      {p.telefono && (
+                                        <a
+                                          href={`https://wa.me/57${p.telefono.replace(/\D/g, "")}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="player-wpp-btn"
+                                          title={`Contactar por WhatsApp (${p.telefono})`}
+                                        >
+                                          <MessageCircle size={12} />
+                                        </a>
+                                      )}
+                                    </div>
+                                    {p.email && (
+                                      <span className="player-linked-chip" title="Correo registrado">
+                                        <Mail size={11} />
+                                        <span>{p.email}</span>
+                                      </span>
+                                    )}
+                                    {p.notas && <small className="player-note">{p.notas}</small>}
+                                  </div>
+                                </td>
+
+                                {/* SELECTOR RÁPIDO DE PUESTO */}
+                                <td className="col-puesto">
+                                  <select
+                                    className={`select-puesto-inline ${es1 ? "p-oro" : es2 ? "p-plata" : es3 ? "p-bronce" : es4 ? "p-top4" : ""}`}
+                                    value={pVal}
+                                    onChange={(e) => handleCambiarPuesto(p, e.target.value)}
+                                  >
+                                    <option value="Participante">Participante</option>
+                                    <option value="1">🏆 1° Lugar</option>
+                                    <option value="2">🥈 2° Lugar</option>
+                                    <option value="3">🥉 3° Lugar</option>
+                                    <option value="4">⭐ 4° Lugar</option>
+                                    <option value="Top 8">Top 8</option>
+                                    <option value="Top 16">Top 16</option>
+                                  </select>
+                                </td>
+
+                                {/* VICTORIAS (WINS) */}
+                                <td className="col-wins" style={{ textAlign: "center" }}>
+                                  <span className="wins-badge">
+                                    <strong>{playerWins}</strong> {playerWins === 1 ? "win" : "wins"}
+                                  </span>
+                                </td>
+
+                                {/* CC COINS */}
+                                <td className="col-cc-coins" style={{ textAlign: "center" }}>
+                                  <div className="cc-coins-cell">
+                                    <span className="coin-chip">
+                                      🪙 <strong>{playerCoins}</strong>
+                                    </span>
+                                    <small className="coin-fiat-eq">${(playerCoins * 2000).toLocaleString("es-CO")}</small>
+                                  </div>
+                                </td>
+
+                                <td className="col-deck">
+                                  {p.deck ? (
+                                    <span className="deck-pill" title={p.deck}>{p.deck}</span>
+                                  ) : (
+                                    <span className="text-muted">—</span>
+                                  )}
+                                </td>
+
+                                {/* PREMIO GANADO CON EDICIÓN INLINE */}
+                                <td className="col-prize">
+                                  {editandoPremioId === p.id ? (
+                                    <div className="edit-prize-inline">
+                                      <input
+                                        type="text"
+                                        value={textoPremioEdicion}
+                                        onChange={(e) => setTextoPremioEdicion(e.target.value)}
+                                        placeholder="Premio en producto físico"
+                                        autoFocus
+                                      />
+                                      <button
+                                        type="button"
+                                        className="btn-save-inline-prize"
+                                        onClick={() => handleGuardarPremioManual(p, textoPremioEdicion)}
+                                      >
+                                        <Check size={13} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn-cancel-inline-prize"
+                                        onClick={() => setEditandoPremioId(null)}
+                                      >
+                                        <X size={13} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="prize-won-container">
+                                      {p.premioGanado ? (
+                                        <div className="prize-won-chip">
+                                          <Trophy size={12} className="prize-won-icon" />
+                                          <span className="prize-text" title={p.premioGanado}>{p.premioGanado}</span>
+                                          <button
+                                            type="button"
+                                            className="btn-edit-prize-btn"
+                                            title="Modificar premio"
+                                            onClick={() => {
+                                              setEditandoPremioId(p.id);
+                                              setTextoPremioEdicion(p.premioGanado || "");
+                                            }}
+                                          >
+                                            <Edit2 size={11} />
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          className="btn-add-prize-placeholder"
+                                          onClick={() => {
+                                            setEditandoPremioId(p.id);
+                                            setTextoPremioEdicion("");
+                                          }}
+                                        >
+                                          + Asignar premio
+                                        </button>
+                                      )}
+
+                                      {/* Miniaturas de productos asignados automáticamente */}
+                                      {p.productosPremios && p.productosPremios.length > 0 && (
+                                        <div className="table-assigned-products">
+                                          {p.productosPremios.map((prod, pIdx) => (
+                                            <span key={pIdx} className="table-assigned-prod-chip" title={`${prod.cantidad > 1 ? prod.cantidad + 'x ' : ''}${prod.nombre}`}>
+                                              {prod.imagen ? (
+                                                <img src={prod.imagen} alt={prod.nombre} className="table-assigned-prod-img" />
+                                              ) : (
+                                                <Package size={11} />
+                                              )}
+                                              <span>{prod.cantidad > 1 ? `${prod.cantidad}x ` : ""}{prod.nombre}</span>
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+
+                                <td className="col-paid">${pagado.toLocaleString("es-CO")}</td>
+                                <td className="col-due">
+                                  {pendiente > 0 ? (
+                                    <span className="due-amount">${pendiente.toLocaleString("es-CO")}</span>
+                                  ) : (
+                                    <span className="due-none">$0</span>
+                                  )}
+                                </td>
+                                <td className="col-status">
+                                  <div className="payment-toggle-buttons">
+                                    <button
+                                      type="button"
+                                      className={`btn-pay-status status-pagado ${p.estadoPago === "pagado" ? "active" : ""}`}
+                                      onClick={() => handleCambiarEstadoPago(p, "pagado")}
+                                      title="Marcar como pagado completo ($26.000)"
+                                    >
+                                      <Check size={11} />
+                                      <span>Pagado</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={`btn-pay-status status-abono ${p.estadoPago === "abono" ? "active" : ""}`}
+                                      onClick={() => handleCambiarEstadoPago(p, "abono")}
+                                      title="Marcar como abono parcial"
+                                    >
+                                      <span>Abono</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={`btn-pay-status status-debe ${p.estadoPago === "debe" ? "active" : ""}`}
+                                      onClick={() => handleCambiarEstadoPago(p, "debe")}
+                                      title="Marcar como pendiente (Debe)"
+                                    >
+                                      <Clock size={11} />
+                                      <span>Debe</span>
+                                    </button>
+                                  </div>
+                                </td>
+                                <td className="col-actions" style={{ textAlign: "right" }}>
+                                  <button
+                                    type="button"
+                                    className="btn-del-player"
+                                    onClick={() => handleEliminarParticipante(p.id)}
+                                    title="Eliminar participante"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ========================================================= */}
+              {/* PESTAÑA 2: ECONOMÍA OFICIAL 100% Y RIFA                  */}
+              {/* ========================================================= */}
+              {tabGestionTorneo === "economia" && (
+                <div className="torneo-tab-content">
+                  {(() => {
+                    const calculoPremios = calcularPremiacionOficialOnePiece(
+                      torneoDetalle.participantes?.length || 0,
+                      torneoDetalle.participantes || []
+                    );
+                    return (
+                      <>
+                        <div className="torneo-economic-pool-card">
+                          <div className="tep-header">
+                            <div className="tep-title-group">
+                              <div className="tep-icon-wrap">
+                                <Coins size={22} />
+                              </div>
+                              <div>
+                                <div className="tep-title-row">
+                                  <strong>Modelo Oficial de Premiación • 100% Retorno en Premios</strong>
+                                  <span className="badge-tep-guarantee">
+                                    <CheckCircle2 size={13} />
+                                    <span>Garantía de Retorno Total</span>
+                                  </span>
+                                </div>
+                                <p>
+                                  La inscripción de ${(torneoDetalle.costoInscripcion || 26000).toLocaleString("es-CO")} COP se entrega 100% a los jugadores: cada victoria otorga 1 CC Coin ($2.000 COP) para el Prize Wall, y el saldo restante financia el pool de sobres oficiales de tienda ($22.000 c/u) para el Top y la rifa obligatoria.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="tep-grid">
+                            <div className="tep-col">
+                              <span className="tep-label">Recaudo Total ({calculoPremios.numJugadores} jugadores)</span>
+                              <strong className="tep-value">${calculoPremios.totalInscripcionCOP.toLocaleString("es-CO")} COP</strong>
+                              <small className="tep-sub">Inscripción $26.000 COP c/u</small>
+                            </div>
+
+                            <div className="tep-col highlight-coins">
+                              <span className="tep-label">Asignado a CC Coins (Prize Wall)</span>
+                              <strong className="tep-value">${calculoPremios.montoCcCoinsCOP.toLocaleString("es-CO")} COP</strong>
+                              <small className="tep-sub">🪙 {calculoPremios.totalWins} Wins acumuladas ($2.000 COP/win)</small>
+                            </div>
+
+                            <div className="tep-col highlight-packs">
+                              <span className="tep-label">Pozo Restante en Sobres Tienda</span>
+                              <strong className="tep-value">${calculoPremios.poolRestanteCOP.toLocaleString("es-CO")} COP</strong>
+                              <small className="tep-sub">📦 {calculoPremios.totalSobresTienda} Sobres ({calculoPremios.sobresRifa} Rifa + {calculoPremios.sobresTop} Top {calculoPremios.puestosPremiados})</small>
+                            </div>
+
+                            <div className="tep-col">
+                              <span className="tep-label">Kits Bandai Oficiales</span>
+                              <strong className="tep-value">1 Winner + {calculoPremios.numJugadores} Packs</strong>
+                              <small className="tep-sub">1 Winner Pack (1°) + Tournament Packs (Todos)</small>
+                            </div>
+                          </div>
+
+                          <div className="tep-footer-bar">
+                            <span className="tep-footer-note">
+                              Total entregado a jugadores: <strong>${calculoPremios.retornoPremiosTotalCOP.toLocaleString("es-CO")} COP</strong> ({calculoPremios.porcentajeRetorno}% exacto del recaudo).
+                            </span>
+                            <button
+                              type="button"
+                              className="btn-open-pw-inline"
+                              onClick={() => setModalPrizeWallAbierto(true)}
+                            >
+                              <Coins size={14} />
+                              <span>Abrir Muro de Premios (Prize Wall)</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Desglose de Premios por Puesto */}
+                        <div className="torneo-prize-breakdown-card">
+                          <h4 className="tpb-title">
+                            <Trophy size={16} className="text-accent" />
+                            <span>Distribución Oficial por Posición ({calculoPremios.numJugadores} Jugadores)</span>
+                          </h4>
+                          <div className="tpb-grid">
+                            <div className="tpb-col tpb-gold">
+                              <span className="tpb-pos">🏆 1° Lugar (Campeón)</span>
+                              <strong>{Math.max(4, Math.floor(calculoPremios.sobresTop * 0.45))} Sobres Tienda</strong>
+                              <p>+ 1 Winner Pack Oficial + 1 Tournament Pack + 1 CC Coin por victoria</p>
+                            </div>
+                            <div className="tpb-col tpb-silver">
+                              <span className="tpb-pos">🥈 2° Lugar (Subcampeón)</span>
+                              <strong>{Math.max(3, Math.floor(calculoPremios.sobresTop * 0.28))} Sobres Tienda</strong>
+                              <p>+ 1 Tournament Pack Oficial + 1 CC Coin por victoria</p>
+                            </div>
+                            <div className="tpb-col tpb-bronze">
+                              <span className="tpb-pos">🥉 3° Lugar</span>
+                              <strong>{Math.max(2, Math.floor(calculoPremios.sobresTop * 0.15))} Sobres Tienda</strong>
+                              <p>+ 1 Tournament Pack Oficial + 1 CC Coin por victoria</p>
+                            </div>
+                            <div className="tpb-col tpb-star">
+                              <span className="tpb-pos">⭐ 4° Lugar</span>
+                              <strong>{Math.max(2, calculoPremios.sobresTop - (Math.max(4, Math.floor(calculoPremios.sobresTop * 0.45)) + Math.max(3, Math.floor(calculoPremios.sobresTop * 0.28)) + Math.max(2, Math.floor(calculoPremios.sobresTop * 0.15))))} Sobres Tienda</strong>
+                              <p>+ 1 Tournament Pack Oficial + 1 CC Coin por victoria</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* BARRA DE RIFA OBLIGATORIA */}
+                        <div className="torneo-rifa-bar">
+                          <div className="trb-info">
+                            <Gift size={22} className="text-accent" />
+                            <div>
+                              <strong>Sobre de Rifa Oficial (1 Sobre de Tienda)</strong>
+                              <p>
+                                Obligatorio en cada torneo. Financiado con el pozo de inscripciones y sorteado exclusivamente entre los jugadores que no quedaron en el Top premiado.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="trb-action-wrap">
+                            {torneoDetalle.ganadorRifa ? (
+                              <div className="trb-winner-pill">
+                                <Sparkles size={14} className="text-accent" />
+                                <span>
+                                  Ganador: <strong>{torneoDetalle.ganadorRifa.nickname || torneoDetalle.ganadorRifa.nombre}</strong> (Puesto #{torneoDetalle.ganadorRifa.puesto || "-"})
+                                </span>
+                                <button
+                                  type="button"
+                                  className="btn-re-sortear"
+                                  onClick={handleSortearRifa}
+                                  disabled={sorteandoRifa}
+                                >
+                                  <RefreshCw size={12} className={sorteandoRifa ? "spin" : ""} />
+                                  <span>Re-sortear</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn-sortear-rifa-primary"
+                                onClick={handleSortearRifa}
+                                disabled={sorteandoRifa || !torneoDetalle.participantes || torneoDetalle.participantes.length === 0}
+                              >
+                                <Sparkles size={14} />
+                                <span>{sorteandoRifa ? "Sorteando..." : "🎲 Sortear Sobre de Rifa"}</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {notifRifa && (
+                          <div className="trb-notification-banner">
+                            <CheckCircle2 size={16} />
+                            <span>{notifRifa}</span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* ========================================================= */}
+              {/* PESTAÑA 3: PREMIOS DE TIENDA & INVENTARIO                 */}
               {/* ========================================================= */}
               {tabGestionTorneo === "productos_premios" && (
                 <div className="torneo-prize-products-container">
@@ -1703,428 +2306,6 @@ export default function Torneos() {
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* PESTAÑA: PARTICIPANTES */}
-              {tabGestionTorneo === "participantes" && (
-                <>
-                  {/* Formulario para inscribir participante */}
-                  <div className="torneo-add-player-box">
-                <h4 className="section-subtitle">
-                  <Plus size={15} />
-                  <span>Registrar nuevo participante</span>
-                </h4>
-
-                <form onSubmit={handleAgregarParticipante} className="add-player-form">
-                  <div className="form-cols-row">
-                    <label className="form-field">
-                      <span>Nombre o Nickname Bandai *</span>
-                      <input
-                        type="text"
-                        placeholder="Ej: Carlos Méndez / Mugiwara99"
-                        value={pNombre}
-                        onChange={(e) => setPNombre(e.target.value)}
-                        required
-                      />
-                    </label>
-
-                    <label className="form-field">
-                      <span>Correo (Para anexar a su perfil)</span>
-                      <input
-                        type="email"
-                        placeholder="ejemplo@correo.com"
-                        value={pEmail}
-                        onChange={(e) => setPEmail(e.target.value)}
-                      />
-                    </label>
-
-                    <label className="form-field">
-                      <span>Teléfono / WhatsApp</span>
-                      <input
-                        type="text"
-                        placeholder="Ej: 3101234567"
-                        value={pTelefono}
-                        onChange={(e) => setPTelefono(e.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="form-cols-row">
-                    <label className="form-field">
-                      <span>Mazo / Arquetipo</span>
-                      <input
-                        type="text"
-                        placeholder="Ej: Luffy Red-Purple / Charizard ex"
-                        value={pDeck}
-                        onChange={(e) => setPDeck(e.target.value)}
-                      />
-                    </label>
-
-                    <label className="form-field">
-                      <span>Puesto en el Torneo</span>
-                      <select
-                        value={pPuesto}
-                        onChange={(e) => setPPuesto(e.target.value)}
-                      >
-                        <option value="Participante">Participante</option>
-                        <option value="1">1° Lugar (Campeón)</option>
-                        <option value="2">2° Lugar (Subcampeón)</option>
-                        <option value="3">3° Lugar</option>
-                        <option value="4">4° Lugar</option>
-                        <option value="Top 8">Top 8</option>
-                        <option value="Top 16">Top 16</option>
-                      </select>
-                    </label>
-
-                    <label className="form-field">
-                      <span>Premio Ganado (Opcional)</span>
-                      <input
-                        type="text"
-                        placeholder="Ej: $210.000 COP + 1 Box"
-                        value={pPremioGanado}
-                        onChange={(e) => setPPremioGanado(e.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="form-cols-row">
-                    <label className="form-field">
-                      <span>Monto Pagado (COP)</span>
-                      <input
-                        type="number"
-                        placeholder={String(torneoDetalle.costoInscripcion || 0)}
-                        value={pMontoPagado}
-                        onChange={(e) => setPMontoPagado(e.target.value)}
-                      />
-                    </label>
-
-                    <label className="form-field">
-                      <span>Estado del pago</span>
-                      <select
-                        value={pEstadoPago}
-                        onChange={(e) => setPEstadoPago(e.target.value)}
-                      >
-                        <option value="pagado">Pagado Completo</option>
-                        <option value="abono">Abono Parcial</option>
-                        <option value="debe">Pendiente (Debe)</option>
-                      </select>
-                    </label>
-
-                    <label className="form-field">
-                      <span>Notas adicionales</span>
-                      <input
-                        type="text"
-                        placeholder="Ej: Paga en efectivo al llegar"
-                        value={pNotas}
-                        onChange={(e) => setPNotas(e.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  <button type="submit" className="btn-add-player">
-                    <Plus size={15} />
-                    <span>Inscribir Jugador</span>
-                  </button>
-                </form>
-              </div>
-
-              {/* Tabla de participantes */}
-              <div className="torneo-players-table-wrapper">
-                <div className="table-header-title">
-                  <div>
-                    <h4>Lista de Participantes ({torneoDetalle.participantes?.length || 0})</h4>
-                    <span className="table-subtitle">Asigna el puesto y estado de pago de cada jugador para sincronizarlo con su perfil</span>
-                  </div>
-                  <div className="table-header-actions-right">
-                    <button
-                      type="button"
-                      className="btn-recalc-premios-btn"
-                      onClick={handleRecalcularPremiacionOficial}
-                      title="Aplica la premiación oficial: Sobres al Top según cantidad de jugadores, Winner al 1° y Tournament Packs"
-                    >
-                      <Sparkles size={14} />
-                      <span>Aplicar Premiación Oficial</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* BARRA DE RIFA OBLIGATORIA */}
-                <div className="torneo-rifa-bar">
-                  <div className="trb-info">
-                    <Gift size={20} className="text-accent" />
-                    <div>
-                      <strong>Sobre de Rifa Oficial (1 Sobre de Tienda)</strong>
-                      <p>
-                        Obligatorio en cada torneo. Se sortea exclusivamente entre los participantes que no quedaron en el Top premiado.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="trb-action-wrap">
-                    {torneoDetalle.ganadorRifa ? (
-                      <div className="trb-winner-pill">
-                        <Sparkles size={14} className="text-accent" />
-                        <span>
-                          Ganador: <strong>{torneoDetalle.ganadorRifa.nickname || torneoDetalle.ganadorRifa.nombre}</strong> (Puesto #{torneoDetalle.ganadorRifa.puesto || "-"})
-                        </span>
-                        <button
-                          type="button"
-                          className="btn-re-sortear"
-                          onClick={handleSortearRifa}
-                          disabled={sorteandoRifa}
-                        >
-                          <RefreshCw size={12} className={sorteandoRifa ? "spin" : ""} />
-                          <span>Re-sortear</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn-sortear-rifa-primary"
-                        onClick={handleSortearRifa}
-                        disabled={sorteandoRifa || !torneoDetalle.participantes || torneoDetalle.participantes.length === 0}
-                      >
-                        <Sparkles size={14} />
-                        <span>{sorteandoRifa ? "Sorteando..." : "🎲 Sortear Sobre de Rifa"}</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {notifRifa && (
-                  <div className="trb-notification-banner">
-                    <CheckCircle2 size={16} />
-                    <span>{notifRifa}</span>
-                  </div>
-                )}
-
-                {(!torneoDetalle.participantes || torneoDetalle.participantes.length === 0) ? (
-                  <p className="no-players-notice">Aún no hay jugadores registrados en este torneo.</p>
-                ) : (
-                  <table className="torneo-table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Jugador / Perfil</th>
-                        <th>Puesto</th>
-                        <th>Victorias (Wins)</th>
-                        <th>🪙 CC Coins</th>
-                        <th>Mazo</th>
-                        <th>Premio Total Ganado</th>
-                        <th>Pagado</th>
-                        <th>Deuda</th>
-                        <th>Estado Pago</th>
-                        <th style={{ textAlign: "right" }}>Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {torneoDetalle.participantes.map((p, idx) => {
-                        const costo = Number(torneoDetalle.costoInscripcion || 0);
-                        const pagado = Number(p.montoPagado || 0);
-                        const pendiente = Math.max(0, costo - pagado);
-
-                        const pVal = String(p.puesto || "Participante");
-                        const es1 = pVal === "1" || pVal.includes("1°");
-                        const es2 = pVal === "2" || pVal.includes("2°");
-                        const es3 = pVal === "3" || pVal.includes("3°");
-                        const es4 = pVal === "4" || pVal.includes("4°");
-
-                        const playerWins = p.wins !== undefined && p.wins !== null
-                          ? Number(p.wins)
-                          : Math.floor((Number(p.puntos) || 0) / 3);
-                        const playerCoins = p.ccCoins !== undefined && p.ccCoins !== null
-                          ? Number(p.ccCoins)
-                          : playerWins;
-
-                        return (
-                          <tr key={p.id}>
-                            <td className="col-idx">{idx + 1}</td>
-                            <td className="col-name">
-                              <div className="player-name-cell">
-                                <strong>{p.nombre}</strong>
-                                {p.email ? (
-                                  <span className="player-linked-chip" title="Enlazado al perfil del usuario">
-                                    <Mail size={11} />
-                                    <span>{p.email}</span>
-                                  </span>
-                                ) : (
-                                  <span className="player-no-email" title="Sin correo registrado (jugador presencial)">
-                                    {p.telefono || "Sin correo"}
-                                  </span>
-                                )}
-                                {p.notas && <small className="player-note">{p.notas}</small>}
-                              </div>
-                            </td>
-
-                            {/* SELECTOR RÁPIDO DE PUESTO */}
-                            <td className="col-puesto">
-                              <select
-                                className={`select-puesto-inline ${es1 ? "p-oro" : es2 ? "p-plata" : es3 ? "p-bronce" : es4 ? "p-top4" : ""}`}
-                                value={pVal}
-                                onChange={(e) => handleCambiarPuesto(p, e.target.value)}
-                              >
-                                <option value="Participante">Participante</option>
-                                <option value="1">🏆 1° Lugar</option>
-                                <option value="2">🥈 2° Lugar</option>
-                                <option value="3">🥉 3° Lugar</option>
-                                <option value="4">⭐ 4° Lugar</option>
-                                <option value="Top 8">Top 8</option>
-                                <option value="Top 16">Top 16</option>
-                              </select>
-                            </td>
-
-                            {/* VICTORIAS (WINS) */}
-                            <td className="col-wins">
-                              <div className="wins-badge-wrap">
-                                <span className="wins-badge">
-                                  <strong>{playerWins}</strong> {playerWins === 1 ? "win" : "wins"}
-                                </span>
-                                {p.puntos !== undefined && <small className="wins-pts">{p.puntos} pts</small>}
-                              </div>
-                            </td>
-
-                            {/* CC COINS */}
-                            <td className="col-cc-coins">
-                              <div className="cc-coins-cell">
-                                <span className="coin-chip">
-                                  🪙 <strong>{playerCoins}</strong>
-                                </span>
-                                <small className="coin-fiat-eq">${(playerCoins * 2000).toLocaleString("es-CO")}</small>
-                              </div>
-                            </td>
-
-                            <td className="col-deck">{p.deck || "—"}</td>
-
-                            {/* PREMIO GANADO CON EDICIÓN INLINE */}
-                            <td className="col-prize">
-                              {editandoPremioId === p.id ? (
-                                <div className="edit-prize-inline">
-                                  <input
-                                    type="text"
-                                    value={textoPremioEdicion}
-                                    onChange={(e) => setTextoPremioEdicion(e.target.value)}
-                                    placeholder="Premio en producto físico"
-                                    autoFocus
-                                  />
-                                  <button
-                                    type="button"
-                                    className="btn-save-inline-prize"
-                                    onClick={() => handleGuardarPremioManual(p, textoPremioEdicion)}
-                                  >
-                                    <Check size={13} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn-cancel-inline-prize"
-                                    onClick={() => setEditandoPremioId(null)}
-                                  >
-                                    <X size={13} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="prize-won-container">
-                                  {p.premioGanado ? (
-                                    <div className="prize-won-chip">
-                                      <Trophy size={12} className="prize-won-icon" />
-                                      <span className="prize-text" title={p.premioGanado}>{p.premioGanado}</span>
-                                      <button
-                                        type="button"
-                                        className="btn-edit-prize-btn"
-                                        title="Modificar premio"
-                                        onClick={() => {
-                                          setEditandoPremioId(p.id);
-                                          setTextoPremioEdicion(p.premioGanado || "");
-                                        }}
-                                      >
-                                        <Edit2 size={11} />
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      className="btn-add-prize-placeholder"
-                                      onClick={() => {
-                                        setEditandoPremioId(p.id);
-                                        setTextoPremioEdicion("");
-                                      }}
-                                    >
-                                      + Asignar premio
-                                    </button>
-                                  )}
-
-                                  {/* Miniaturas de productos asignados automáticamente */}
-                                  {p.productosPremios && p.productosPremios.length > 0 && (
-                                    <div className="table-assigned-products">
-                                      {p.productosPremios.map((prod, pIdx) => (
-                                        <span key={pIdx} className="table-assigned-prod-chip" title={`${prod.cantidad > 1 ? prod.cantidad + 'x ' : ''}${prod.nombre}`}>
-                                          {prod.imagen ? (
-                                            <img src={prod.imagen} alt={prod.nombre} className="table-assigned-prod-img" />
-                                          ) : (
-                                            <Package size={11} />
-                                          )}
-                                          <span>{prod.cantidad > 1 ? `${prod.cantidad}x ` : ""}{prod.nombre}</span>
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </td>
-
-                            <td className="col-paid">${pagado.toLocaleString("es-CO")}</td>
-                            <td className="col-due">
-                              {pendiente > 0 ? (
-                                <span className="due-amount">${pendiente.toLocaleString("es-CO")}</span>
-                              ) : (
-                                <span className="due-none">$0</span>
-                              )}
-                            </td>
-                            <td className="col-status">
-                              <div className="payment-toggle-buttons">
-                                <button
-                                  type="button"
-                                  className={`btn-pay-status status-pagado ${p.estadoPago === "pagado" ? "active" : ""}`}
-                                  onClick={() => handleCambiarEstadoPago(p, "pagado")}
-                                  title="Marcar como pagado completo"
-                                >
-                                  Pagado
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`btn-pay-status status-abono ${p.estadoPago === "abono" ? "active" : ""}`}
-                                  onClick={() => handleCambiarEstadoPago(p, "abono")}
-                                  title="Marcar como abono parcial"
-                                >
-                                  Abono
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`btn-pay-status status-debe ${p.estadoPago === "debe" ? "active" : ""}`}
-                                  onClick={() => handleCambiarEstadoPago(p, "debe")}
-                                  title="Marcar como pendiente"
-                                >
-                                  Debe
-                                </button>
-                              </div>
-                            </td>
-                            <td className="col-actions" style={{ textAlign: "right" }}>
-                              <button
-                                type="button"
-                                className="btn-del-player"
-                                onClick={() => handleEliminarParticipante(p.id)}
-                                title="Eliminar participante"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-              </>
               )}
             </div>
           </div>
@@ -3025,8 +3206,8 @@ export default function Torneos() {
                     className="btn-toggle-new-pw"
                     onClick={() => setMostrarFormNuevoPW(!mostrarFormNuevoPW)}
                   >
-                    <Plus size={14} />
-                    <span>{mostrarFormNuevoPW ? "Cerrar Formulario" : "Nuevo Artículo"}</span>
+                    <Plus size={15} />
+                    <span>{mostrarFormNuevoPW ? "✕ Cancelar" : "+ Agregar Artículo al Prize Wall"}</span>
                   </button>
                 </div>
               </div>

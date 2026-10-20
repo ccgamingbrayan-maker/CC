@@ -1043,19 +1043,21 @@ export async function listarPrizeWall() {
     if (supabase) {
       const { data, error } = await supabase
         .from("prizewall_items")
-        .select("*")
-        .order("costo_cc_coins", { ascending: true });
+        .select("*");
       if (!error && Array.isArray(data) && data.length > 0) {
-        const mapeados = data.map((d) => ({
-          id: d.id,
-          nombre: d.nombre,
-          categoria: d.categoria || "Accesorios",
-          costoCcCoins: Number(d.costo_cc_coins || d.costoCcCoins || 10),
-          equivalenteCop: Number(d.equivalente_cop || d.equivalenteCop || 0),
-          stock: Number(d.stock ?? 0),
-          imagen: d.imagen || "",
-          descripcion: d.descripcion || "",
-        }));
+        const mapeados = data.map((d) => {
+          const costo = Number(d.costo_cc_coins ?? d.costo_coins ?? d.costoCcCoins ?? 10);
+          return {
+            id: d.id,
+            nombre: d.nombre,
+            categoria: d.categoria || "Accesorios",
+            costoCcCoins: costo,
+            equivalenteCop: Number(d.equivalente_cop ?? d.valor_cop ?? d.equivalenteCop ?? costo * 2000),
+            stock: Number(d.stock ?? 0),
+            imagen: d.imagen || "",
+            descripcion: d.descripcion || "",
+          };
+        });
         guardarPrizeWallLocal(mapeados);
         return mapeados;
       }
@@ -1092,7 +1094,8 @@ export async function guardarItemPrizeWall(item) {
 
   try {
     if (supabase) {
-      await supabase.from("prizewall_items").upsert({
+      // Intentar con costo_cc_coins primero
+      const { error: err1 } = await supabase.from("prizewall_items").upsert({
         id: registro.id,
         nombre: registro.nombre,
         categoria: registro.categoria,
@@ -1103,6 +1106,21 @@ export async function guardarItemPrizeWall(item) {
         descripcion: registro.descripcion,
         actualizado_en: new Date().toISOString(),
       });
+
+      if (err1) {
+        // Fallback si la tabla fue creada con costo_coins / valor_cop
+        await supabase.from("prizewall_items").upsert({
+          id: registro.id,
+          nombre: registro.nombre,
+          categoria: registro.categoria,
+          costo_coins: registro.costoCcCoins,
+          valor_cop: registro.equivalenteCop,
+          stock: registro.stock,
+          imagen: registro.imagen,
+          descripcion: registro.descripcion,
+          actualizado_en: new Date().toISOString(),
+        });
+      }
     }
   } catch (e) {}
 
