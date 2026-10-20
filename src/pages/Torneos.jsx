@@ -584,7 +584,7 @@ export default function Torneos() {
       {/* METRIC CARDS SUPERIORES */}
       <div className="torneos-kpi-grid">
         <div className="torneo-kpi-card">
-          <div className="kpi-icon-wrap kpi-blue">
+          <div className="kpi-icon-wrap">
             <Calendar size={20} />
           </div>
           <div className="kpi-info">
@@ -594,7 +594,7 @@ export default function Torneos() {
         </div>
 
         <div className="torneo-kpi-card">
-          <div className="kpi-icon-wrap kpi-purple">
+          <div className="kpi-icon-wrap">
             <Users size={20} />
           </div>
           <div className="kpi-info">
@@ -604,7 +604,7 @@ export default function Torneos() {
         </div>
 
         <div className="torneo-kpi-card">
-          <div className="kpi-icon-wrap kpi-green">
+          <div className="kpi-icon-wrap">
             <CreditCard size={20} />
           </div>
           <div className="kpi-info">
@@ -614,7 +614,7 @@ export default function Torneos() {
         </div>
 
         <div className="torneo-kpi-card">
-          <div className="kpi-icon-wrap kpi-amber">
+          <div className="kpi-icon-wrap">
             <TrendingUp size={20} />
           </div>
           <div className="kpi-info">
@@ -1017,30 +1017,30 @@ export default function Torneos() {
                       const totalP = Number(pozoMonto) || 0;
                       const porcentajes = {
                         top4_standard: [
-                          { p: 1, label: "1° Lugar", pct: 0.50, color: "#eab308" },
-                          { p: 2, label: "2° Lugar", pct: 0.30, color: "#94a3b8" },
-                          { p: 3, label: "3° Lugar", pct: 0.10, color: "#b45309" },
-                          { p: 4, label: "4° Lugar", pct: 0.10, color: "#38bdf8" },
+                          { p: 1, label: "1° Lugar", pct: 0.50 },
+                          { p: 2, label: "2° Lugar", pct: 0.30 },
+                          { p: 3, label: "3° Lugar", pct: 0.10 },
+                          { p: 4, label: "4° Lugar", pct: 0.10 },
                         ],
                         top4_split: [
-                          { p: 1, label: "1° Lugar", pct: 0.50, color: "#eab308" },
-                          { p: 2, label: "2° Lugar", pct: 0.25, color: "#94a3b8" },
-                          { p: 3, label: "3° Lugar", pct: 0.125, color: "#b45309" },
-                          { p: 4, label: "4° Lugar", pct: 0.125, color: "#38bdf8" },
+                          { p: 1, label: "1° Lugar", pct: 0.50 },
+                          { p: 2, label: "2° Lugar", pct: 0.25 },
+                          { p: 3, label: "3° Lugar", pct: 0.125 },
+                          { p: 4, label: "4° Lugar", pct: 0.125 },
                         ],
                         top8_premier: [
-                          { p: 1, label: "1° Lugar", pct: 0.40, color: "#eab308" },
-                          { p: 2, label: "2° Lugar", pct: 0.20, color: "#94a3b8" },
-                          { p: 3, label: "3° Lugar", pct: 0.10, color: "#b45309" },
-                          { p: 4, label: "4° Lugar", pct: 0.10, color: "#38bdf8" },
-                          { p: 5, label: "5°-8°", pct: 0.05, color: "#a855f7" },
+                          { p: 1, label: "1° Lugar", pct: 0.40 },
+                          { p: 2, label: "2° Lugar", pct: 0.20 },
+                          { p: 3, label: "3° Lugar", pct: 0.10 },
+                          { p: 4, label: "4° Lugar", pct: 0.10 },
+                          { p: 5, label: "5°-8°", pct: 0.05 },
                         ],
                         top2: [
-                          { p: 1, label: "1° Lugar", pct: 0.70, color: "#eab308" },
-                          { p: 2, label: "2° Lugar", pct: 0.30, color: "#94a3b8" },
+                          { p: 1, label: "1° Lugar", pct: 0.70 },
+                          { p: 2, label: "2° Lugar", pct: 0.30 },
                         ],
                         winner: [
-                          { p: 1, label: "1° Lugar (Campeón)", pct: 1.00, color: "#eab308" },
+                          { p: 1, label: "1° Lugar (Campeón)", pct: 1.00 },
                         ],
                       };
 
@@ -1053,7 +1053,7 @@ export default function Torneos() {
                             {lista.map((item, idx) => {
                               const monto = Math.round(totalP * item.pct);
                               return (
-                                <div key={idx} className="pp-chip" style={{ borderLeftColor: item.color }}>
+                                <div key={idx} className="pp-chip">
                                   <span className="chip-puesto">{item.label} ({(item.pct * 100).toFixed(0)}%)</span>
                                   <strong className="chip-monto">${monto.toLocaleString("es-CO")} COP</strong>
                                 </div>
