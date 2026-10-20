@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Search,
   Grid2X2,
@@ -12,7 +13,8 @@ import {
   Loader2,
   ArrowRight,
   RotateCcw,
-  Plus
+  Plus,
+  Trophy
 } from "lucide-react";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
 import { buscarCartaRiftbound, buscarPrintsRiftbound } from "../lib/riftbound.js";
@@ -472,6 +474,14 @@ export default function AgregarCarta() {
               <Package size={16} />
               <span>Accesorios</span>
             </button>
+            <Link
+              to="/torneos"
+              className="admin-nav-tab"
+              title="Ir al módulo de torneos y eventos"
+            >
+              <Trophy size={16} />
+              <span>Torneos</span>
+            </Link>
           </div>
         </div>
 

@@ -14,7 +14,8 @@ import {
   LogIn,
   UserPlus,
   ShieldCheck,
-  ChevronDown
+  ChevronDown,
+  Trophy
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useCart } from "../lib/CartContext.jsx";
@@ -93,6 +94,14 @@ export default function Navbar() {
           >
             <span className="dot-preventa-pulse" />
             <span>Pre-Ventas</span>
+          </Link>
+          <Link
+            to="/torneos"
+            className={`nav-pill nav-pill-torneos ${location.pathname.startsWith("/torneos") ? "active" : ""}`}
+            title="Torneos y eventos presenciales TCG"
+          >
+            <Trophy size={15} />
+            <span>Torneos</span>
           </Link>
           {esAdmin && (
             <Link

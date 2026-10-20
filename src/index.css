@@ -7637,3 +7637,950 @@ img { display: block; max-width: 100%; }
   }
 }
 
+/* ==========================================================
+   MÓDULO DE TORNEOS Y EVENTOS TCG (CAPSULE CORP)
+   ========================================================== */
+.torneos-page-view {
+  max-width: 1580px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+  box-sizing: border-box;
+}
+
+.torneos-header-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--borde);
+  margin-bottom: 24px;
+}
+
+.torneos-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.torneos-main-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--texto);
+  margin: 0 0 6px;
+  letter-spacing: -0.4px;
+}
+
+.torneos-main-subtitle {
+  font-size: 14px;
+  color: var(--texto-suave);
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.btn-nuevo-torneo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 9px;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
+  font-size: 13.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.btn-nuevo-torneo:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* KPI Cards Superiores */
+.torneos-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.torneo-kpi-card {
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-icon-wrap.kpi-blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+.kpi-icon-wrap.kpi-purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+.kpi-icon-wrap.kpi-green {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.kpi-icon-wrap.kpi-amber {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.kpi-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--texto);
+  letter-spacing: -0.3px;
+}
+
+/* Toolbar de Filtros */
+.torneos-filter-toolbar {
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.torneos-game-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.chip-game-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  color: var(--texto-suave);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.chip-game-btn:hover {
+  color: var(--texto);
+  border-color: var(--acento);
+  background: var(--t08);
+}
+
+.chip-game-btn.active {
+  background: var(--acento);
+  color: var(--sobre-acento);
+  border-color: var(--acento);
+  box-shadow: 0 2px 6px rgba(91, 63, 209, 0.25);
+}
+
+.chip-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--t15);
+  color: inherit;
+}
+
+.torneos-toolbar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde);
+}
+
+.torneo-search-box {
+  flex: 1;
+  min-width: 220px;
+  max-width: 440px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 38px;
+}
+
+.torneo-search-box:focus-within {
+  border-color: var(--acento);
+  box-shadow: 0 0 0 2px rgba(91, 63, 209, 0.2);
+}
+
+.torneo-search-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--texto);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.btn-clear {
+  border: none;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.torneo-status-tabs {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--nav);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid var(--borde);
+}
+
+.status-tab {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.status-tab:hover {
+  color: var(--texto);
+}
+
+.status-tab.active {
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
+  font-weight: 700;
+}
+
+/* Grilla de Torneos */
+.torneos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.torneo-card {
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s, box-shadow 0.18s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.torneo-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--acento);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.torneo-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.torneo-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-franchise {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--t12);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+}
+
+.badge-status {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.badge-status.status-proximo {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.badge-status.status-en_curso {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.badge-status.status-finalizado {
+  background: var(--t08);
+  color: var(--texto-suave);
+  border: 1px solid var(--borde);
+}
+.badge-status.status-cancelado {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.torneo-card-admin-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-icon-action {
+  background: transparent;
+  border: 1px solid var(--borde);
+  color: var(--texto-suave);
+  padding: 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-icon-action:hover {
+  color: var(--texto);
+  background: var(--t08);
+  border-color: var(--texto-suave);
+}
+
+.btn-icon-action.delete:hover {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.torneo-card-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--texto);
+  line-height: 1.35;
+}
+
+.torneo-card-format {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--texto-suave);
+}
+
+.torneo-info-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--t04);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--texto);
+}
+
+.info-icon {
+  color: var(--texto-suave);
+  flex-shrink: 0;
+}
+
+/* Cupos y Progreso */
+.torneo-cupos-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cupos-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.cupos-labels strong {
+  color: var(--texto);
+}
+
+.cupos-left {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.cupos-bar-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--t12);
+  overflow: hidden;
+}
+
+.cupos-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  transition: width 0.3s ease;
+}
+
+/* Pricing y Premios */
+.torneo-pricing-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--borde);
+  border-bottom: 1px solid var(--borde);
+}
+
+.pricing-box, .recaudo-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pricing-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+.pricing-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.recaudo-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.torneo-premios-snippet {
+  font-size: 12px;
+  color: var(--texto-suave);
+  background: var(--t04);
+  padding: 8px 10px;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
+.torneo-premios-snippet strong {
+  color: #fbbf24;
+}
+
+/* Botones de Acción */
+.torneo-card-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-torneo-manage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-torneo-manage:hover {
+  filter: brightness(1.1);
+}
+
+.btn-torneo-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: #25d366;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-torneo-whatsapp:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* Empty State */
+.torneos-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--fondo-panel);
+  border: 1.5px dashed var(--borde);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-icon {
+  color: var(--texto-suave);
+  opacity: 0.6;
+}
+
+.torneos-empty-state h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--texto);
+}
+
+.torneos-empty-state p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--texto-suave);
+  max-width: 440px;
+}
+
+/* Modales */
+.torneo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.torneo-modal-dialog {
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.torneo-modal-dialog.modal-large {
+  max-width: 960px;
+}
+
+.torneo-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.modal-badge {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.12);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.modal-title {
+  margin: 4px 0 2px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--texto);
+}
+
+.modal-subtitle {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--texto-suave);
+}
+
+.btn-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.btn-modal-close:hover {
+  color: var(--texto);
+  background: var(--t08);
+}
+
+.torneo-modal-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Banner de Métricas dentro del modal */
+.modal-metrics-banner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  background: var(--t04);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+}
+
+.m-metric-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.m-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+}
+
+.m-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--texto);
+}
+
+.text-green { color: #4ade80 !important; }
+.text-amber { color: #fbbf24 !important; }
+.text-rose { color: #f87171 !important; }
+.text-cyan { color: #38bdf8 !important; }
+
+/* Formulario inline de participantes */
+.torneo-add-player-box {
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.section-subtitle {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--texto);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-player-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-cols-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--texto);
+  outline: none;
+  font-family: inherit;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--acento);
+}
+
+.btn-add-player {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-add-player:hover {
+  filter: brightness(1.1);
+}
+
+/* Tabla de participantes */
+.torneo-players-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.table-header-title h4 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.table-subtitle {
+  font-size: 11.5px;
+  color: var(--texto-suave);
+}
+
+.torneo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.torneo-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  border-bottom: 1px solid var(--borde);
+}
+
+.torneo-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--t08);
+  color: var(--texto);
+  vertical-align: middle;
+}
+
+.col-idx {
+  color: var(--texto-suave);
+  font-weight: 700;
+}
+
+.player-note {
+  display: block;
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.due-amount {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.due-none {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.payment-toggle-buttons {
+  display: inline-flex;
+  gap: 3px;
+  background: var(--nav);
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid var(--borde);
+}
+
+.btn-pay-status {
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-pay-status.active.status-pagado {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.btn-pay-status.active.status-abono {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.btn-pay-status.active.status-debe {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.btn-del-player {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.btn-del-player:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.no-players-notice {
+  text-align: center;
+  padding: 24px;
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.modal-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.btn-cancel {
+  padding: 9px 18px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-save-torneo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border-radius: 8px;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+

@@ -11,6 +11,7 @@ import Login from "./pages/Login.jsx";
 import RestablecerClave from "./pages/RestablecerClave.jsx";
 import ConfirmarCuenta from "./pages/ConfirmarCuenta.jsx";
 import Perfil from "./pages/Perfil.jsx";
+import Torneos from "./pages/Torneos.jsx";
 import RutaAdmin from "./components/RutaAdmin.jsx";
 import { useCart } from "./lib/CartContext.jsx";
 
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/accesorio/:accesorioId" element={<DetalleAccesorio onAgregar={agregar} />} />
         <Route path="/carta/:cartaId" element={<DetalleCarta onAgregar={agregar} />} />
         <Route path="/carrito" element={<Carrito />} />
+        <Route path="/torneos" element={<Torneos />} />
         <Route path="/login" element={<Login />} />
         <Route path="/restablecer-clave" element={<RestablecerClave />} />
         <Route path="/confirmar-cuenta" element={<ConfirmarCuenta />} />
@@ -38,6 +40,14 @@ export default function App() {
           element={
             <RutaAdmin>
               <AgregarCarta />
+            </RutaAdmin>
+          }
+        />
+        <Route
+          path="/admin/torneos"
+          element={
+            <RutaAdmin>
+              <Torneos />
             </RutaAdmin>
           }
         />
