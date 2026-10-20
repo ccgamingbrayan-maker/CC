@@ -659,14 +659,28 @@ export default function Clientes() {
                               </div>
 
                               {/* Premio Ganado */}
-                              {t.premioGanado && (
+                              {(t.premioGanado || (t.productosPremios && t.productosPremios.length > 0)) && (
                                 <div className="dtc-premio-banner">
                                   <div className="dtc-premio-icon">
                                     <Sparkles size={16} />
                                   </div>
                                   <div className="dtc-premio-info">
                                     <span className="dtc-premio-label">Premio Ganado en el Torneo:</span>
-                                    <strong className="dtc-premio-text">{t.premioGanado}</strong>
+                                    {t.premioGanado && <strong className="dtc-premio-text">{t.premioGanado}</strong>}
+                                    {t.productosPremios && t.productosPremios.length > 0 && (
+                                      <div className="dtc-premios-productos-list">
+                                        {t.productosPremios.map((prod, pIdx) => (
+                                          <div key={pIdx} className="dtc-prod-premio-item">
+                                            {prod.imagen ? (
+                                              <img src={prod.imagen} alt={prod.nombre} className="dtc-prod-premio-img" />
+                                            ) : (
+                                              <Package size={13} />
+                                            )}
+                                            <span>{prod.cantidad > 1 ? `${prod.cantidad}x ` : ""}{prod.nombre}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               )}

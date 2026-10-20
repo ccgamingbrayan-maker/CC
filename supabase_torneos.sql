@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS public.torneos (
     gastos_evento NUMERIC(12, 2) DEFAULT 0,
     estado TEXT NOT NULL DEFAULT 'proximo' CHECK (estado IN ('proximo', 'en_curso', 'finalizado', 'cancelado')),
     notas TEXT,
+    productos_premios JSONB DEFAULT '[]'::jsonb,
     participantes JSONB DEFAULT '[]'::jsonb,
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW()
@@ -145,6 +146,7 @@ CREATE TABLE IF NOT EXISTS public.torneo_participantes (
     monto_pagado NUMERIC(12, 2) DEFAULT 0,
     estado_pago TEXT DEFAULT 'pagado' CHECK (estado_pago IN ('pagado', 'abono', 'debe')),
     premio_ganado TEXT,
+    productos_premios JSONB DEFAULT '[]'::jsonb,
     notas TEXT,
     creado_en TIMESTAMPTZ DEFAULT NOW()
 );
@@ -207,6 +209,7 @@ BEGIN
                 monto_pagado,
                 estado_pago,
                 premio_ganado,
+                productos_premios,
                 notas,
                 creado_en
             )
@@ -226,6 +229,7 @@ BEGIN
                 COALESCE((elem->>'montoPagado')::NUMERIC, NEW.costo_inscripcion),
                 COALESCE(elem->>'estadoPago', 'pagado'),
                 COALESCE(elem->>'premioGanado', ''),
+                COALESCE(elem->'productosPremios', '[]'::jsonb),
                 COALESCE(elem->>'notas', ''),
                 NOW()
             );

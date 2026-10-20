@@ -256,6 +256,7 @@ export async function listarClientesCompletos() {
         estadoPago: p.estadoPago || (pagado >= costo ? "pagado" : pagado > 0 ? "abono" : "debe"),
         deuda,
         premioGanado: p.premioGanado || null,
+        productosPremios: p.productosPremios || [],
         notas: p.notas || "",
       };
 

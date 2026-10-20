@@ -15,6 +15,56 @@
     "gastosEvento": 100000,
     "estado": "finalizado",
     "notas": "Torneo oficial reportado en Bandai TCG+. Registro y emparejamientos automáticos.",
+    "productosPremios": [
+      {
+        "id": "prod-1",
+        "nombre": "1 Booster Box OP-09 Sellada (24 sobres)",
+        "puesto": "1",
+        "cantidad": 1,
+        "imagen": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&auto=format&fit=crop&q=80",
+        "valorCop": 450000
+      },
+      {
+        "id": "prod-2",
+        "nombre": "Carta Promo Winner Monkey D. Luffy Foil",
+        "puesto": "1",
+        "cantidad": 1,
+        "imagen": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=80",
+        "valorCop": 150000
+      },
+      {
+        "id": "prod-3",
+        "nombre": "Pack 6 Sobres de Torneo Vol. 6",
+        "puesto": "2",
+        "cantidad": 6,
+        "imagen": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80",
+        "valorCop": 90000
+      },
+      {
+        "id": "prod-4",
+        "nombre": "Pack 2 Sobres de Torneo Vol. 6",
+        "puesto": "3",
+        "cantidad": 2,
+        "imagen": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80",
+        "valorCop": 30000
+      },
+      {
+        "id": "prod-5",
+        "nombre": "Pack 2 Sobres de Torneo Vol. 6",
+        "puesto": "4",
+        "cantidad": 2,
+        "imagen": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80",
+        "valorCop": 30000
+      },
+      {
+        "id": "prod-6",
+        "nombre": "Sobre Oficial de Participación OP-09",
+        "puesto": "todos",
+        "cantidad": 1,
+        "imagen": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=300&auto=format&fit=crop&q=80",
+        "valorCop": 15000
+      }
+    ],
     "participantes": [
       {
         "id": "p-1",
@@ -27,7 +77,23 @@
         "montoPagado": 35000,
         "estadoPago": "pagado",
         "puesto": "1",
-        "premioGanado": "$210.000 COP + 1 Booster Box OP-09",
+        "premioGanado": "$210.000 COP + 1 Booster Box OP-09 Sellada + Carta Promo Winner",
+        "productosPremios": [
+          {
+            "id": "prod-1",
+            "nombre": "1 Booster Box OP-09 Sellada (24 sobres)",
+            "cantidad": 1,
+            "imagen": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&auto=format&fit=crop&q=80",
+            "puesto": "1"
+          },
+          {
+            "id": "prod-2",
+            "nombre": "Carta Promo Winner Monkey D. Luffy Foil",
+            "cantidad": 1,
+            "imagen": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=80",
+            "puesto": "1"
+          }
+        ],
         "notas": "Campeón del torneo"
       },
       {
@@ -41,7 +107,16 @@
         "montoPagado": 35000,
         "estadoPago": "pagado",
         "puesto": "2",
-        "premioGanado": "$126.000 COP + Sobres Oficiales",
+        "premioGanado": "$126.000 COP + Pack 6 Sobres de Torneo Vol. 6",
+        "productosPremios": [
+          {
+            "id": "prod-3",
+            "nombre": "Pack 6 Sobres de Torneo Vol. 6",
+            "cantidad": 6,
+            "imagen": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80",
+            "puesto": "2"
+          }
+        ],
         "notas": "Subcampeón"
       },
       {
@@ -55,7 +130,16 @@
         "montoPagado": 35000,
         "estadoPago": "pagado",
         "puesto": "3",
-        "premioGanado": "$42.000 COP + Sobres de Torneo",
+        "premioGanado": "$42.000 COP + Pack 2 Sobres de Torneo Vol. 6",
+        "productosPremios": [
+          {
+            "id": "prod-4",
+            "nombre": "Pack 2 Sobres de Torneo Vol. 6",
+            "cantidad": 2,
+            "imagen": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80",
+            "puesto": "3"
+          }
+        ],
         "notas": "Top 4"
       },
       {
@@ -69,7 +153,16 @@
         "montoPagado": 35000,
         "estadoPago": "pagado",
         "puesto": "4",
-        "premioGanado": "$42.000 COP + Sobres de Torneo",
+        "premioGanado": "$42.000 COP + Pack 2 Sobres de Torneo Vol. 6",
+        "productosPremios": [
+          {
+            "id": "prod-5",
+            "nombre": "Pack 2 Sobres de Torneo Vol. 6",
+            "cantidad": 2,
+            "imagen": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80",
+            "puesto": "4"
+          }
+        ],
         "notas": "Top 4"
       },
       {

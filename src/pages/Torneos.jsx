@@ -35,6 +35,8 @@ import {
   Camera,
   Download,
   RefreshCw,
+  Gift,
+  Package,
 } from "lucide-react";
 import {
   listarTorneos,
@@ -44,6 +46,8 @@ import {
   eliminarParticipante,
   calcularMetricasTorneo,
   distribuirPremiosTorneo,
+  guardarProductosPremiosTorneo,
+  asignarProductosPremiosTorneo,
 } from "../lib/torneos.js";
 import {
   parsearTextoBandai,
@@ -107,6 +111,19 @@ export default function Torneos() {
   const [distribuyendoPozo, setDistribuyendoPozo] = useState(false);
   const [mensajePozo, setMensajePozo] = useState("");
   const [panelPozoAbierto, setPanelPozoAbierto] = useState(true);
+
+  // Pestañas de Gestión del Torneo ("participantes" | "productos_premios" | "pozo_efectivo")
+  const [tabGestionTorneo, setTabGestionTorneo] = useState("participantes");
+
+  // Apartado de Productos de Premiación (subida de fotos y asignación automática)
+  const [prodNombre, setProdNombre] = useState("");
+  const [prodPuesto, setProdPuesto] = useState("1");
+  const [prodCantidad, setProdCantidad] = useState("1");
+  const [prodImagen, setProdImagen] = useState("");
+  const [prodValorCop, setProdValorCop] = useState("");
+  const [guardandoProducto, setGuardandoProducto] = useState(false);
+  const [asignandoProductos, setAsignandoProductos] = useState(false);
+  const [mensajeProdPremio, setMensajeProdPremio] = useState("");
 
   // Edición rápida de premio individual
   const [editandoPremioId, setEditandoPremioId] = useState(null);
@@ -414,7 +431,12 @@ export default function Torneos() {
       puesto: nuevoPuesto,
     });
     if (actualizado) {
-      setTorneoDetalle(actualizado);
+      if (actualizado.productosPremios && actualizado.productosPremios.length > 0) {
+        const conPremios = await asignarProductosPremiosTorneo(actualizado.id);
+        setTorneoDetalle(conPremios || actualizado);
+      } else {
+        setTorneoDetalle(actualizado);
+      }
       await cargarDatos();
     }
   }
@@ -456,6 +478,78 @@ export default function Torneos() {
       await cargarDatos();
       setTimeout(() => setMensajePozo(""), 4500);
     }
+  }
+
+  function handleSubirFotoProducto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("La imagen es mayor a 2MB. Por favor sube una imagen más ligera.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setProdImagen(ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleAgregarProductoPremio(e) {
+    e.preventDefault();
+    if (!torneoDetalle || !prodNombre.trim()) return;
+
+    setGuardandoProducto(true);
+    const nuevoProd = {
+      id: `prod-${Date.now()}`,
+      nombre: prodNombre.trim(),
+      puesto: prodPuesto,
+      cantidad: Math.max(1, parseInt(prodCantidad, 10) || 1),
+      imagen: prodImagen || "",
+      valorCop: Number(prodValorCop) || 0,
+    };
+
+    const listaActual = torneoDetalle.productosPremios || [];
+    const nuevaLista = [...listaActual, nuevoProd];
+
+    const actualizado = await guardarProductosPremiosTorneo(torneoDetalle.id, nuevaLista);
+    if (actualizado) {
+      setTorneoDetalle(actualizado);
+      setTorneos((prev) => prev.map((t) => (t.id === actualizado.id ? actualizado : t)));
+      setProdNombre("");
+      setProdPuesto("1");
+      setProdCantidad("1");
+      setProdImagen("");
+      setProdValorCop("");
+      setMensajeProdPremio("Producto agregado a la premiación del torneo.");
+      setTimeout(() => setMensajeProdPremio(""), 4000);
+    }
+    setGuardandoProducto(false);
+  }
+
+  async function handleEliminarProductoPremio(prodId) {
+    if (!torneoDetalle) return;
+    const listaActual = torneoDetalle.productosPremios || [];
+    const nuevaLista = listaActual.filter((p) => p.id !== prodId);
+
+    const actualizado = await guardarProductosPremiosTorneo(torneoDetalle.id, nuevaLista);
+    if (actualizado) {
+      setTorneoDetalle(actualizado);
+      setTorneos((prev) => prev.map((t) => (t.id === actualizado.id ? actualizado : t)));
+    }
+  }
+
+  async function handleAsignarProductosPremios() {
+    if (!torneoDetalle) return;
+    setAsignandoProductos(true);
+    setMensajeProdPremio("");
+    const actualizado = await asignarProductosPremiosTorneo(torneoDetalle.id);
+    if (actualizado) {
+      setTorneoDetalle(actualizado);
+      setTorneos((prev) => prev.map((t) => (t.id === actualizado.id ? actualizado : t)));
+      setMensajeProdPremio("¡Productos asignados automáticamente a los ganadores según su puesto!");
+      setTimeout(() => setMensajeProdPremio(""), 5000);
+    }
+    setAsignandoProductos(false);
   }
 
   async function handleEliminarParticipante(pId) {
@@ -806,12 +900,39 @@ export default function Torneos() {
                   </div>
                 )}
 
+                {t.productosPremios && t.productosPremios.length > 0 && (
+                  <div className="torneo-card-prize-prods">
+                    <span className="tcpp-title">
+                      <Gift size={12} />
+                      <span>Premios en Producto:</span>
+                    </span>
+                    <div className="tcpp-chips">
+                      {t.productosPremios.slice(0, 3).map((pr) => (
+                        <span key={pr.id} className="tcpp-chip" title={`${pr.nombre} (${pr.puesto === 'todos' ? 'Todos' : pr.puesto + '° Lugar'})`}>
+                          {pr.imagen ? (
+                            <img src={pr.imagen} alt={pr.nombre} className="tcpp-thumb" />
+                          ) : (
+                            <Package size={11} />
+                          )}
+                          <span>{pr.puesto === "todos" ? "Todos" : `${pr.puesto}°`}: {pr.cantidad > 1 ? `${pr.cantidad}x ` : ""}{pr.nombre}</span>
+                        </span>
+                      ))}
+                      {t.productosPremios.length > 3 && (
+                        <span className="tcpp-more">+{t.productosPremios.length - 3} más</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Botones de Acción */}
                 <div className="torneo-card-actions">
                   <button
                     type="button"
                     className="btn-torneo-manage"
-                    onClick={() => setTorneoDetalle(t)}
+                    onClick={() => {
+                      setTorneoDetalle(t);
+                      setTabGestionTorneo("participantes");
+                    }}
                   >
                     <Users size={15} />
                     <span>Gestionar Jugadores ({m.totalInscritos})</span>
@@ -905,10 +1026,261 @@ export default function Torneos() {
                 );
               })()}
 
+              {/* Pestañas de Gestión del Torneo */}
+              <div className="torneo-modal-tabs">
+                <button
+                  type="button"
+                  className={`torneo-tab-btn ${tabGestionTorneo === "participantes" ? "active" : ""}`}
+                  onClick={() => setTabGestionTorneo("participantes")}
+                >
+                  <Users size={15} />
+                  <span>Participantes ({torneoDetalle.participantes?.length || 0})</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`torneo-tab-btn ${tabGestionTorneo === "productos_premios" ? "active" : ""}`}
+                  onClick={() => setTabGestionTorneo("productos_premios")}
+                >
+                  <Gift size={15} />
+                  <span>
+                    Productos de Premiación
+                    {torneoDetalle.productosPremios?.length > 0 && (
+                      <span className="tab-counter-badge">{torneoDetalle.productosPremios.length}</span>
+                    )}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`torneo-tab-btn ${tabGestionTorneo === "pozo_efectivo" ? "active" : ""}`}
+                  onClick={() => setTabGestionTorneo("pozo_efectivo")}
+                >
+                  <Coins size={15} />
+                  <span>Pozo de Premios</span>
+                </button>
+              </div>
+
               {/* ========================================================= */}
-              {/* PULL DE PREMIACIÓN (PRIZE POOL) AUTOMÁTICO               */}
+              {/* APARTADO DE PRODUCTOS DE PREMIACIÓN                       */}
               {/* ========================================================= */}
-              <div className="torneo-prize-pool-container">
+              {tabGestionTorneo === "productos_premios" && (
+                <div className="torneo-prize-products-container">
+                  <div className="prize-products-header-row">
+                    <div>
+                      <h4 className="pp-title">Productos de Premiación del Torneo</h4>
+                      <p className="pp-subtitle">
+                        Sube las fotos y datos de los productos para este torneo. Se asignan automáticamente a los ganadores según su puesto.
+                      </p>
+                    </div>
+                    <div className="pp-header-actions">
+                      <button
+                        type="button"
+                        className="btn-asignar-prods-auto"
+                        onClick={handleAsignarProductosPremios}
+                        disabled={asignandoProductos || !torneoDetalle.productosPremios || torneoDetalle.productosPremios.length === 0}
+                        title="Asigna automáticamente estos productos a cada jugador según su puesto en la tabla"
+                      >
+                        <Sparkles size={15} />
+                        <span>{asignandoProductos ? "Asignando…" : "Asignar Productos Automáticamente"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {mensajeProdPremio && (
+                    <div className="pp-success-toast">
+                      <CheckCircle2 size={16} />
+                      <span>{mensajeProdPremio}</span>
+                    </div>
+                  )}
+
+                  {/* Formulario para agregar producto con foto */}
+                  <form onSubmit={handleAgregarProductoPremio} className="prize-product-add-form">
+                    <div className="pp-form-row">
+                      {/* Subida y Previsualización de Foto */}
+                      <div className="pp-photo-upload-group">
+                        <label className="pp-photo-dropzone">
+                          {prodImagen ? (
+                            <div className="pp-photo-preview-wrap">
+                              <img src={prodImagen} alt="Foto producto" className="pp-photo-preview-img" />
+                              <button
+                                type="button"
+                                className="btn-remove-prod-photo"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setProdImagen("");
+                                }}
+                                title="Quitar foto"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="pp-photo-empty">
+                              <Camera size={22} />
+                              <span>Subir Foto</span>
+                              <small>JPG, PNG o WebP</small>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            style={{ display: "none" }}
+                            onChange={handleSubirFotoProducto}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="pp-form-fields-group">
+                        <div className="pp-inputs-grid">
+                          <label className="form-field">
+                            <span>Nombre del Producto *</span>
+                            <input
+                              type="text"
+                              placeholder="Ej: 1 Booster Box OP-09 Sellada"
+                              value={prodNombre}
+                              onChange={(e) => setProdNombre(e.target.value)}
+                              required
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>Puesto al que se Asigna *</span>
+                            <select
+                              value={prodPuesto}
+                              onChange={(e) => setProdPuesto(e.target.value)}
+                            >
+                              <option value="1">🏆 1° Lugar (Campeón)</option>
+                              <option value="2">🥈 2° Lugar (Subcampeón)</option>
+                              <option value="3">🥉 3° Lugar</option>
+                              <option value="4">⭐ 4° Lugar</option>
+                              <option value="top4">🎖️ Top 4 (Puestos 1 al 4)</option>
+                              <option value="top8">🎖️ Top 8 (Puestos 1 al 8)</option>
+                              <option value="todos">🎁 Todos los Participantes (Asistencia)</option>
+                            </select>
+                          </label>
+                        </div>
+
+                        <div className="pp-inputs-grid-bottom">
+                          <label className="form-field">
+                            <span>Cantidad</span>
+                            <input
+                              type="number"
+                              min="1"
+                              placeholder="1"
+                              value={prodCantidad}
+                              onChange={(e) => setProdCantidad(e.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>Valor estimado (COP, opcional)</span>
+                            <input
+                              type="number"
+                              placeholder="Ej: 450000"
+                              value={prodValorCop}
+                              onChange={(e) => setProdValorCop(e.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <span>O URL de imagen</span>
+                            <input
+                              type="url"
+                              placeholder="https://..."
+                              value={prodImagen.startsWith("http") ? prodImagen : ""}
+                              onChange={(e) => setProdImagen(e.target.value)}
+                            />
+                          </label>
+
+                          <button
+                            type="submit"
+                            className="btn-add-prize-product"
+                            disabled={guardandoProducto || !prodNombre.trim()}
+                          >
+                            <Plus size={15} />
+                            <span>{guardandoProducto ? "Guardando…" : "Agregar Producto"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+
+                  {/* Grilla de productos ya registrados */}
+                  <div className="prize-products-list-wrapper">
+                    <div className="pp-list-header">
+                      <h5>Productos de Premiación Configurados ({torneoDetalle.productosPremios?.length || 0})</h5>
+                      <span className="pp-list-counter">
+                        {torneoDetalle.participantes?.length || 0} jugadores inscritos
+                      </span>
+                    </div>
+
+                    {(!torneoDetalle.productosPremios || torneoDetalle.productosPremios.length === 0) ? (
+                      <div className="pp-empty-state">
+                        <Package size={34} />
+                        <p>Aún no has agregado productos de premiación a este torneo.</p>
+                        <small>Usa el formulario superior para subir fotos y registrar cajas, sobres oficiales o promos.</small>
+                      </div>
+                    ) : (
+                      <div className="prize-products-grid">
+                        {torneoDetalle.productosPremios.map((prod) => {
+                          const puestoLabel =
+                            prod.puesto === "1" ? "🏆 1° Lugar" :
+                            prod.puesto === "2" ? "🥈 2° Lugar" :
+                            prod.puesto === "3" ? "🥉 3° Lugar" :
+                            prod.puesto === "4" ? "⭐ 4° Lugar" :
+                            prod.puesto === "top4" ? "🎖️ Top 4" :
+                            prod.puesto === "top8" ? "🎖️ Top 8" :
+                            prod.puesto === "todos" ? "🎁 Todos los participantes" :
+                            `Puesto ${prod.puesto}`;
+
+                          return (
+                            <div key={prod.id} className="prize-product-card">
+                              <div className="pp-card-thumb-wrap">
+                                {prod.imagen ? (
+                                  <img src={prod.imagen} alt={prod.nombre} className="pp-card-thumb-img" />
+                                ) : (
+                                  <div className="pp-card-thumb-fallback">
+                                    <Package size={22} />
+                                  </div>
+                                )}
+                                <span className="pp-card-qty-badge">{prod.cantidad}x</span>
+                              </div>
+
+                              <div className="pp-card-details">
+                                <span className="pp-card-puesto-tag">{puestoLabel}</span>
+                                <strong className="pp-card-name" title={prod.nombre}>{prod.nombre}</strong>
+                                {prod.valorCop > 0 && (
+                                  <span className="pp-card-valor">
+                                    Valor: ${Number(prod.valorCop).toLocaleString("es-CO")} COP
+                                  </span>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                className="btn-del-prize-prod"
+                                onClick={() => handleEliminarProductoPremio(prod.id)}
+                                title="Eliminar este producto de la premiación"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ========================================================= */}
+              {/* PULL DE PREMIACIÓN (PRIZE POOL) EN EFECTIVO               */}
+              {/* ========================================================= */}
+              {tabGestionTorneo === "pozo_efectivo" && (
+                <div className="torneo-prize-pool-container">
                 <div className="prize-pool-header-row">
                   <div className="pp-title-box">
                     <div className="pp-icon-wrap">
@@ -1079,9 +1451,13 @@ export default function Torneos() {
                   </div>
                 )}
               </div>
+              )}
 
-              {/* Formulario para inscribir participante */}
-              <div className="torneo-add-player-box">
+              {/* PESTAÑA: PARTICIPANTES */}
+              {tabGestionTorneo === "participantes" && (
+                <>
+                  {/* Formulario para inscribir participante */}
+                  <div className="torneo-add-player-box">
                 <h4 className="section-subtitle">
                   <Plus size={15} />
                   <span>Registrar nuevo participante</span>
@@ -1301,33 +1677,53 @@ export default function Torneos() {
                                     <X size={13} />
                                   </button>
                                 </div>
-                              ) : p.premioGanado ? (
-                                <div className="prize-won-chip">
-                                  <Trophy size={12} className="prize-won-icon" />
-                                  <span className="prize-text" title={p.premioGanado}>{p.premioGanado}</span>
-                                  <button
-                                    type="button"
-                                    className="btn-edit-prize-btn"
-                                    title="Modificar premio"
-                                    onClick={() => {
-                                      setEditandoPremioId(p.id);
-                                      setTextoPremioEdicion(p.premioGanado || "");
-                                    }}
-                                  >
-                                    <Edit2 size={11} />
-                                  </button>
-                                </div>
                               ) : (
-                                <button
-                                  type="button"
-                                  className="btn-add-prize-placeholder"
-                                  onClick={() => {
-                                    setEditandoPremioId(p.id);
-                                    setTextoPremioEdicion("");
-                                  }}
-                                >
-                                  + Asignar premio
-                                </button>
+                                <div className="prize-won-container">
+                                  {p.premioGanado ? (
+                                    <div className="prize-won-chip">
+                                      <Trophy size={12} className="prize-won-icon" />
+                                      <span className="prize-text" title={p.premioGanado}>{p.premioGanado}</span>
+                                      <button
+                                        type="button"
+                                        className="btn-edit-prize-btn"
+                                        title="Modificar premio"
+                                        onClick={() => {
+                                          setEditandoPremioId(p.id);
+                                          setTextoPremioEdicion(p.premioGanado || "");
+                                        }}
+                                      >
+                                        <Edit2 size={11} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="btn-add-prize-placeholder"
+                                      onClick={() => {
+                                        setEditandoPremioId(p.id);
+                                        setTextoPremioEdicion("");
+                                      }}
+                                    >
+                                      + Asignar premio
+                                    </button>
+                                  )}
+
+                                  {/* Miniaturas de productos asignados automáticamente */}
+                                  {p.productosPremios && p.productosPremios.length > 0 && (
+                                    <div className="table-assigned-products">
+                                      {p.productosPremios.map((prod, pIdx) => (
+                                        <span key={pIdx} className="table-assigned-prod-chip" title={`${prod.cantidad > 1 ? prod.cantidad + 'x ' : ''}${prod.nombre}`}>
+                                          {prod.imagen ? (
+                                            <img src={prod.imagen} alt={prod.nombre} className="table-assigned-prod-img" />
+                                          ) : (
+                                            <Package size={11} />
+                                          )}
+                                          <span>{prod.cantidad > 1 ? `${prod.cantidad}x ` : ""}{prod.nombre}</span>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </td>
 
@@ -1384,6 +1780,8 @@ export default function Torneos() {
                   </table>
                 )}
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>

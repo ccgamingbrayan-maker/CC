@@ -10763,3 +10763,555 @@ img { display: block; max-width: 100%; }
 
 
 
+
+
+
+
+/* ========================================================
+   PESTAÑAS DE GESTIÓN Y APARTADO DE PRODUCTOS DE PREMIACIÓN
+   ======================================================== */
+.torneo-modal-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--borde);
+  padding-bottom: 8px;
+  overflow-x: auto;
+}
+
+.torneo-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.torneo-tab-btn:hover {
+  color: var(--texto);
+  background: var(--t05);
+}
+
+.torneo-tab-btn.active {
+  color: var(--btn-texto);
+  background: var(--btn-fondo);
+  border-color: var(--btn-fondo);
+}
+
+.tab-counter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--t15);
+  color: inherit;
+}
+
+/* Contenedor del apartado de productos de premiación */
+.torneo-prize-products-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.prize-products-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-asignar-prods-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-asignar-prods-auto:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-asignar-prods-auto:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Formulario para agregar producto */
+.prize-product-add-form {
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.pp-form-row {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.pp-photo-upload-group {
+  flex-shrink: 0;
+}
+
+.pp-photo-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+  border: 1px dashed var(--borde);
+  border-radius: 10px;
+  background: var(--t04);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.pp-photo-dropzone:hover {
+  border-color: var(--acento);
+  background: var(--t08);
+}
+
+.pp-photo-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--texto-suave);
+  text-align: center;
+  padding: 8px;
+}
+
+.pp-photo-empty span {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.pp-photo-empty small {
+  font-size: 10px;
+}
+
+.pp-photo-preview-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.pp-photo-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.btn-remove-prod-photo {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pp-form-fields-group {
+  flex: 1;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-inputs-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .pp-inputs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pp-inputs-grid-bottom {
+  display: grid;
+  grid-template-columns: 100px 140px 1fr auto;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+@media (max-width: 768px) {
+  .pp-inputs-grid-bottom {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.btn-add-prize-product {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--btn-fondo);
+  color: var(--btn-texto);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  height: 40px;
+  white-space: nowrap;
+}
+
+.btn-add-prize-product:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.btn-add-prize-product:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Grilla de productos configurados */
+.prize-products-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pp-list-header h5 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.pp-list-counter {
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.pp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 16px;
+  border: 1px dashed var(--borde);
+  border-radius: 12px;
+  background: var(--t02);
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.pp-empty-state p {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.pp-empty-state small {
+  font-size: 12px;
+}
+
+.prize-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.prize-product-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--nav);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+
+.prize-product-card:hover {
+  border-color: var(--acento);
+}
+
+.pp-card-thumb-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  background: var(--t05);
+  border: 1px solid var(--borde);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pp-card-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pp-card-thumb-fallback {
+  color: var(--texto-suave);
+}
+
+.pp-card-qty-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: var(--texto);
+  color: var(--nav);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.pp-card-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pp-card-puesto-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--texto-suave);
+}
+
+.pp-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-card-valor {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.btn-del-prize-prod {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.btn-del-prize-prod:hover {
+  color: var(--texto);
+  background: var(--t08);
+}
+
+/* Vista previa en tarjetas de torneos */
+.torneo-card-prize-prods {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--borde);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tcpp-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.tcpp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tcpp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: var(--t04);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--texto);
+  max-width: 220px;
+}
+
+.tcpp-chip span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tcpp-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.tcpp-more {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--texto-suave);
+  padding: 3px 6px;
+}
+
+/* Columna de premio en tabla de participantes */
+.prize-won-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.table-assigned-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.table-assigned-prod-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--t05);
+  border: 1px solid var(--borde);
+  font-size: 11px;
+  color: var(--texto);
+  max-width: 180px;
+}
+
+.table-assigned-prod-chip span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-assigned-prod-img {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Expediente en CRM Clientes.jsx */
+.dtc-premios-productos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.dtc-prod-premio-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.dtc-prod-premio-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--borde);
+}
+
+/* Perfil de jugador Perfil.jsx */
+.perfil-tc-prod-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.perfil-tc-prod-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--t05);
+  border: 1px solid var(--borde);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.perfil-tc-prod-img {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+

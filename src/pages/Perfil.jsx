@@ -602,14 +602,28 @@ function MisTorneos({ user }) {
               )}
 
               {/* QUÉ GANÓ (PREMIO OBTENIDO) */}
-              {t.premioGanado ? (
+              {(t.premioGanado || (t.productosPremios && t.productosPremios.length > 0)) ? (
                 <div className="perfil-tc-premio-box">
                   <div className="premio-icon-badge">
                     <Sparkles size={18} />
                   </div>
                   <div className="premio-content">
                     <span className="premio-title">Premio Ganado en el Torneo:</span>
-                    <strong className="premio-text">{t.premioGanado}</strong>
+                    {t.premioGanado && <strong className="premio-text">{t.premioGanado}</strong>}
+                    {t.productosPremios && t.productosPremios.length > 0 && (
+                      <div className="perfil-tc-prod-list">
+                        {t.productosPremios.map((prod, prIdx) => (
+                          <div key={prIdx} className="perfil-tc-prod-pill">
+                            {prod.imagen ? (
+                              <img src={prod.imagen} alt={prod.nombre} className="perfil-tc-prod-img" />
+                            ) : (
+                              <Package size={12} />
+                            )}
+                            <span>{prod.cantidad > 1 ? `${prod.cantidad}x ` : ""}{prod.nombre}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

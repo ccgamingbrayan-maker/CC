@@ -301,6 +301,9 @@ export function mapTorneoDesdeSupabase(row) {
     gastosEvento: Number(row.gastos_evento ?? row.gastosEvento ?? 0),
     actualizadoEn: row.actualizado_en ?? row.actualizadoEn,
     participantes: Array.isArray(row.participantes) ? row.participantes : [],
+    productosPremios: Array.isArray(row.productos_premios)
+      ? row.productos_premios
+      : (Array.isArray(row.productosPremios) ? row.productosPremios : []),
   };
 }
 
@@ -325,6 +328,7 @@ export function mapTorneoParaSupabase(t) {
     estado: t.estado || "proximo",
     notas: t.notas || "",
     participantes: t.participantes || [],
+    productos_premios: t.productosPremios || [],
     actualizado_en: t.actualizadoEn || new Date().toISOString(),
   };
 }
@@ -516,6 +520,108 @@ export async function eliminarParticipante(torneoId, participanteId) {
 }
 
 /**
+ * Guarda o actualiza los productos de premiación configurados para un torneo
+ */
+export async function guardarProductosPremiosTorneo(torneoId, productos) {
+  const torneos = cargarLocal();
+  const tIndex = torneos.findIndex((t) => t.id === torneoId);
+  if (tIndex < 0) return null;
+
+  torneos[tIndex].productosPremios = productos;
+  guardarLocal(torneos);
+
+  // Intentar sincronizar con backend Express
+  try {
+    await fetch(`${API_URL}/api/torneos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(torneos[tIndex]),
+      signal: AbortSignal.timeout(3000),
+    });
+  } catch (e) {}
+
+  // Intentar sincronizar con Supabase
+  try {
+    if (supabase) {
+      await supabase.from("torneos").update({
+        productos_premios: productos,
+        actualizado_en: new Date().toISOString(),
+      }).eq("id", torneoId);
+    }
+  } catch (e) {}
+
+  return torneos[tIndex];
+}
+
+/**
+ * Asigna automáticamente los productos de premiación a los participantes según su puesto
+ */
+export async function asignarProductosPremiosTorneo(torneoId) {
+  const torneos = cargarLocal();
+  const tIndex = torneos.findIndex((t) => t.id === torneoId);
+  if (tIndex < 0) return null;
+
+  const torneo = torneos[tIndex];
+  const productos = torneo.productosPremios || [];
+  const participantes = torneo.participantes || [];
+
+  if (productos.length === 0 || participantes.length === 0) return torneo;
+
+  const actualizados = participantes.map((p) => {
+    const rawPuesto = String(p.puesto || "").toLowerCase().trim();
+    const numPuesto = parseInt(rawPuesto.replace(/\D/g, ""), 10);
+
+    // Buscar productos que le corresponden a su puesto
+    const productosGanados = productos.filter((prod) => {
+      const puestoProd = String(prod.puesto || "").toLowerCase().trim();
+      if (puestoProd === "todos" || puestoProd === "participacion" || puestoProd === "participante") {
+        return true;
+      }
+      if (numPuesto && String(numPuesto) === puestoProd) {
+        return true;
+      }
+      if (puestoProd === "top4" && numPuesto >= 1 && numPuesto <= 4) {
+        return true;
+      }
+      if (puestoProd === "top8" && numPuesto >= 1 && numPuesto <= 8) {
+        return true;
+      }
+      return false;
+    });
+
+    if (productosGanados.length > 0) {
+      const resumenTextual = productosGanados
+        .map((pr) => `${pr.cantidad > 1 ? pr.cantidad + "x " : ""}${pr.nombre}`)
+        .join(" + ");
+
+      let nuevoPremio = resumenTextual;
+      if (p.premioGanado && p.premioGanado.includes("COP")) {
+        const parteCop = p.premioGanado.split("+")[0].trim();
+        nuevoPremio = `${parteCop} + ${resumenTextual}`;
+      }
+
+      return {
+        ...p,
+        productosPremios: productosGanados,
+        premioGanado: nuevoPremio,
+      };
+    }
+
+    return p;
+  });
+
+  torneo.participantes = actualizados;
+  torneos[tIndex] = torneo;
+  guardarLocal(torneos);
+
+  try {
+    await guardarTorneo(torneo);
+  } catch (e) {}
+
+  return torneo;
+}
+
+/**
  * Distribución automática de pozo de premios (Prize Pool)
  */
 export async function distribuirPremiosTorneo(torneoId, { pozoTotal, esquema, premiosFisicos }) {
@@ -619,6 +725,7 @@ export async function obtenerTorneosUsuario(user) {
           deck: p.deck,
           puesto: p.puesto || "Participante",
           premioGanado: p.premioGanado || null,
+          productosPremios: p.productosPremios || [],
           montoPagado: pagado,
           estadoPago: p.estadoPago || "pagado",
           deuda,
