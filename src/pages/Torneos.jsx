@@ -46,7 +46,6 @@ import {
   guardarParticipante,
   eliminarParticipante,
   calcularMetricasTorneo,
-  distribuirPremiosTorneo,
   guardarProductosPremiosTorneo,
   asignarProductosPremiosTorneo,
   listarCatalogoPremios,
@@ -54,6 +53,10 @@ import {
   eliminarProductoCatalogo,
   ajustarStockCatalogo,
   descontarStockCatalogoPorTorneo,
+  calcularPremiacionOficialOnePiece,
+  aplicarPremiacionOficialTorneo,
+  sortearRifaTorneo,
+  cargarKitsMensualesBandai,
 } from "../lib/torneos.js";
 import {
   parsearTextoBandai,
@@ -89,7 +92,7 @@ export default function Torneos() {
   const [formFormato, setFormFormato] = useState("Estándar Suizo");
   const [formFecha, setFormFecha] = useState("");
   const [formLugar, setFormLugar] = useState("Sede Capsule Corp Gaming - Cali (Cra 34 # 4-50)");
-  const [formCosto, setFormCosto] = useState("30000");
+  const [formCosto, setFormCosto] = useState("26000");
   const [formCupo, setFormCupo] = useState("16");
   const [formPremios, setFormPremios] = useState("");
   const [formGastos, setFormGastos] = useState("0");
@@ -147,6 +150,10 @@ export default function Torneos() {
   const [editandoPremioId, setEditandoPremioId] = useState(null);
   const [textoPremioEdicion, setTextoPremioEdicion] = useState("");
 
+  // Sorteo de Rifa Obligatoria
+  const [sorteandoRifa, setSorteandoRifa] = useState(false);
+  const [notifRifa, setNotifRifa] = useState("");
+
   // Modal Importador Automático Bandai TCG+ / Riftbound
   const [modalImportarAbierto, setModalImportarAbierto] = useState(false);
   const [importTexto, setImportTexto] = useState("");
@@ -159,7 +166,7 @@ export default function Torneos() {
     return d.toISOString().slice(0, 16);
   });
   const [importLugar, setImportLugar] = useState("Sede Capsule Corp Gaming - Cali (Cra 34 # 4-50)");
-  const [importCosto, setImportCosto] = useState("35000");
+  const [importCosto, setImportCosto] = useState("26000");
   const [participantesParseados, setParticipantesParseados] = useState([]);
   const [procesandoOcr, setProcesandoOcr] = useState(false);
   const [estadoOcr, setEstadoOcr] = useState("");
@@ -184,11 +191,11 @@ export default function Torneos() {
     if (torneoExistente) {
       setImportNombre(torneoExistente.nombre || "");
       setImportJuego(torneoExistente.juego || "One Piece TCG");
-      setImportCosto(String(torneoExistente.costoInscripcion || 35000));
+      setImportCosto(String(torneoExistente.costoInscripcion || 26000));
     } else {
       setImportNombre("Torneo Store Championship OP-09 (Bandai TCG+)");
       setImportJuego("One Piece TCG");
-      setImportCosto("35000");
+      setImportCosto("26000");
     }
     setImportTexto("");
     setParticipantesParseados([]);
@@ -201,7 +208,7 @@ export default function Torneos() {
     setImportTexto(EJEMPLO_BANDAI_TEXTO);
     setImportNombre("Torneo Store Championship OP-09 (Bandai TCG+)");
     setImportJuego("One Piece TCG");
-    setImportCosto("35000");
+    setImportCosto("26000");
   }
 
   async function handleSubirImagenBandai(e) {
@@ -232,32 +239,21 @@ export default function Torneos() {
       return;
     }
 
-    const costo = Number(importCosto) || 0;
+    const costo = Number(importCosto) || 26000;
 
-    // Buscar productos disponibles en el catálogo de premios para este juego
-    const itemsJuego = catalogoPremios.filter(
-      (cp) => cp.juego === importJuego || cp.juego === "General"
-    );
+    // Buscar productos en catálogo
+    const prodWinner = catalogoPremios.find((p) => p.categoria === "Kits de Torneo" || p.nombre.toLowerCase().includes("winner"));
+    const prodPack = catalogoPremios.find((p) => p.categoria === "Sobres de Torneo" || p.nombre.toLowerCase().includes("tournament pack"));
+    const prodSobres = catalogoPremios.find((p) => p.categoria === "Sobres" && p.juego === "One Piece TCG") || catalogoPremios.find((p) => p.categoria === "Sobres");
 
-    const prodDisplay = itemsJuego.find((p) => p.categoria === "Cajas / Displays") || catalogoPremios.find((p) => p.categoria === "Cajas / Displays");
-    const prodWinner = itemsJuego.find((p) => p.categoria === "Cartas Promo") || catalogoPremios.find((p) => p.categoria === "Cartas Promo");
-    const prodSobres = itemsJuego.find((p) => p.categoria === "Sobres") || catalogoPremios.find((p) => p.categoria === "Sobres");
-    const prodTorneo = itemsJuego.find((p) => p.categoria === "Sobres de Torneo") || catalogoPremios.find((p) => p.categoria === "Sobres de Torneo");
+    const stockWinner = prodWinner?.stock ?? 7;
+    const stockPacks = prodPack?.stock ?? 56;
+
+    const calculo = calcularPremiacionOficialOnePiece(participantesParseados.length);
 
     // Construir lista de productos de premiación del torneo
     const productosPremiosTorneo = [];
-    if (prodDisplay) {
-      productosPremiosTorneo.push({
-        id: `pp-box-${Date.now()}`,
-        catalogoId: prodDisplay.id,
-        nombre: prodDisplay.nombre,
-        puesto: "1",
-        cantidad: 1,
-        imagen: prodDisplay.imagen,
-        valorCop: prodDisplay.valorCop,
-      });
-    }
-    if (prodWinner) {
+    if (prodWinner && stockWinner > 0) {
       productosPremiosTorneo.push({
         id: `pp-win-${Date.now()}`,
         catalogoId: prodWinner.id,
@@ -265,54 +261,68 @@ export default function Torneos() {
         puesto: "1",
         cantidad: 1,
         imagen: prodWinner.imagen,
-        valorCop: prodWinner.valorCop,
+        valorCop: 0,
       });
     }
+
     if (prodSobres) {
-      productosPremiosTorneo.push({
-        id: `pp-sob-${Date.now()}`,
-        catalogoId: prodSobres.id,
-        nombre: prodSobres.nombre,
-        puesto: "2",
-        cantidad: 12,
-        imagen: prodSobres.imagen,
-        valorCop: prodSobres.valorCop,
-      });
+      for (let pos = 1; pos <= calculo.puestosPremiados; pos++) {
+        const cant = calculo.sobresPorPuesto[pos];
+        if (cant > 0) {
+          productosPremiosTorneo.push({
+            id: `pp-top${pos}-${Date.now()}`,
+            catalogoId: prodSobres.id,
+            nombre: prodSobres.nombre,
+            puesto: String(pos),
+            cantidad: cant,
+            imagen: prodSobres.imagen,
+            valorCop: prodSobres.valorCop,
+          });
+        }
+      }
+      if (calculo.sobresRifa > 0) {
+        productosPremiosTorneo.push({
+          id: `pp-rifa-${Date.now()}`,
+          catalogoId: prodSobres.id,
+          nombre: `${prodSobres.nombre} (Sobre de Rifa)`,
+          puesto: "rifa",
+          cantidad: 1,
+          imagen: prodSobres.imagen,
+          valorCop: prodSobres.valorCop,
+        });
+      }
     }
-    if (prodTorneo) {
-      productosPremiosTorneo.push({
-        id: `pp-t4-${Date.now()}`,
-        catalogoId: prodTorneo.id,
-        nombre: prodTorneo.nombre,
-        puesto: "top4",
-        cantidad: 2,
-        imagen: prodTorneo.imagen,
-        valorCop: prodTorneo.valorCop,
-      });
+
+    if (prodPack && stockPacks > 0) {
       productosPremiosTorneo.push({
         id: `pp-part-${Date.now()}`,
-        catalogoId: prodTorneo.id,
-        nombre: prodTorneo.nombre,
+        catalogoId: prodPack.id,
+        nombre: prodPack.nombre,
         puesto: "todos",
         cantidad: 1,
-        imagen: prodTorneo.imagen,
-        valorCop: prodTorneo.valorCop,
+        imagen: prodPack.imagen,
+        valorCop: 0,
       });
     }
 
     const participantesConPremios = participantesParseados.map((p) => {
       const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
-      let premioTexto = "";
+      const items = [];
 
-      if (numP === 1) {
-        premioTexto = [prodDisplay?.nombre, prodWinner?.nombre].filter(Boolean).join(" + ") || "1er Lugar (Premios de Catálogo)";
-      } else if (numP === 2) {
-        premioTexto = prodSobres ? `12x ${prodSobres.nombre}` : "2do Lugar (Premios de Catálogo)";
-      } else if (numP === 3 || numP === 4) {
-        premioTexto = prodTorneo ? `2x ${prodTorneo.nombre}` : "Top 4 (Premios de Catálogo)";
-      } else {
-        premioTexto = prodTorneo ? `1x ${prodTorneo.nombre}` : "Sobre de Participación Oficial";
+      if (numP === 1 && stockWinner > 0) {
+        items.push(prodWinner ? `1x ${prodWinner.nombre}` : "1x Sobre Winner Oficial");
       }
+
+      const sobresPuesto = calculo.sobresPorPuesto[numP];
+      if (sobresPuesto && sobresPuesto > 0) {
+        items.push(`${sobresPuesto}x ${prodSobres?.nombre || "Sobres Oficiales OP-09"}`);
+      }
+
+      if (stockPacks > 0) {
+        items.push(prodPack ? `1x ${prodPack.nombre}` : "1x Tournament Pack");
+      }
+
+      const premioTexto = items.join(" + ") || "1x Tournament Pack";
 
       return {
         ...p,
@@ -344,9 +354,9 @@ export default function Torneos() {
       lugar: importLugar.trim(),
       costoInscripcion: costo,
       cupoMaximo: Math.max(participantesParseados.length, 16),
-      premios: "Premiación oficial con productos de la tienda (Catálogo de Premios).",
+      premios: `Premiación oficial: ${calculo.puestosPremiados > 4 ? `Top ${calculo.puestosPremiados}` : "Top 4"} en Sobres OP, Winner al 1°, Tournament Packs a participantes y 1 Sobre de Rifa.`,
       estado: "finalizado",
-      notas: `Importado automáticamente desde Bandai TCG+ (${participantesParseados.length} jugadores).`,
+      notas: `Importado automáticamente desde Bandai TCG+ (${participantesParseados.length} jugadores). Incluye 1 Sobre de Rifa para sortear.`,
       productosPremios: productosPremiosTorneo,
       participantes: participantesConPremios,
     };
@@ -378,7 +388,7 @@ export default function Torneos() {
     setFormFormato("Estándar Suizo");
     setFormFecha("");
     setFormLugar("Sede Capsule Corp Gaming - Cali (Cra 34 # 4-50)");
-    setFormCosto("30000");
+    setFormCosto("26000");
     setFormCupo("16");
     setFormPremios("");
     setFormGastos("0");
@@ -503,6 +513,41 @@ export default function Torneos() {
     }
   }
 
+  // --- HANDLER DE RIFA OBLIGATORIA & PREMIACIÓN OFICIAL ---
+  async function handleSortearRifa() {
+    if (!torneoDetalle) return;
+    setSorteandoRifa(true);
+    setNotifRifa("🎲 Sorteando 1 sobre de rifa entre los jugadores fuera del Top...");
+
+    setTimeout(async () => {
+      const res = await sortearRifaTorneo(torneoDetalle.id);
+      setSorteandoRifa(false);
+      if (res.error) {
+        alert(res.error);
+        setNotifRifa("");
+        return;
+      }
+      setTorneoDetalle(res.torneo);
+      setNotifRifa(`🎉 ¡Ganador del Sobre de Rifa: ${res.ganador.nickname || res.ganador.nombre} (Puesto #${res.ganador.puesto})!`);
+      await cargarDatos();
+      setTimeout(() => setNotifRifa(""), 6000);
+    }, 600);
+  }
+
+  async function handleRecalcularPremiacionOficial() {
+    if (!torneoDetalle) return;
+    const actualizado = await aplicarPremiacionOficialTorneo(torneoDetalle.id);
+    if (actualizado) {
+      setTorneoDetalle(actualizado);
+      await cargarDatos();
+    }
+  }
+
+  async function handleCargarKitsMensuales() {
+    const nuevoCat = await cargarKitsMensualesBandai();
+    setCatalogoPremios(nuevoCat);
+    alert("¡Se han cargado los 7 Kits Mensuales de Bandai con éxito (7 Sobres Winner + 56 Tournament Packs)!");
+  }
 
   // --- HANDLERS DEL CATÁLOGO DE PREMIOS (INVENTARIO) ---
   function handleSubirFotoCatalogo(e) {
@@ -1590,9 +1635,72 @@ export default function Torneos() {
               {/* Tabla de participantes */}
               <div className="torneo-players-table-wrapper">
                 <div className="table-header-title">
-                  <h4>Lista de Participantes ({torneoDetalle.participantes?.length || 0})</h4>
-                  <span className="table-subtitle">Asigna el puesto y estado de pago de cada jugador para sincronizarlo con su perfil</span>
+                  <div>
+                    <h4>Lista de Participantes ({torneoDetalle.participantes?.length || 0})</h4>
+                    <span className="table-subtitle">Asigna el puesto y estado de pago de cada jugador para sincronizarlo con su perfil</span>
+                  </div>
+                  <div className="table-header-actions-right">
+                    <button
+                      type="button"
+                      className="btn-recalc-premios-btn"
+                      onClick={handleRecalcularPremiacionOficial}
+                      title="Aplica la premiación oficial: Sobres al Top según cantidad de jugadores, Winner al 1° y Tournament Packs"
+                    >
+                      <Sparkles size={14} />
+                      <span>Aplicar Premiación Oficial</span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* BARRA DE RIFA OBLIGATORIA */}
+                <div className="torneo-rifa-bar">
+                  <div className="trb-info">
+                    <Gift size={20} className="text-accent" />
+                    <div>
+                      <strong>Sobre de Rifa Oficial (1 Sobre de Tienda)</strong>
+                      <p>
+                        Obligatorio en cada torneo. Se sortea exclusivamente entre los participantes que no quedaron en el Top premiado.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="trb-action-wrap">
+                    {torneoDetalle.ganadorRifa ? (
+                      <div className="trb-winner-pill">
+                        <Sparkles size={14} className="text-accent" />
+                        <span>
+                          Ganador: <strong>{torneoDetalle.ganadorRifa.nickname || torneoDetalle.ganadorRifa.nombre}</strong> (Puesto #{torneoDetalle.ganadorRifa.puesto || "-"})
+                        </span>
+                        <button
+                          type="button"
+                          className="btn-re-sortear"
+                          onClick={handleSortearRifa}
+                          disabled={sorteandoRifa}
+                        >
+                          <RefreshCw size={12} className={sorteandoRifa ? "spin" : ""} />
+                          <span>Re-sortear</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn-sortear-rifa-primary"
+                        onClick={handleSortearRifa}
+                        disabled={sorteandoRifa || !torneoDetalle.participantes || torneoDetalle.participantes.length === 0}
+                      >
+                        <Sparkles size={14} />
+                        <span>{sorteandoRifa ? "Sorteando..." : "🎲 Sortear Sobre de Rifa"}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {notifRifa && (
+                  <div className="trb-notification-banner">
+                    <CheckCircle2 size={16} />
+                    <span>{notifRifa}</span>
+                  </div>
+                )}
 
                 {(!torneoDetalle.participantes || torneoDetalle.participantes.length === 0) ? (
                   <p className="no-players-notice">Aún no hay jugadores registrados en este torneo.</p>
@@ -2166,42 +2274,50 @@ export default function Torneos() {
                         </tr>
                       </thead>
                       <tbody>
-                        {participantesParseados.map((p, idx) => {
-                          const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
-                          const isTop = numP && numP <= 4;
-                          return (
-                            <tr key={idx} className={isTop ? "row-top" : ""}>
-                              <td className="cell-rank">
-                                <span className={`rank-badge ${numP === 1 ? "rank-1" : numP === 2 ? "rank-2" : numP === 3 ? "rank-3" : ""}`}>
-                                  #{p.puesto || idx + 1}
-                                </span>
-                              </td>
-                              <td className="cell-id">
-                                <code>{p.bandaiId || "N/A"}</code>
-                              </td>
-                              <td className="cell-user">
-                                <span className="player-tag-name">{p.nickname || p.nombre}</span>
-                              </td>
-                              <td className="cell-pts">{p.puntos ?? 0} pts</td>
-                              <td className="cell-omw">{p.omw || "-"}</td>
-                              <td className="cell-prize">
-                                <span className="prize-preview-badge">
-                                  {numP === 1
-                                    ? "🏆 1 Booster Box Sellada + Carta Winner"
-                                    : numP === 2
-                                    ? "🥈 12 Sobres Oficiales"
-                                    : (numP === 3 || numP === 4)
-                                    ? "🥉 6 Sobres Oficiales"
-                                    : (numP >= 5 && numP <= 8)
-                                    ? "⭐ 2 Sobres Oficiales"
-                                    : "🎁 1 Tournament Pack Oficial"}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {(() => {
+                          const calculoPrev = calcularPremiacionOficialOnePiece(participantesParseados.length);
+                          return participantesParseados.map((p, idx) => {
+                            const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
+                            const isTop = numP && numP <= calculoPrev.puestosPremiados;
+                            const sobresTop = calculoPrev.sobresPorPuesto[numP] || 0;
+                            return (
+                              <tr key={idx} className={isTop ? "row-top" : ""}>
+                                <td className="cell-rank">
+                                  <span className={`rank-badge ${numP === 1 ? "rank-1" : numP === 2 ? "rank-2" : numP === 3 ? "rank-3" : ""}`}>
+                                    #{p.puesto || idx + 1}
+                                  </span>
+                                </td>
+                                <td className="cell-id">
+                                  <code>{p.bandaiId || "N/A"}</code>
+                                </td>
+                                <td className="cell-user">
+                                  <span className="player-tag-name">{p.nickname || p.nombre}</span>
+                                </td>
+                                <td className="cell-pts">{p.puntos ?? 0} pts</td>
+                                <td className="cell-omw">{p.omw || "-"}</td>
+                                <td className="cell-prize">
+                                  <span className="prize-preview-badge">
+                                    {numP === 1
+                                      ? `🏆 1x Winner Oficial + ${sobresTop}x Sobres OP-09 + 1x Pack`
+                                      : isTop
+                                      ? `${numP === 2 ? "🥈" : numP === 3 ? "🥉" : "⭐"} ${sobresTop}x Sobres OP-09 + 1x Pack`
+                                      : "🎁 1x Tournament Pack (Elegible Rifa)"}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
                       </tbody>
                     </table>
+                    {participantesParseados.length >= 4 && (
+                      <div className="import-rifa-note">
+                        <Gift size={15} />
+                        <span>
+                          <strong>1 Sobre de Rifa Oficial Incluido:</strong> Se sorteará al registrar el torneo entre los {Math.max(0, participantesParseados.length - (participantesParseados.length > 12 ? (participantesParseados.length >= 16 ? 6 : 5) : 4))} participantes fuera del Top premiado.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -2298,6 +2414,16 @@ export default function Torneos() {
                       </button>
                     )}
                   </div>
+
+                  <button
+                    type="button"
+                    className="btn-cargar-kits-mensuales"
+                    onClick={handleCargarKitsMensuales}
+                    title="Cargar o reponer los 7 Kits Mensuales de Bandai (7 Sobres Winner + 56 Tournament Packs)"
+                  >
+                    <Package size={14} />
+                    <span>Cargar 7 Kits Bandai</span>
+                  </button>
 
                   <button
                     type="button"

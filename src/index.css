@@ -9742,6 +9742,178 @@ img { display: block; max-width: 100%; }
   display: inline-block;
 }
 
+.import-rifa-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--t04);
+  border-top: 1px solid var(--borde);
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+.import-rifa-note svg {
+  color: var(--acento);
+  flex-shrink: 0;
+}
+
+.torneo-rifa-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: var(--t04);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+
+.trb-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 550px;
+}
+
+.trb-info svg {
+  color: var(--acento);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.trb-info strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 2px;
+}
+
+.trb-info p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+.trb-action-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.trb-winner-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(91, 63, 209, 0.12);
+  border: 1px solid var(--acento);
+  color: var(--texto);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.trb-winner-pill strong {
+  color: var(--acento);
+}
+
+.btn-sortear-rifa-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--acento);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-sortear-rifa-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-re-sortear {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--t08);
+  border: 1px solid var(--borde);
+  color: var(--texto-suave);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.btn-re-sortear:hover {
+  color: var(--texto);
+  border-color: var(--texto);
+}
+
+.btn-recalc-premios-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--t06);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-recalc-premios-btn:hover {
+  background: var(--t12);
+  border-color: var(--acento);
+}
+
+.trb-notification-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(91, 63, 209, 0.15);
+  border: 1px solid var(--acento);
+  color: var(--texto);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-cargar-kits-mensuales {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(91, 63, 209, 0.15);
+  border: 1px solid var(--acento);
+  color: var(--texto);
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cargar-kits-mensuales:hover {
+  background: var(--acento);
+  color: #FFFFFF;
+}
+
 .btn-confirm-import {
   display: inline-flex;
   align-items: center;
