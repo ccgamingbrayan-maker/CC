@@ -2805,33 +2805,32 @@ export default function Torneos() {
       {/* MODAL: CATÁLOGO DE PREMIOS (INVENTARIO GENERAL)           */}
       {/* ========================================================= */}
       {modalCatalogoAbierto && (
-        <div className="modal-overlay" onClick={() => setModalCatalogoAbierto(false)}>
+        <div className="torneo-modal-backdrop" onClick={() => setModalCatalogoAbierto(false)}>
           <div
-            className="modal-container modal-catalogo-dialog"
+            className="torneo-modal-dialog modal-large modal-catalogo-dialog"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <div className="modal-title-wrap">
-                <div className="modal-icon-badge">
-                  <Package size={20} />
+            <div className="torneo-modal-header">
+              <div className="torneo-modal-header-info">
+                <div className="modal-badge-row">
+                  <span className="modal-badge">Inventario General</span>
                 </div>
-                <div>
-                  <h3 className="modal-title">Catálogo de Premios (Inventario)</h3>
-                  <p className="modal-subtitle">
-                    Gestiona los productos disponibles para torneos. Su stock se descuenta en automático al asignar las premiaciones.
-                  </p>
-                </div>
+                <h2 className="modal-title">Catálogo de Premios & Inventario</h2>
+                <p className="modal-subtitle">
+                  Gestiona los productos disponibles para torneos. Su stock se descuenta en automático al asignar las premiaciones.
+                </p>
               </div>
               <button
                 type="button"
-                className="btn-close-modal"
+                className="btn-modal-close"
                 onClick={() => setModalCatalogoAbierto(false)}
+                title="Cerrar Catálogo"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="modal-body modal-catalogo-body">
+            <div className="torneo-modal-body modal-catalogo-body">
               {/* Barra de herramientas y filtros del catálogo */}
               <div className="cat-toolbar">
                 <div className="cat-game-chips">
@@ -3121,33 +3120,32 @@ export default function Torneos() {
       {/* MODAL: MURO DE PREMIOS (PRIZE WALL) & CC COINS            */}
       {/* ========================================================= */}
       {modalPrizeWallAbierto && (
-        <div className="modal-overlay" onClick={() => setModalPrizeWallAbierto(false)}>
+        <div className="torneo-modal-backdrop" onClick={() => setModalPrizeWallAbierto(false)}>
           <div
-            className="modal-container modal-prizewall-dialog"
+            className="torneo-modal-dialog modal-large modal-prizewall-dialog"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-header">
-              <div className="modal-title-wrap">
-                <div className="modal-icon-badge pw-coin-badge">
-                  <Coins size={22} />
+            <div className="torneo-modal-header">
+              <div className="torneo-modal-header-info">
+                <div className="modal-badge-row">
+                  <span className="modal-badge pw-coin-badge">🪙 CC Coins & Prize Wall</span>
                 </div>
-                <div>
-                  <h3 className="modal-title">Muro de Premios Oficial • Prize Wall</h3>
-                  <p className="modal-subtitle">
-                    1 Win en torneo = 1 CC Coin ($2.000 COP de inscripción) • Acumula tus CC Coins y reclama productos exclusivos que no se venden en tienda.
-                  </p>
-                </div>
+                <h2 className="modal-title">Muro de Premios Oficial • Prize Wall</h2>
+                <p className="modal-subtitle">
+                  1 Victoria en torneo = 1 CC Coin ($2.000 COP) • Acumula tus CC Coins y reclama productos exclusivos que no se venden en tienda.
+                </p>
               </div>
               <button
                 type="button"
-                className="btn-close-modal"
+                className="btn-modal-close"
                 onClick={() => setModalPrizeWallAbierto(false)}
+                title="Cerrar Prize Wall"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="modal-body modal-prizewall-body">
+            <div className="torneo-modal-body modal-prizewall-body">
               {/* Notificación de canje */}
               {mensajeCanje && (
                 <div className="pw-toast-notification">
