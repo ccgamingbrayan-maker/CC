@@ -37,6 +37,7 @@ import {
   RefreshCw,
   Gift,
   Package,
+  Minus,
 } from "lucide-react";
 import {
   listarTorneos,
@@ -48,6 +49,11 @@ import {
   distribuirPremiosTorneo,
   guardarProductosPremiosTorneo,
   asignarProductosPremiosTorneo,
+  listarCatalogoPremios,
+  guardarProductoCatalogo,
+  eliminarProductoCatalogo,
+  ajustarStockCatalogo,
+  descontarStockCatalogoPorTorneo,
 } from "../lib/torneos.js";
 import {
   parsearTextoBandai,
@@ -115,7 +121,30 @@ export default function Torneos() {
   // Pestañas de Gestión del Torneo ("participantes" | "productos_premios" | "pozo_efectivo")
   const [tabGestionTorneo, setTabGestionTorneo] = useState("participantes");
 
-  // Apartado de Productos de Premiación (subida de fotos y asignación automática)
+  // Catálogo General de Premios e Inventario
+  const [catalogoPremios, setCatalogoPremios] = useState([]);
+  const [modalCatalogoAbierto, setModalCatalogoAbierto] = useState(false);
+  const [filtroCatJuego, setFiltroCatJuego] = useState("todos");
+  const [busquedaCat, setBusquedaCat] = useState("");
+
+  // Formulario de Producto para el Catálogo General
+  const [catNombre, setCatNombre] = useState("");
+  const [catJuego, setCatJuego] = useState("One Piece TCG");
+  const [catCategoria, setCatCategoria] = useState("Sobres");
+  const [catStock, setCatStock] = useState("12");
+  const [catValorCop, setCatValorCop] = useState("");
+  const [catImagen, setCatImagen] = useState("");
+  const [catNotas, setCatNotas] = useState("");
+  const [mostrarFormNuevoCat, setMostrarFormNuevoCat] = useState(false);
+  const [guardandoCatItem, setGuardandoCatItem] = useState(false);
+
+  // Selector y Vinculación desde Catálogo a Torneo
+  const [premioCatSeleccionadoId, setPremioCatSeleccionadoId] = useState("");
+  const [premioCatPuesto, setPremioCatPuesto] = useState("1");
+  const [premioCatCantidad, setPremioCatCantidad] = useState("1");
+  const [descontandoStock, setDescontandoStock] = useState(false);
+
+  // Apartado de Productos de Premiación (personalizado opcional)
   const [prodNombre, setProdNombre] = useState("");
   const [prodPuesto, setProdPuesto] = useState("1");
   const [prodCantidad, setProdCantidad] = useState("1");
@@ -317,8 +346,12 @@ export default function Torneos() {
 
   async function cargarDatos() {
     setCargando(true);
-    const data = await listarTorneos();
-    setTorneos(data);
+    const [dataTorneos, dataCatalogo] = await Promise.all([
+      listarTorneos(),
+      listarCatalogoPremios(),
+    ]);
+    setTorneos(dataTorneos);
+    setCatalogoPremios(dataCatalogo);
     setCargando(false);
   }
 
@@ -480,6 +513,125 @@ export default function Torneos() {
     }
   }
 
+  // --- HANDLERS DEL CATÁLOGO DE PREMIOS (INVENTARIO) ---
+  function handleSubirFotoCatalogo(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("La imagen es mayor a 2MB. Por favor sube una imagen más ligera.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setCatImagen(ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleGuardarItemCatalogo(e) {
+    e.preventDefault();
+    if (!catNombre.trim()) return;
+    setGuardandoCatItem(true);
+    const item = {
+      nombre: catNombre.trim(),
+      juego: catJuego,
+      categoria: catCategoria,
+      stock: Math.max(0, parseInt(catStock, 10) || 0),
+      valorCop: Number(catValorCop) || 0,
+      imagen: catImagen.trim(),
+      notas: catNotas.trim(),
+    };
+    await guardarProductoCatalogo(item);
+    const actualizado = await listarCatalogoPremios();
+    setCatalogoPremios(actualizado);
+    setCatNombre("");
+    setCatStock("12");
+    setCatValorCop("");
+    setCatImagen("");
+    setCatNotas("");
+    setMostrarFormNuevoCat(false);
+    setGuardandoCatItem(false);
+  }
+
+  async function handleEliminarItemCatalogo(id) {
+    if (!window.confirm("¿Seguro de eliminar este producto del catálogo de premios?")) return;
+    const actualizado = await eliminarProductoCatalogo(id);
+    setCatalogoPremios(actualizado);
+  }
+
+  async function handleAjustarStock(id, delta) {
+    const res = await ajustarStockCatalogo(id, delta);
+    if (res) {
+      setCatalogoPremios((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, stock: res.stock } : item))
+      );
+    }
+  }
+
+  // --- VINCULACIÓN DESDE CATÁLOGO AL TORNEO ---
+  async function handleVincularPremioDesdeCatalogo(e) {
+    e.preventDefault();
+    if (!torneoDetalle) return;
+    const catItem = catalogoPremios.find((c) => c.id === premioCatSeleccionadoId);
+    if (!catItem) {
+      alert("Por favor selecciona un producto del catálogo.");
+      return;
+    }
+
+    const cant = Math.max(1, parseInt(premioCatCantidad, 10) || 1);
+    const nuevoProd = {
+      id: `torneo-premio-${Date.now()}`,
+      catalogoId: catItem.id,
+      nombre: catItem.nombre,
+      juego: catItem.juego,
+      categoria: catItem.categoria,
+      imagen: catItem.imagen,
+      puesto: premioCatPuesto,
+      cantidad: cant,
+      valorCop: catItem.valorCop || 0,
+    };
+
+    const listaActual = torneoDetalle.productosPremios || [];
+    const nuevaLista = [...listaActual, nuevoProd];
+
+    const actualizado = await guardarProductosPremiosTorneo(torneoDetalle.id, nuevaLista);
+    if (actualizado) {
+      setTorneoDetalle(actualizado);
+      setTorneos((prev) => prev.map((t) => (t.id === actualizado.id ? actualizado : t)));
+      setPremioCatSeleccionadoId("");
+      setPremioCatCantidad("1");
+      setMensajeProdPremio(`"${catItem.nombre}" vinculado a la premiación del torneo.`);
+      setTimeout(() => setMensajeProdPremio(""), 4000);
+    }
+  }
+
+  // Asignar premios y descontar automáticamente del stock del catálogo
+  async function handleAsignarYDescontarStock() {
+    if (!torneoDetalle) return;
+    setDescontandoStock(true);
+    setMensajeProdPremio("");
+    const res = await asignarProductosPremiosTorneo(torneoDetalle.id, { descontarStock: true });
+    if (res && res.torneo) {
+      setTorneoDetalle(res.torneo);
+      setTorneos((prev) => prev.map((t) => (t.id === res.torneo.id ? res.torneo : t)));
+
+      // Recargar catálogo para actualizar números de stock en pantalla
+      const catActualizado = await listarCatalogoPremios();
+      setCatalogoPremios(catActualizado);
+
+      if (res.itemsDescontados && res.itemsDescontados.length > 0) {
+        const descTexto = res.itemsDescontados
+          .map((i) => `${i.descontado}x ${i.nombre} (quedan ${i.stockRestante} en stock)`)
+          .join(" • ");
+        setMensajeProdPremio(`Premios asignados y descontados del inventario: ${descTexto}`);
+      } else {
+        setMensajeProdPremio("Premios asignados a los participantes según su puesto en el torneo.");
+      }
+      setTimeout(() => setMensajeProdPremio(""), 6000);
+    }
+    setDescontandoStock(false);
+  }
+
   function handleSubirFotoProducto(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -542,11 +694,12 @@ export default function Torneos() {
     if (!torneoDetalle) return;
     setAsignandoProductos(true);
     setMensajeProdPremio("");
-    const actualizado = await asignarProductosPremiosTorneo(torneoDetalle.id);
+    const res = await asignarProductosPremiosTorneo(torneoDetalle.id, { descontarStock: false });
+    const actualizado = res?.torneo || res;
     if (actualizado) {
       setTorneoDetalle(actualizado);
       setTorneos((prev) => prev.map((t) => (t.id === actualizado.id ? actualizado : t)));
-      setMensajeProdPremio("¡Productos asignados automáticamente a los ganadores según su puesto!");
+      setMensajeProdPremio("Productos asignados a los ganadores según su puesto (sin descontar stock).");
       setTimeout(() => setMensajeProdPremio(""), 5000);
     }
     setAsignandoProductos(false);
@@ -647,6 +800,18 @@ export default function Torneos() {
             <Users size={16} />
             <span>Clientes</span>
           </Link>
+          <button
+            type="button"
+            className="btn-catalogo-premios"
+            onClick={() => setModalCatalogoAbierto(true)}
+            title="Inventario y catálogo general de premios para torneos"
+          >
+            <Package size={16} />
+            <span>Catálogo de Premios</span>
+            {catalogoPremios.length > 0 && (
+              <span className="badge-cat-count">{catalogoPremios.length}</span>
+            )}
+          </button>
           <button
             type="button"
             className="btn-importar-bandai"
@@ -1044,7 +1209,7 @@ export default function Torneos() {
                 >
                   <Gift size={15} />
                   <span>
-                    Productos de Premiación
+                    Premios & Catálogo
                     {torneoDetalle.productosPremios?.length > 0 && (
                       <span className="tab-counter-badge">{torneoDetalle.productosPremios.length}</span>
                     )}
@@ -1062,27 +1227,44 @@ export default function Torneos() {
               </div>
 
               {/* ========================================================= */}
-              {/* APARTADO DE PRODUCTOS DE PREMIACIÓN                       */}
+              {/* APARTADO DE PREMIOS & CATÁLOGO DE INVENTARIO              */}
               {/* ========================================================= */}
               {tabGestionTorneo === "productos_premios" && (
                 <div className="torneo-prize-products-container">
                   <div className="prize-products-header-row">
                     <div>
-                      <h4 className="pp-title">Productos de Premiación del Torneo</h4>
+                      <div className="pp-title-with-badge">
+                        <h4 className="pp-title">Premios del Torneo (Catálogo de Inventario)</h4>
+                        {torneoDetalle.stockPremiosDescontado && (
+                          <span className="badge-stock-descontado-ok" title="El stock ya fue descontado automáticamente del catálogo">
+                            <Check size={13} /> Stock descontado en catálogo
+                          </span>
+                        )}
+                      </div>
                       <p className="pp-subtitle">
-                        Sube las fotos y datos de los productos para este torneo. Se asignan automáticamente a los ganadores según su puesto.
+                        Selecciona los productos directamente del catálogo general. Al asignar la premiación, las unidades se descuentan en automático del inventario.
                       </p>
                     </div>
+
                     <div className="pp-header-actions">
                       <button
                         type="button"
-                        className="btn-asignar-prods-auto"
-                        onClick={handleAsignarProductosPremios}
-                        disabled={asignandoProductos || !torneoDetalle.productosPremios || torneoDetalle.productosPremios.length === 0}
-                        title="Asigna automáticamente estos productos a cada jugador según su puesto en la tabla"
+                        className="btn-abrir-cat-modal"
+                        onClick={() => setModalCatalogoAbierto(true)}
+                        title="Abrir el catálogo general para agregar productos o ajustar stock"
+                      >
+                        <Package size={15} />
+                        <span>Abrir Catálogo ({catalogoPremios.length})</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-asignar-descontar-primary"
+                        onClick={handleAsignarYDescontarStock}
+                        disabled={descontandoStock || !torneoDetalle.productosPremios || torneoDetalle.productosPremios.length === 0}
+                        title="Asigna los premios a los participantes y descuenta las unidades del inventario del catálogo"
                       >
                         <Sparkles size={15} />
-                        <span>{asignandoProductos ? "Asignando…" : "Asignar Productos Automáticamente"}</span>
+                        <span>{descontandoStock ? "Descontando stock…" : "Asignar y Descontar Stock"}</span>
                       </button>
                     </div>
                   </div>
@@ -1094,124 +1276,104 @@ export default function Torneos() {
                     </div>
                   )}
 
-                  {/* Formulario para agregar producto con foto */}
-                  <form onSubmit={handleAgregarProductoPremio} className="prize-product-add-form">
-                    <div className="pp-form-row">
-                      {/* Subida y Previsualización de Foto */}
-                      <div className="pp-photo-upload-group">
-                        <label className="pp-photo-dropzone">
-                          {prodImagen ? (
-                            <div className="pp-photo-preview-wrap">
-                              <img src={prodImagen} alt="Foto producto" className="pp-photo-preview-img" />
-                              <button
-                                type="button"
-                                className="btn-remove-prod-photo"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setProdImagen("");
-                                }}
-                                title="Quitar foto"
-                              >
-                                <X size={12} />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="pp-photo-empty">
-                              <Camera size={22} />
-                              <span>Subir Foto</span>
-                              <small>JPG, PNG o WebP</small>
-                            </div>
-                          )}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="sr-only"
-                            style={{ display: "none" }}
-                            onChange={handleSubirFotoProducto}
-                          />
-                        </label>
-                      </div>
-
-                      <div className="pp-form-fields-group">
-                        <div className="pp-inputs-grid">
-                          <label className="form-field">
-                            <span>Nombre del Producto *</span>
-                            <input
-                              type="text"
-                              placeholder="Ej: 1 Booster Box OP-09 Sellada"
-                              value={prodNombre}
-                              onChange={(e) => setProdNombre(e.target.value)}
-                              required
-                            />
-                          </label>
-
-                          <label className="form-field">
-                            <span>Puesto al que se Asigna *</span>
-                            <select
-                              value={prodPuesto}
-                              onChange={(e) => setProdPuesto(e.target.value)}
-                            >
-                              <option value="1">🏆 1° Lugar (Campeón)</option>
-                              <option value="2">🥈 2° Lugar (Subcampeón)</option>
-                              <option value="3">🥉 3° Lugar</option>
-                              <option value="4">⭐ 4° Lugar</option>
-                              <option value="top4">🎖️ Top 4 (Puestos 1 al 4)</option>
-                              <option value="top8">🎖️ Top 8 (Puestos 1 al 8)</option>
-                              <option value="todos">🎁 Todos los Participantes (Asistencia)</option>
-                            </select>
-                          </label>
-                        </div>
-
-                        <div className="pp-inputs-grid-bottom">
-                          <label className="form-field">
-                            <span>Cantidad</span>
-                            <input
-                              type="number"
-                              min="1"
-                              placeholder="1"
-                              value={prodCantidad}
-                              onChange={(e) => setProdCantidad(e.target.value)}
-                            />
-                          </label>
-
-                          <label className="form-field">
-                            <span>Valor estimado (COP, opcional)</span>
-                            <input
-                              type="number"
-                              placeholder="Ej: 450000"
-                              value={prodValorCop}
-                              onChange={(e) => setProdValorCop(e.target.value)}
-                            />
-                          </label>
-
-                          <label className="form-field">
-                            <span>O URL de imagen</span>
-                            <input
-                              type="url"
-                              placeholder="https://..."
-                              value={prodImagen.startsWith("http") ? prodImagen : ""}
-                              onChange={(e) => setProdImagen(e.target.value)}
-                            />
-                          </label>
-
-                          <button
-                            type="submit"
-                            className="btn-add-prize-product"
-                            disabled={guardandoProducto || !prodNombre.trim()}
-                          >
-                            <Plus size={15} />
-                            <span>{guardandoProducto ? "Guardando…" : "Agregar Producto"}</span>
-                          </button>
-                        </div>
-                      </div>
+                  {/* Selector y Vinculación desde el Catálogo */}
+                  <form onSubmit={handleVincularPremioDesdeCatalogo} className="prize-catalog-link-box">
+                    <div className="pcl-title-row">
+                      <span className="pcl-label">Seleccionar Producto del Catálogo de Premios:</span>
+                      <button
+                        type="button"
+                        className="btn-link-nuevo-cat"
+                        onClick={() => setModalCatalogoAbierto(true)}
+                      >
+                        + Crear nuevo producto en catálogo
+                      </button>
                     </div>
+
+                    <div className="pcl-form-grid">
+                      <div className="pcl-select-wrap">
+                        <select
+                          className="pcl-product-select"
+                          value={premioCatSeleccionadoId}
+                          onChange={(e) => setPremioCatSeleccionadoId(e.target.value)}
+                        >
+                          <option value="">-- Seleccionar producto del catálogo general --</option>
+                          {catalogoPremios.map((cp) => (
+                            <option key={cp.id} value={cp.id}>
+                              {cp.nombre} — Stock: {cp.stock} ({cp.categoria} • {cp.juego})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="pcl-puesto-wrap">
+                        <select
+                          value={premioCatPuesto}
+                          onChange={(e) => setPremioCatPuesto(e.target.value)}
+                        >
+                          <option value="1">🏆 1° Lugar (Campeón)</option>
+                          <option value="2">🥈 2° Lugar (Subcampeón)</option>
+                          <option value="3">🥉 3° Lugar</option>
+                          <option value="4">⭐ 4° Lugar</option>
+                          <option value="top4">🎖️ Top 4 (Puestos 1 al 4)</option>
+                          <option value="top8">🎖️ Top 8 (Puestos 1 al 8)</option>
+                          <option value="todos">🎁 Todos los Participantes (Asistencia)</option>
+                        </select>
+                      </div>
+
+                      <div className="pcl-cant-wrap">
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Cant."
+                          value={premioCatCantidad}
+                          onChange={(e) => setPremioCatCantidad(e.target.value)}
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="btn-vincular-cat-prize"
+                        disabled={!premioCatSeleccionadoId}
+                      >
+                        <Plus size={15} />
+                        <span>Vincular Premio</span>
+                      </button>
+                    </div>
+
+                    {/* Previsualización del ítem de catálogo seleccionado */}
+                    {(() => {
+                      const selItem = catalogoPremios.find((c) => c.id === premioCatSeleccionadoId);
+                      if (!selItem) return null;
+                      return (
+                        <div className="pcl-preview-banner">
+                          <div className="pcl-preview-thumb">
+                            {selItem.imagen ? (
+                              <img src={selItem.imagen} alt={selItem.nombre} />
+                            ) : (
+                              <Package size={20} />
+                            )}
+                          </div>
+                          <div className="pcl-preview-info">
+                            <strong>{selItem.nombre}</strong>
+                            <span>
+                              Categoría: {selItem.categoria} • Juego: {selItem.juego}
+                              {selItem.valorCop > 0 && ` • Valor Est.: $${Number(selItem.valorCop).toLocaleString("es-CO")} COP`}
+                            </span>
+                          </div>
+                          <div className="pcl-preview-stock">
+                            <span className={`cat-stock-pill ${selItem.stock > 0 ? "has-stock" : "no-stock"}`}>
+                              Stock en inventario: <strong>{selItem.stock} unidades</strong>
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </form>
 
-                  {/* Grilla de productos ya registrados */}
+                  {/* Grilla de productos ya vinculados a este torneo */}
                   <div className="prize-products-list-wrapper">
                     <div className="pp-list-header">
-                      <h5>Productos de Premiación Configurados ({torneoDetalle.productosPremios?.length || 0})</h5>
+                      <h5>Premios Configurados para este Torneo ({torneoDetalle.productosPremios?.length || 0})</h5>
                       <span className="pp-list-counter">
                         {torneoDetalle.participantes?.length || 0} jugadores inscritos
                       </span>
@@ -1220,57 +1382,101 @@ export default function Torneos() {
                     {(!torneoDetalle.productosPremios || torneoDetalle.productosPremios.length === 0) ? (
                       <div className="pp-empty-state">
                         <Package size={34} />
-                        <p>Aún no has agregado productos de premiación a este torneo.</p>
-                        <small>Usa el formulario superior para subir fotos y registrar cajas, sobres oficiales o promos.</small>
+                        <p>Aún no has vinculado productos de premiación a este torneo.</p>
+                        <small>Selecciona arriba un producto del catálogo (cajas, sobres, cartas promo) para asignarlo automáticamente a los ganadores.</small>
                       </div>
                     ) : (
-                      <div className="prize-products-grid">
-                        {torneoDetalle.productosPremios.map((prod) => {
-                          const puestoLabel =
-                            prod.puesto === "1" ? "🏆 1° Lugar" :
-                            prod.puesto === "2" ? "🥈 2° Lugar" :
-                            prod.puesto === "3" ? "🥉 3° Lugar" :
-                            prod.puesto === "4" ? "⭐ 4° Lugar" :
-                            prod.puesto === "top4" ? "🎖️ Top 4" :
-                            prod.puesto === "top8" ? "🎖️ Top 8" :
-                            prod.puesto === "todos" ? "🎁 Todos los participantes" :
-                            `Puesto ${prod.puesto}`;
+                      <>
+                        <div className="prize-products-grid">
+                          {torneoDetalle.productosPremios.map((prod) => {
+                            const puestoLabel =
+                              prod.puesto === "1" ? "🏆 1° Lugar" :
+                              prod.puesto === "2" ? "🥈 2° Lugar" :
+                              prod.puesto === "3" ? "🥉 3° Lugar" :
+                              prod.puesto === "4" ? "⭐ 4° Lugar" :
+                              prod.puesto === "top4" ? "🎖️ Top 4" :
+                              prod.puesto === "top8" ? "🎖️ Top 8" :
+                              prod.puesto === "todos" ? "🎁 Todos los participantes" :
+                              `Puesto ${prod.puesto}`;
 
-                          return (
-                            <div key={prod.id} className="prize-product-card">
-                              <div className="pp-card-thumb-wrap">
-                                {prod.imagen ? (
-                                  <img src={prod.imagen} alt={prod.nombre} className="pp-card-thumb-img" />
-                                ) : (
-                                  <div className="pp-card-thumb-fallback">
-                                    <Package size={22} />
+                            const catProd = catalogoPremios.find(
+                              (c) => c.id === prod.catalogoId || c.nombre.toLowerCase().trim() === prod.nombre.toLowerCase().trim()
+                            );
+
+                            return (
+                              <div key={prod.id} className="prize-product-card">
+                                <div className="pp-card-thumb-wrap">
+                                  {prod.imagen ? (
+                                    <img src={prod.imagen} alt={prod.nombre} className="pp-card-thumb-img" />
+                                  ) : (
+                                    <div className="pp-card-thumb-fallback">
+                                      <Package size={22} />
+                                    </div>
+                                  )}
+                                  <span className="pp-card-qty-badge">{prod.cantidad}x</span>
+                                </div>
+
+                                <div className="pp-card-details">
+                                  <span className="pp-card-puesto-tag">{puestoLabel}</span>
+                                  <strong className="pp-card-name" title={prod.nombre}>{prod.nombre}</strong>
+                                  <div className="pp-card-meta-row">
+                                    {catProd ? (
+                                      <span className="pp-card-cat-stock">
+                                        Stock en catálogo: <strong>{catProd.stock}</strong>
+                                      </span>
+                                    ) : (
+                                      prod.valorCop > 0 && (
+                                        <span className="pp-card-valor">
+                                          ${Number(prod.valorCop).toLocaleString("es-CO")} COP
+                                        </span>
+                                      )
+                                    )}
                                   </div>
-                                )}
-                                <span className="pp-card-qty-badge">{prod.cantidad}x</span>
-                              </div>
+                                </div>
 
-                              <div className="pp-card-details">
-                                <span className="pp-card-puesto-tag">{puestoLabel}</span>
-                                <strong className="pp-card-name" title={prod.nombre}>{prod.nombre}</strong>
-                                {prod.valorCop > 0 && (
-                                  <span className="pp-card-valor">
-                                    Valor: ${Number(prod.valorCop).toLocaleString("es-CO")} COP
-                                  </span>
-                                )}
+                                <button
+                                  type="button"
+                                  className="btn-del-prize-prod"
+                                  onClick={() => handleEliminarProductoPremio(prod.id)}
+                                  title="Quitar este producto de la premiación de este torneo"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
                               </div>
+                            );
+                          })}
+                        </div>
 
-                              <button
-                                type="button"
-                                className="btn-del-prize-prod"
-                                onClick={() => handleEliminarProductoPremio(prod.id)}
-                                title="Eliminar este producto de la premiación"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
+                        {/* Barra de acción para descontar stock */}
+                        <div className="pp-action-footer-bar">
+                          <div className="pp-af-info">
+                            <strong>Descuento automático de inventario:</strong>
+                            <span>Al pulsar el botón se asignan los premios a los ganadores según su puesto y se descuentan las unidades correspondientes del catálogo.</span>
+                          </div>
+
+                          <div className="pp-af-btns">
+                            <button
+                              type="button"
+                              className="btn-asignar-sin-descontar"
+                              onClick={handleAsignarProductosPremios}
+                              disabled={asignandoProductos}
+                              title="Asigna los premios en texto sin alterar el stock del catálogo"
+                            >
+                              Solo Asignar sin Descontar
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-asignar-descontar-primary"
+                              onClick={handleAsignarYDescontarStock}
+                              disabled={descontandoStock}
+                              title="Asigna los premios y descuenta las unidades del inventario"
+                            >
+                              <Sparkles size={15} />
+                              <span>{descontandoStock ? "Descontando stock…" : "Asignar y Descontar del Catálogo"}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -2244,6 +2450,312 @@ export default function Torneos() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: CATÁLOGO DE PREMIOS (INVENTARIO GENERAL)           */}
+      {/* ========================================================= */}
+      {modalCatalogoAbierto && (
+        <div className="modal-overlay" onClick={() => setModalCatalogoAbierto(false)}>
+          <div
+            className="modal-container modal-catalogo-dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div className="modal-title-wrap">
+                <div className="modal-icon-badge">
+                  <Package size={20} />
+                </div>
+                <div>
+                  <h3 className="modal-title">Catálogo de Premios (Inventario)</h3>
+                  <p className="modal-subtitle">
+                    Gestiona los productos disponibles para torneos. Su stock se descuenta en automático al asignar las premiaciones.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-close-modal"
+                onClick={() => setModalCatalogoAbierto(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body modal-catalogo-body">
+              {/* Barra de herramientas y filtros del catálogo */}
+              <div className="cat-toolbar">
+                <div className="cat-game-chips">
+                  {[
+                    { id: "todos", label: "Todos" },
+                    { id: "One Piece TCG", label: "One Piece TCG" },
+                    { id: "Riftbound TCG", label: "Riftbound TCG" },
+                  ].map((j) => (
+                    <button
+                      key={j.id}
+                      type="button"
+                      className={`cat-chip-btn ${filtroCatJuego === j.id ? "active" : ""}`}
+                      onClick={() => setFiltroCatJuego(j.id)}
+                    >
+                      {j.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="cat-toolbar-right">
+                  <div className="cat-search-box">
+                    <Search size={14} />
+                    <input
+                      type="text"
+                      placeholder="Buscar producto..."
+                      value={busquedaCat}
+                      onChange={(e) => setBusquedaCat(e.target.value)}
+                    />
+                    {busquedaCat && (
+                      <button type="button" onClick={() => setBusquedaCat("")}>
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-toggle-nuevo-prod"
+                    onClick={() => setMostrarFormNuevoCat(!mostrarFormNuevoCat)}
+                  >
+                    <Plus size={15} />
+                    <span>{mostrarFormNuevoCat ? "Cerrar Formulario" : "Nuevo Producto"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Formulario para registrar nuevo producto en el catálogo */}
+              {mostrarFormNuevoCat && (
+                <form onSubmit={handleGuardarItemCatalogo} className="cat-new-item-form">
+                  <h5 className="cat-form-title">Registrar Producto en el Catálogo</h5>
+                  <div className="cat-form-grid">
+                    <div className="cat-photo-col">
+                      <label className="cat-photo-dropzone">
+                        {catImagen ? (
+                          <div className="cat-photo-preview-wrap">
+                            <img src={catImagen} alt="Foto producto" />
+                            <button
+                              type="button"
+                              className="btn-remove-cat-photo"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setCatImagen("");
+                              }}
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="cat-photo-empty">
+                            <Camera size={20} />
+                            <span>Subir Foto</span>
+                            <small>JPG / PNG / WebP</small>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={handleSubirFotoCatalogo}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="cat-inputs-col">
+                      <div className="cat-row-2">
+                        <label className="form-field">
+                          <span>Nombre del Producto *</span>
+                          <input
+                            type="text"
+                            placeholder="Ej: Booster Box One Piece OP-09"
+                            value={catNombre}
+                            onChange={(e) => setCatNombre(e.target.value)}
+                            required
+                          />
+                        </label>
+
+                        <label className="form-field">
+                          <span>Juego *</span>
+                          <select
+                            value={catJuego}
+                            onChange={(e) => setCatJuego(e.target.value)}
+                          >
+                            <option value="One Piece TCG">One Piece TCG</option>
+                            <option value="Riftbound TCG">Riftbound TCG</option>
+                            <option value="General">General / Accesorios</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="cat-row-3">
+                        <label className="form-field">
+                          <span>Categoría</span>
+                          <select
+                            value={catCategoria}
+                            onChange={(e) => setCatCategoria(e.target.value)}
+                          >
+                            <option value="Sobres">Sobres</option>
+                            <option value="Cajas / Displays">Cajas / Displays</option>
+                            <option value="Sobres de Torneo">Sobres de Torneo (Promo)</option>
+                            <option value="Cartas Promo">Cartas Promo / Winner</option>
+                            <option value="Playmats">Playmats / Tapetes</option>
+                            <option value="Accesorios">Accesorios / Sleeves / Deckbox</option>
+                          </select>
+                        </label>
+
+                        <label className="form-field">
+                          <span>Stock Inicial *</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="12"
+                            value={catStock}
+                            onChange={(e) => setCatStock(e.target.value)}
+                            required
+                          />
+                        </label>
+
+                        <label className="form-field">
+                          <span>Valor estimado (COP)</span>
+                          <input
+                            type="number"
+                            placeholder="Ej: 450000"
+                            value={catValorCop}
+                            onChange={(e) => setCatValorCop(e.target.value)}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="cat-row-actions">
+                        <input
+                          type="url"
+                          placeholder="O pega aquí la URL de la imagen (https://...)"
+                          value={catImagen.startsWith("http") ? catImagen : ""}
+                          onChange={(e) => setCatImagen(e.target.value)}
+                          className="cat-url-input"
+                        />
+                        <button
+                          type="submit"
+                          className="btn-guardar-cat-item"
+                          disabled={guardandoCatItem || !catNombre.trim()}
+                        >
+                          <Plus size={15} />
+                          <span>{guardandoCatItem ? "Guardando…" : "Guardar en Catálogo"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              {/* Lista / Grilla de productos del catálogo */}
+              <div className="catalogo-items-grid">
+                {(() => {
+                  const filtrados = catalogoPremios.filter((p) => {
+                    if (filtroCatJuego !== "todos" && p.juego !== filtroCatJuego) return false;
+                    if (busquedaCat.trim()) {
+                      const q = busquedaCat.toLowerCase();
+                      const matchNombre = (p.nombre || "").toLowerCase().includes(q);
+                      const matchCat = (p.categoria || "").toLowerCase().includes(q);
+                      if (!matchNombre && !matchCat) return false;
+                    }
+                    return true;
+                  });
+
+                  if (filtrados.length === 0) {
+                    return (
+                      <div className="cat-empty-view">
+                        <Package size={36} />
+                        <p>No se encontraron productos en el catálogo.</p>
+                        <small>Haz clic en "Nuevo Producto" para registrar premios en el inventario.</small>
+                      </div>
+                    );
+                  }
+
+                  return filtrados.map((item) => (
+                    <div key={item.id} className="cat-card-item">
+                      <div className="cat-card-thumb">
+                        {item.imagen ? (
+                          <img src={item.imagen} alt={item.nombre} />
+                        ) : (
+                          <Package size={24} />
+                        )}
+                        <span className="cat-card-badge-juego">{item.juego.includes("Riftbound") ? "RIFT" : "OP TCG"}</span>
+                      </div>
+
+                      <div className="cat-card-body">
+                        <div className="cat-card-cat-tag">{item.categoria}</div>
+                        <strong className="cat-card-title" title={item.nombre}>{item.nombre}</strong>
+                        {item.valorCop > 0 && (
+                          <span className="cat-card-valor">
+                            ${Number(item.valorCop).toLocaleString("es-CO")} COP
+                          </span>
+                        )}
+                        {item.notas && <p className="cat-card-notas">{item.notas}</p>}
+                      </div>
+
+                      <div className="cat-card-stock-controller">
+                        <span className="cat-stock-label">Stock:</span>
+                        <div className="cat-stock-stepper">
+                          <button
+                            type="button"
+                            className="btn-stepper-stock minus"
+                            onClick={() => handleAjustarStock(item.id, -1)}
+                            disabled={item.stock <= 0}
+                            title="Restar 1 unidad"
+                          >
+                            <Minus size={13} />
+                          </button>
+                          <span className={`cat-stock-num ${item.stock === 0 ? "zero" : ""}`}>
+                            {item.stock}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn-stepper-stock plus"
+                            onClick={() => handleAjustarStock(item.id, 1)}
+                            title="Sumar 1 unidad"
+                          >
+                            <Plus size={13} />
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn-del-cat-item"
+                          onClick={() => handleEliminarItemCatalogo(item.id)}
+                          title="Eliminar del catálogo"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+
+            <div className="modal-footer cat-modal-footer">
+              <div className="cat-footer-summary">
+                <span>Total de productos: <strong>{catalogoPremios.length}</strong></span>
+                <span>•</span>
+                <span>Unidades en inventario: <strong>{catalogoPremios.reduce((acc, p) => acc + (Number(p.stock) || 0), 0)}</strong></span>
+              </div>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setModalCatalogoAbierto(false)}
+              >
+                Cerrar Catálogo
+              </button>
+            </div>
           </div>
         </div>
       )}

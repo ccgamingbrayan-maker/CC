@@ -501,3 +501,48 @@ ON CONFLICT (id) DO UPDATE SET
     items = EXCLUDED.items,
     estado = EXCLUDED.estado;
 
+-- ==============================================================================
+-- 9. TABLA: CATALOGO_PREMIOS (INVENTARIO GENERAL DE PREMIOS)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.catalogo_premios (
+    id TEXT PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    juego TEXT DEFAULT 'One Piece TCG',
+    categoria TEXT DEFAULT 'Sobres',
+    imagen TEXT,
+    stock INT NOT NULL DEFAULT 0,
+    valor_cop NUMERIC(12, 2) DEFAULT 0,
+    notas TEXT,
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_catalogo_premios_juego ON public.catalogo_premios(juego);
+CREATE INDEX IF NOT EXISTS idx_catalogo_premios_stock ON public.catalogo_premios(stock);
+
+ALTER TABLE IF EXISTS public.catalogo_premios ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Permitir lectura publica catalogo_premios" ON public.catalogo_premios;
+CREATE POLICY "Permitir lectura publica catalogo_premios" ON public.catalogo_premios
+    FOR SELECT TO public USING (true);
+
+DROP POLICY IF EXISTS "Permitir administracion completa catalogo_premios" ON public.catalogo_premios;
+CREATE POLICY "Permitir administracion completa catalogo_premios" ON public.catalogo_premios
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Seed inicial de catálogo de premios
+INSERT INTO public.catalogo_premios (id, nombre, juego, categoria, imagen, stock, valor_cop, notas)
+VALUES
+    ('premio-box-op09', 'Booster Box One Piece OP-09 (Sellada)', 'One Piece TCG', 'Cajas / Displays', 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&q=80', 8, 450000, 'Display oficial de 24 sobres para campeones de torneos Store Championship'),
+    ('premio-sobres-op09', 'Sobres Oficiales OP-09 (Four Emperors)', 'One Piece TCG', 'Sobres', 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=300&q=80', 96, 22000, 'Sobres individuales de expansión para Top 4 y Top 8'),
+    ('premio-tournament-pack', 'Tournament Pack Oficial Vol. 6 (Promo)', 'One Piece TCG', 'Sobres de Torneo', 'https://images.unsplash.com/photo-1578374173705-969cbe6f2d6b?w=300&q=80', 48, 15000, 'Sobres exclusivos de torneo entregados por Bandai TCG+'),
+    ('premio-winner-card', 'Carta Promo Winner Oficial con Estampado Dorado', 'One Piece TCG', 'Cartas Promo', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&q=80', 4, 120000, 'Carta exclusiva Winner para el 1er lugar de eventos oficiales'),
+    ('premio-playmat-champ', 'Playmat de Neopreno Store Championship', 'One Piece TCG', 'Playmats', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&q=80', 5, 90000, 'Tapete con bordes cosidos y zona de juego oficial'),
+    ('premio-riftbound-starter', 'Display Starter Riftbound TCG', 'Riftbound TCG', 'Cajas / Displays', 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&q=80', 6, 380000, 'Display para premiación de torneos Riftbound')
+ON CONFLICT (id) DO UPDATE SET
+    nombre = EXCLUDED.nombre,
+    stock = EXCLUDED.stock,
+    valor_cop = EXCLUDED.valor_cop,
+    imagen = EXCLUDED.imagen,
+    actualizado_en = NOW();
+
