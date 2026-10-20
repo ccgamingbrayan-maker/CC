@@ -452,9 +452,6 @@ export default function AgregarCarta() {
         <div className="admin-header-row">
           <div>
             <h2 className="admin-titulo">Panel de Administración</h2>
-            <p className="admin-subtitulo">
-              Gestiona el catálogo de cartas físicas oficiales y suministros de la tienda.
-            </p>
           </div>
 
           {/* PESTAÑAS PRINCIPALES: CARTAS VS ACCESORIOS */}
@@ -1037,33 +1034,12 @@ export default function AgregarCarta() {
                   </div>
                 </div>
               ) : (
-                /* ESTADO INICIAL / GUÍA PARA EL ADMINISTRADOR */
-                <div className="admin-guide-card">
-                  <div className="guide-card-icon-badge">
-                    <Sparkles size={24} />
-                  </div>
-                  <h3>Flujo de Ingreso de Cartas</h3>
-                  <p className="guide-card-lead">
-                    Busca cartas por nombre o código en las APIs oficiales para importar automáticamente su foto oficial en alta resolución, rareza y expansión a tu base de datos.
+                /* ESTADO INICIAL */
+                <div className="admin-guide-card" style={{ padding: "48px 24px" }}>
+                  <Search size={32} className="search-icon-muted" style={{ opacity: 0.35 }} />
+                  <p style={{ margin: "12px 0 0", color: "var(--texto-suave)", fontSize: "14px" }}>
+                    Usa el buscador de la izquierda para encontrar cartas.
                   </p>
-
-                  <div className="guide-steps-grid">
-                    <div className="guide-step-item">
-                      <span className="step-num">1</span>
-                      <h5>Selecciona el juego</h5>
-                      <p>Elige One Piece, Pokémon, Magic o Riftbound en el selector de la izquierda.</p>
-                    </div>
-                    <div className="guide-step-item">
-                      <span className="step-num">2</span>
-                      <h5>Elige la versión exacta</h5>
-                      <p>Visualiza todas las impresiones, artes base, paralelas (AA) y cartas especiales.</p>
-                    </div>
-                    <div className="guide-step-item">
-                      <span className="step-num">3</span>
-                      <h5>Fija precio y publica</h5>
-                      <p>Asigna tu precio en COP, unidades en stock y publica al instante en tu tienda.</p>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

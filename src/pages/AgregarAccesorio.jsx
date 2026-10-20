@@ -649,32 +649,11 @@ export default function AgregarAccesorio() {
                 </div>
               </>
             ) : (
-              <div className="admin-guide-card">
-                <div className="guide-icon-box">
-                  <Boxes size={28} />
-                </div>
-                <h3>Explorador de Accesorios TCG</h3>
-                <p>
-                  Elige una categoría (Fundas, Cajas de mazo, Protectores) y una marca oficial para desplegar las referencias disponibles.
+              <div className="admin-guide-card" style={{ padding: "48px 24px" }}>
+                <Boxes size={32} className="search-icon-muted" style={{ opacity: 0.35 }} />
+                <p style={{ margin: "12px 0 0", color: "var(--texto-suave)", fontSize: "14px" }}>
+                  Selecciona una categoría y marca para ver productos.
                 </p>
-
-                <div className="guide-steps-grid">
-                  <div className="guide-step-item">
-                    <span className="step-bubble">1</span>
-                    <strong>Selecciona la categoría</strong>
-                    <span>Fundas estándar, cajas para mazo o carpetas de colección.</span>
-                  </div>
-                  <div className="guide-step-item">
-                    <span className="step-bubble">2</span>
-                    <strong>Elige la marca</strong>
-                    <span>Dragon Shield, Ultra Pro, Ultimate Guard o Gamegenic.</span>
-                  </div>
-                  <div className="guide-step-item">
-                    <span className="step-bubble">3</span>
-                    <strong>Fija tu precio y stock</strong>
-                    <span>Usa el convertidor sugerido en COP y publica con un solo clic.</span>
-                  </div>
-                </div>
               </div>
             )}
           </>
