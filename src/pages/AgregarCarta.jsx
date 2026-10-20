@@ -478,7 +478,6 @@ export default function AgregarCarta() {
             <Link
               to="/torneos"
               className="admin-nav-tab"
-              title="Ir al módulo de torneos y eventos"
             >
               <Trophy size={16} />
               <span>Torneos</span>
@@ -486,10 +485,9 @@ export default function AgregarCarta() {
             <Link
               to="/admin/clientes"
               className="admin-nav-tab"
-              title="Ir al directorio y expedientes 360° de clientes"
             >
               <Users size={16} />
-              <span>Clientes & Perfiles</span>
+              <span>Clientes</span>
             </Link>
           </div>
         </div>

@@ -109,7 +109,7 @@ export default function Navbar() {
               <Link
                 to="/admin/agregar"
                 className={`nav-pill nav-pill-admin ${location.pathname.startsWith("/admin/agregar") ? "active" : ""}`}
-                title="Panel de administración de tienda"
+                title="Admin"
               >
                 <ShieldCheck size={15} />
                 <span>Admin</span>
@@ -117,7 +117,7 @@ export default function Navbar() {
               <Link
                 to="/admin/clientes"
                 className={`nav-pill nav-pill-clientes ${location.pathname.startsWith("/admin/clientes") || location.pathname === "/clientes" ? "active" : ""}`}
-                title="Directorio y expedientes 360° de clientes"
+                title="Clientes"
               >
                 <Users size={15} />
                 <span>Clientes</span>

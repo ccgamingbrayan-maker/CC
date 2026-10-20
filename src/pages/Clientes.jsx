@@ -152,33 +152,26 @@ export default function Clientes() {
       {/* HEADER DE MÓDULO */}
       <div className="crm-header-banner">
         <div className="crm-header-left">
-          <div className="crm-tag-badge">
-            <Users size={13} />
-            <span>CRM & Expedientes de Clientes</span>
-          </div>
-          <h1 className="crm-main-title">Directorio de Clientes y Jugadores</h1>
-          <p className="crm-main-subtitle">
-            Consulta el expediente 360° de cada jugador: sus torneos oficiales disputados, puestos y victorias, compras en tienda, deudas y mazos registrados.
-          </p>
+          <h1 className="crm-main-title">Clientes</h1>
         </div>
 
         {/* NAVEGACIÓN ENTRE SECCIONES DE ADMINISTRACIÓN */}
         <div className="admin-segmented-nav">
-          <Link to="/admin/agregar" className="admin-nav-tab" title="Gestión de catálogo de cartas">
+          <Link to="/admin/agregar" className="admin-nav-tab">
             <Layers size={15} />
             <span>Cartas TCG</span>
           </Link>
-          <Link to="/accesorios" className="admin-nav-tab" title="Gestión de accesorios">
+          <Link to="/accesorios" className="admin-nav-tab">
             <Package size={15} />
             <span>Accesorios</span>
           </Link>
-          <Link to="/torneos" className="admin-nav-tab" title="Módulo de torneos oficiales">
+          <Link to="/torneos" className="admin-nav-tab">
             <Trophy size={15} />
             <span>Torneos</span>
           </Link>
           <button type="button" className="admin-nav-tab active">
             <Users size={15} />
-            <span>Clientes & Perfiles</span>
+            <span>Clientes</span>
           </button>
         </div>
       </div>
@@ -308,7 +301,7 @@ export default function Clientes() {
             {cargando ? (
               <div className="crm-loading-state">
                 <div className="loading-spinner" />
-                <span>Cargando directorio de clientes...</span>
+                <span>Cargando clientes...</span>
               </div>
             ) : clientesFiltrados.length === 0 ? (
               <div className="crm-empty-state">
@@ -570,9 +563,9 @@ export default function Clientes() {
                     {clienteActivo.torneos.length === 0 ? (
                       <div className="dossier-empty-tab">
                         <Trophy size={38} className="text-muted" />
-                        <p>Este cliente aún no ha participado en torneos oficiales registrados.</p>
+                        <p>Sin torneos registrados.</p>
                         <Link to="/torneos" className="btn-link-action">
-                          Ir a Torneos y Crear / Importar
+                          Ir a Torneos
                         </Link>
                       </div>
                     ) : (
@@ -786,7 +779,7 @@ export default function Clientes() {
             <div className="dossier-unselected-state">
               <Users size={48} className="text-muted" />
               <h3>Selecciona un cliente</h3>
-              <p>Elige un cliente del panel izquierdo para ver su expediente 360° completo.</p>
+              <p>Elige un cliente de la lista para ver su información.</p>
             </div>
           )}
         </main>

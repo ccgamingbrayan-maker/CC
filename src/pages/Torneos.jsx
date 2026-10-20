@@ -542,33 +542,24 @@ export default function Torneos() {
       {/* HEADER DE MÓDULO */}
       <div className="torneos-header-banner">
         <div className="torneos-header-left">
-          <div className="torneos-tag-badge">
-            <Trophy size={13} />
-            <span>Eventos Oficiales</span>
-          </div>
-          <h1 className="torneos-main-title">Torneos One Piece y Riftbound</h1>
-          <p className="torneos-main-subtitle">
-            Organiza, inscribe y consulta las posiciones oficiales de One Piece TCG (Bandai TCG+) y Riftbound TCG de Capsule Corp Gaming en Cali.
-          </p>
+          <h1 className="torneos-main-title">Torneos</h1>
         </div>
 
         <div className="torneos-header-actions">
           <Link
             to="/admin/clientes"
             className="btn-ver-clientes"
-            title="Directorio 360° de perfiles, torneos y compras de clientes"
           >
             <Users size={16} />
-            <span>Ver Clientes & Perfiles</span>
+            <span>Clientes</span>
           </Link>
           <button
             type="button"
             className="btn-importar-bandai"
             onClick={() => abrirModalImportar(null)}
-            title="Importar automáticamente torneo desde tabla de Bandai TCG+ o captura"
           >
             <Sparkles size={16} />
-            <span>Importar desde Bandai TCG+</span>
+            <span>Importar Torneo</span>
           </button>
           <button
             type="button"
