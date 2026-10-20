@@ -471,6 +471,7 @@ export async function obtenerTorneosUsuario(user) {
 
   const userEmail = (user.email || "").toLowerCase().trim();
   const userNombre = (user.user_metadata?.nombre || "").toLowerCase().trim();
+  const userNickname = (user.user_metadata?.nickname || "").toLowerCase().trim();
   const userTelefono = (user.user_metadata?.telefono || "").replace(/\D/g, "");
 
   const historial = [];
@@ -480,13 +481,20 @@ export async function obtenerTorneosUsuario(user) {
     for (const p of participantes) {
       const pEmail = (p.email || "").toLowerCase().trim();
       const pNombre = (p.nombre || "").toLowerCase().trim();
+      const pNickname = (p.nickname || "").toLowerCase().trim();
       const pTelefono = (p.telefono || "").replace(/\D/g, "");
 
       const coincideEmail = userEmail && pEmail && userEmail === pEmail;
       const coincideTelefono = userTelefono && pTelefono && userTelefono === pTelefono;
       const coincideNombre = userNombre && pNombre && (userNombre === pNombre || pNombre.includes(userNombre));
+      const coincideNickname = userNickname && (
+        (pNickname && pNickname === userNickname) ||
+        pNombre === userNickname ||
+        pNombre.includes(userNickname) ||
+        userNickname.includes(pNombre)
+      );
 
-      if (coincideEmail || coincideTelefono || coincideNombre) {
+      if (coincideEmail || coincideTelefono || coincideNombre || coincideNickname) {
         const costo = Number(t.costoInscripcion || 0);
         const pagado = Number(p.montoPagado || 0);
         const deuda = Math.max(0, costo - pagado);

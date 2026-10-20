@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LogIn, UserPlus, Mail, Lock, User, Phone } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock, User, Phone, Gamepad2 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 
 export default function Login() {
@@ -22,6 +22,7 @@ export default function Login() {
   // A donde volver tras iniciar sesión (ej: "/checkout" si venía de pagar).
   const redirect = location.state?.redirect;
   const [nombre, setNombre] = useState("");
+  const [nickname, setNickname] = useState("");
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -71,6 +72,10 @@ export default function Login() {
         setError("Escribe tu nombre completo.");
         return;
       }
+      if (!nickname.trim()) {
+        setError("Ingresa tu Nickname de Bandai TCG+ (el mismo que usas en los torneos).");
+        return;
+      }
       if (password !== confirmar) {
         setError("Las contraseñas no coinciden.");
         return;
@@ -78,6 +83,7 @@ export default function Login() {
       setEnviando(true);
       const { error } = await registro(email.trim(), password, {
         nombre: nombre.trim(),
+        nickname: nickname.trim(),
         telefono: telefono.trim(),
       });
       setEnviando(false);
@@ -85,7 +91,7 @@ export default function Login() {
         setError("No se pudo crear la cuenta. " + (error.message ?? ""));
       } else {
         setMensaje(
-          "Cuenta creada. Si no entras automáticamente, revisa tu correo para confirmarla."
+          "Cuenta creada con éxito. Si no entras automáticamente, revisa tu correo para confirmarla."
         );
       }
       return;
@@ -122,7 +128,7 @@ export default function Login() {
             : redirect
               ? "Ya casi. Crea tu cuenta o inicia sesión para completar tu compra."
               : esRegistro
-                ? "Regístrate para comprar cartas y accesorios."
+                ? "Regístrate para comprar cartas, accesorios y participar en torneos oficiales."
                 : "Ingresa con tu cuenta de CapsuleCorp Gaming."}
         </p>
 
@@ -158,6 +164,21 @@ export default function Login() {
                   placeholder="Ej: Juan Pérez"
                   required
                 />
+              </label>
+
+              <label>
+                <Gamepad2 size={16} />
+                Nickname Bandai TCG+
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="Ej: Mugiwara_Luffy (el mismo de Bandai)"
+                  required
+                />
+                <small className="auth-campo-ayuda">
+                  * Debe ser el mismo Nickname que tienes en Bandai TCG+ para enlazar tus torneos automáticamente.
+                </small>
               </label>
 
               <label>

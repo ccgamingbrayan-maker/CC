@@ -896,10 +896,10 @@ export default function Torneos() {
                 <form onSubmit={handleAgregarParticipante} className="add-player-form">
                   <div className="form-cols-row">
                     <label className="form-field">
-                      <span>Nombre del jugador *</span>
+                      <span>Nombre o Nickname Bandai *</span>
                       <input
                         type="text"
-                        placeholder="Ej: Carlos Méndez"
+                        placeholder="Ej: Carlos Méndez / Mugiwara99"
                         value={pNombre}
                         onChange={(e) => setPNombre(e.target.value)}
                         required

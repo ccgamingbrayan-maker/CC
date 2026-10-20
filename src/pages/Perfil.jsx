@@ -15,6 +15,7 @@ import {
   Calendar,
   MapPin,
   ExternalLink,
+  Gamepad2,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { supabase } from "../lib/supabase.js";
@@ -36,6 +37,7 @@ export default function Perfil() {
   if (!user) return null;
 
   const nombre = user.user_metadata?.nombre || "Mi cuenta";
+  const nickname = user.user_metadata?.nickname;
   const inicial = (user.user_metadata?.nombre || user.email || "?")
     .charAt(0)
     .toUpperCase();
@@ -49,6 +51,16 @@ export default function Perfil() {
             <div className="perfil-user-meta">
               <div className="perfil-name-badge-row">
                 <h1 className="perfil-user-name">{nombre}</h1>
+                {nickname ? (
+                  <span className="perfil-badge-nickname" title="Nickname oficial en Bandai TCG+">
+                    <Gamepad2 size={13} />
+                    <span>@{nickname} (Bandai)</span>
+                  </span>
+                ) : (
+                  <span className="perfil-badge-no-nickname" title="Configura tu Nickname de Bandai en Mis Datos">
+                    <span>Sin Nickname Bandai</span>
+                  </span>
+                )}
                 <span className="perfil-badge-verified">Cuenta Verificada</span>
               </div>
               <p className="perfil-user-email">{user.email}</p>
@@ -135,6 +147,7 @@ export default function Perfil() {
 
 function DatosUsuario({ user }) {
   const [nombre, setNombre] = useState(user.user_metadata?.nombre ?? "");
+  const [nickname, setNickname] = useState(user.user_metadata?.nickname ?? "");
   const [telefono, setTelefono] = useState(user.user_metadata?.telefono ?? "");
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
@@ -148,9 +161,17 @@ function DatosUsuario({ user }) {
       setError("El nombre debe tener al menos 3 caracteres.");
       return;
     }
+    if (!nickname.trim()) {
+      setError("El Nickname de Bandai TCG+ es obligatorio para vincular torneos.");
+      return;
+    }
     setGuardando(true);
     const { error } = await supabase.auth.updateUser({
-      data: { nombre: nombre.trim(), telefono: telefono.trim() },
+      data: {
+        nombre: nombre.trim(),
+        nickname: nickname.trim(),
+        telefono: telefono.trim(),
+      },
     });
     setGuardando(false);
     if (error) setError("No se pudieron guardar los datos. " + error.message);
@@ -173,6 +194,19 @@ function DatosUsuario({ user }) {
             onChange={(e) => setNombre(e.target.value)}
             required
           />
+        </label>
+        <label>
+          Nickname Bandai TCG+ (mismo que en la app de Bandai) *
+          <input
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="Ej: Mugiwara_Luffy"
+            required
+          />
+          <small style={{ display: "block", marginTop: "4px", color: "var(--texto-suave)", fontSize: "11.5px" }}>
+            * Es el mismo Nickname con el que estás registrado en Bandai TCG+ para emparejarte en torneos de One Piece TCG.
+          </small>
         </label>
         <label>
           Teléfono
