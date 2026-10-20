@@ -12,6 +12,7 @@ import RestablecerClave from "./pages/RestablecerClave.jsx";
 import ConfirmarCuenta from "./pages/ConfirmarCuenta.jsx";
 import Perfil from "./pages/Perfil.jsx";
 import Torneos from "./pages/Torneos.jsx";
+import Clientes from "./pages/Clientes.jsx";
 import RutaAdmin from "./components/RutaAdmin.jsx";
 import { useCart } from "./lib/CartContext.jsx";
 
@@ -48,6 +49,22 @@ export default function App() {
           element={
             <RutaAdmin>
               <Torneos />
+            </RutaAdmin>
+          }
+        />
+        <Route
+          path="/admin/clientes"
+          element={
+            <RutaAdmin>
+              <Clientes />
+            </RutaAdmin>
+          }
+        />
+        <Route
+          path="/clientes"
+          element={
+            <RutaAdmin>
+              <Clientes />
             </RutaAdmin>
           }
         />

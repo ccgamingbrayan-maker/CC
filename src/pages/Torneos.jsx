@@ -553,6 +553,14 @@ export default function Torneos() {
         </div>
 
         <div className="torneos-header-actions">
+          <Link
+            to="/admin/clientes"
+            className="btn-ver-clientes"
+            title="Directorio 360° de perfiles, torneos y compras de clientes"
+          >
+            <Users size={16} />
+            <span>Ver Clientes & Perfiles</span>
+          </Link>
           <button
             type="button"
             className="btn-importar-bandai"

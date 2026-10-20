@@ -14,7 +14,8 @@ import {
   ArrowRight,
   RotateCcw,
   Plus,
-  Trophy
+  Trophy,
+  Users
 } from "lucide-react";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
 import { buscarCartaRiftbound, buscarPrintsRiftbound } from "../lib/riftbound.js";
@@ -481,6 +482,14 @@ export default function AgregarCarta() {
             >
               <Trophy size={16} />
               <span>Torneos</span>
+            </Link>
+            <Link
+              to="/admin/clientes"
+              className="admin-nav-tab"
+              title="Ir al directorio y expedientes 360° de clientes"
+            >
+              <Users size={16} />
+              <span>Clientes & Perfiles</span>
             </Link>
           </div>
         </div>

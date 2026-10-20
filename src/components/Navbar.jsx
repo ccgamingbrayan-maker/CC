@@ -15,7 +15,8 @@ import {
   UserPlus,
   ShieldCheck,
   ChevronDown,
-  Trophy
+  Trophy,
+  Users
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useCart } from "../lib/CartContext.jsx";
@@ -104,14 +105,24 @@ export default function Navbar() {
             <span>Torneos</span>
           </Link>
           {esAdmin && (
-            <Link
-              to="/admin/agregar"
-              className={`nav-pill nav-pill-admin ${location.pathname.startsWith("/admin") ? "active" : ""}`}
-              title="Panel de administración de tienda"
-            >
-              <ShieldCheck size={15} />
-              <span>Admin</span>
-            </Link>
+            <>
+              <Link
+                to="/admin/agregar"
+                className={`nav-pill nav-pill-admin ${location.pathname.startsWith("/admin/agregar") ? "active" : ""}`}
+                title="Panel de administración de tienda"
+              >
+                <ShieldCheck size={15} />
+                <span>Admin</span>
+              </Link>
+              <Link
+                to="/admin/clientes"
+                className={`nav-pill nav-pill-clientes ${location.pathname.startsWith("/admin/clientes") || location.pathname === "/clientes" ? "active" : ""}`}
+                title="Directorio y expedientes 360° de clientes"
+              >
+                <Users size={15} />
+                <span>Clientes</span>
+              </Link>
+            </>
           )}
         </div>
 
@@ -164,10 +175,16 @@ export default function Navbar() {
                         <span>Mi perfil</span>
                       </Link>
                       {esAdmin && (
-                        <Link to="/admin/agregar" onClick={() => setMenuAbierto(false)}>
-                          <ShieldCheck size={15} />
-                          <span>Panel Admin</span>
-                        </Link>
+                        <>
+                          <Link to="/admin/agregar" onClick={() => setMenuAbierto(false)}>
+                            <ShieldCheck size={15} />
+                            <span>Panel Admin</span>
+                          </Link>
+                          <Link to="/admin/clientes" onClick={() => setMenuAbierto(false)}>
+                            <Users size={15} />
+                            <span>Directorio Clientes</span>
+                          </Link>
+                        </>
                       )}
                     </div>
                     <div className="usuario-menu-footer">

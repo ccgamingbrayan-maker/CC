@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     nickname TEXT UNIQUE,              -- Nickname Bandai TCG+ / Riftbound
     bandai_id TEXT,                    -- Membership Number (ej: 0000205267)
     telefono TEXT,
+    ciudad TEXT DEFAULT 'Cali',
+    notas_admin TEXT,
     avatar_url TEXT,
     rol TEXT DEFAULT 'cliente' CHECK (rol IN ('cliente', 'admin', 'juez')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -397,3 +399,89 @@ ON CONFLICT (id) DO UPDATE SET
     pozo_premios = EXCLUDED.pozo_premios,
     participantes = EXCLUDED.participantes,
     actualizado_en = NOW();
+
+-- ==============================================================================
+-- 9. TABLA: PEDIDOS / COMPRAS EN TIENDA DE CLIENTES
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.pedidos (
+    id TEXT PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    nickname TEXT,
+    email TEXT,
+    estado TEXT DEFAULT 'entregado' CHECK (estado IN ('pendiente', 'pagado', 'enviado', 'entregado', 'cancelado')),
+    total NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    items JSONB DEFAULT '[]'::jsonb,
+    metodo_pago TEXT DEFAULT 'ePayco (Nequi)',
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pedidos_user_id ON public.pedidos(user_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_nickname ON public.pedidos(LOWER(nickname));
+CREATE INDEX IF NOT EXISTS idx_pedidos_estado ON public.pedidos(estado);
+
+ALTER TABLE public.pedidos ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Pedidos públicos para lectura" ON public.pedidos;
+CREATE POLICY "Pedidos públicos para lectura" ON public.pedidos FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Gestionar pedidos (Admin o usuario)" ON public.pedidos;
+CREATE POLICY "Gestionar pedidos (Admin o usuario)" ON public.pedidos FOR ALL USING (true);
+
+-- Compras de prueba iniciales asociadas a los jugadores estrella de Bandai
+INSERT INTO public.pedidos (id, nickname, estado, total, metodo_pago, items, creado_en)
+VALUES
+  (
+    'PED-1042',
+    '[BC] JackPoe',
+    'entregado',
+    485000,
+    'ePayco (Nequi)',
+    '[
+      {"tipo":"carta","nombre":"Monkey.D.Luffy (Manga Rare OP-05)","cantidad":1,"precio":380000},
+      {"tipo":"accesorio","nombre":"Dragon Shield Matte Dual Fury (100ct)","cantidad":1,"precio":55000},
+      {"tipo":"accesorio","nombre":"Deck Box Ultimate Guard Sidewinder Purple","cantidad":1,"precio":50000}
+    ]'::jsonb,
+    NOW() - INTERVAL '2 days'
+  ),
+  (
+    'PED-1038',
+    'danieldlora',
+    'entregado',
+    240000,
+    'ePayco (Tarjeta de Crédito)',
+    '[
+      {"tipo":"carta","nombre":"Donquixote Doflamingo (Leader Parallel)","cantidad":1,"precio":150000},
+      {"tipo":"carta","nombre":"Boa Hancock (OP07-051 SR)","cantidad":2,"precio":45000}
+    ]'::jsonb,
+    NOW() - INTERVAL '5 days'
+  ),
+  (
+    'PED-1025',
+    'Niñojackie',
+    'entregado',
+    185000,
+    'ePayco (Bancolombia)',
+    '[
+      {"tipo":"carta","nombre":"Gecko Moria (OP06-086 SR)","cantidad":2,"precio":65000},
+      {"tipo":"accesorio","nombre":"Playmat Capsule Corp Neopreno 60x35cm","cantidad":1,"precio":55000}
+    ]'::jsonb,
+    NOW() - INTERVAL '18 days'
+  ),
+  (
+    'PED-1030',
+    'Lythrick',
+    'entregado',
+    310000,
+    'ePayco (Nequi)',
+    '[
+      {"tipo":"carta","nombre":"Enel (OP05-098 Leader Parallel)","cantidad":1,"precio":190000},
+      {"tipo":"carta","nombre":"Charlotte Katakuri (OP03-123 SEC)","cantidad":1,"precio":120000}
+    ]'::jsonb,
+    NOW() - INTERVAL '12 days'
+  )
+ON CONFLICT (id) DO UPDATE SET
+    total = EXCLUDED.total,
+    items = EXCLUDED.items,
+    estado = EXCLUDED.estado;
+
