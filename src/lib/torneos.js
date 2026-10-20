@@ -287,6 +287,49 @@ function guardarLocal(torneos) {
 }
 
 /**
+ * Mapea columnas desde Supabase (snake_case) al formato usado en la app (camelCase)
+ */
+export function mapTorneoDesdeSupabase(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    juegoId: row.juego_id ?? row.juegoId,
+    costoInscripcion: Number(row.costo_inscripcion ?? row.costoInscripcion ?? 0),
+    cupoMaximo: Number(row.cupo_maximo ?? row.cupoMaximo ?? 16),
+    pozoPremios: Number(row.pozo_premios ?? row.pozoPremios ?? 0),
+    esquemaPremios: row.esquema_premios ?? row.esquemaPremios ?? "top4_standard",
+    gastosEvento: Number(row.gastos_evento ?? row.gastosEvento ?? 0),
+    actualizadoEn: row.actualizado_en ?? row.actualizadoEn,
+    participantes: Array.isArray(row.participantes) ? row.participantes : [],
+  };
+}
+
+/**
+ * Mapea un torneo a snake_case para guardar en Supabase PostgreSQL
+ */
+export function mapTorneoParaSupabase(t) {
+  return {
+    id: t.id,
+    nombre: t.nombre,
+    juego: t.juego,
+    juego_id: t.juegoId || (t.juego?.includes("Riftbound") ? 2 : 1),
+    formato: t.formato || "Estándar Suizo",
+    fecha: t.fecha,
+    lugar: t.lugar,
+    costo_inscripcion: Number(t.costoInscripcion || 0),
+    cupo_maximo: Number(t.cupoMaximo || 16),
+    premios: t.premios || "",
+    pozo_premios: Number(t.pozoPremios || 0),
+    esquema_premios: t.esquemaPremios || "top4_standard",
+    gastos_evento: Number(t.gastosEvento || 0),
+    estado: t.estado || "proximo",
+    notas: t.notas || "",
+    participantes: t.participantes || [],
+    actualizado_en: t.actualizadoEn || new Date().toISOString(),
+  };
+}
+
+/**
  * Obtiene la lista completa de torneos (Backend > Supabase > LocalStorage)
  */
 export async function listarTorneos() {
@@ -310,8 +353,9 @@ export async function listarTorneos() {
         .select("*")
         .order("fecha", { ascending: true });
       if (!error && Array.isArray(data) && data.length > 0) {
-        guardarLocal(data);
-        return data;
+        const mapeados = data.map(mapTorneoDesdeSupabase);
+        guardarLocal(mapeados);
+        return mapeados;
       }
     }
   } catch (e) {}
@@ -358,7 +402,8 @@ export async function guardarTorneo(torneo) {
   // Sincronizar en Supabase
   try {
     if (supabase) {
-      await supabase.from("torneos").upsert(registro);
+      const payloadSupabase = mapTorneoParaSupabase(registro);
+      await supabase.from("torneos").upsert(payloadSupabase);
     }
   } catch (e) {}
 
