@@ -32,7 +32,7 @@ const TORNEOS_INICIALES = [
         montoPagado: 35000,
         estadoPago: "pagado",
         puesto: "1",
-        premioGanado: "$210.000 COP + 1 Booster Box OP-09",
+        premioGanado: "1 Booster Box OP-09 (Sellada) + Carta Promo Winner",
         notas: "Campeón del torneo"
       },
       {
@@ -46,7 +46,7 @@ const TORNEOS_INICIALES = [
         montoPagado: 35000,
         estadoPago: "pagado",
         puesto: "2",
-        premioGanado: "$126.000 COP + Sobres Oficiales",
+        premioGanado: "12 Sobres Oficiales OP-09",
         notas: "Subcampeón"
       },
       {
@@ -60,7 +60,7 @@ const TORNEOS_INICIALES = [
         montoPagado: 35000,
         estadoPago: "pagado",
         puesto: "3",
-        premioGanado: "$42.000 COP + Sobres de Torneo",
+        premioGanado: "4 Sobres de Torneo Oficiales",
         notas: "Top 4"
       },
       {
@@ -74,7 +74,7 @@ const TORNEOS_INICIALES = [
         montoPagado: 35000,
         estadoPago: "pagado",
         puesto: "4",
-        premioGanado: "$42.000 COP + Sobres de Torneo",
+        premioGanado: "2 Sobres de Torneo Oficiales",
         notas: "Top 4"
       },
       {
@@ -851,16 +851,10 @@ export async function asignarProductosPremiosTorneo(torneoId, { descontarStock =
         .map((pr) => `${pr.cantidad > 1 ? pr.cantidad + "x " : ""}${pr.nombre}`)
         .join(" + ");
 
-      let nuevoPremio = resumenTextual;
-      if (p.premioGanado && p.premioGanado.includes("COP")) {
-        const parteCop = p.premioGanado.split("+")[0].trim();
-        nuevoPremio = `${parteCop} + ${resumenTextual}`;
-      }
-
       return {
         ...p,
         productosPremios: productosGanados,
-        premioGanado: nuevoPremio,
+        premioGanado: resumenTextual,
       };
     }
 

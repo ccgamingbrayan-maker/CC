@@ -107,18 +107,7 @@ export default function Torneos() {
   const [pEstadoPago, setPEstadoPago] = useState("pagado");
   const [pNotas, setPNotas] = useState("");
 
-  // Pull de Premiación (Prize Pool)
-  const [pozoMonto, setPozoMonto] = useState("");
-  const [pozoEsquema, setPozoEsquema] = useState("top4_standard");
-  const [premioFisico1, setPremioFisico1] = useState("");
-  const [premioFisico2, setPremioFisico2] = useState("");
-  const [premioFisico3, setPremioFisico3] = useState("");
-  const [premioFisico4, setPremioFisico4] = useState("");
-  const [distribuyendoPozo, setDistribuyendoPozo] = useState(false);
-  const [mensajePozo, setMensajePozo] = useState("");
-  const [panelPozoAbierto, setPanelPozoAbierto] = useState(true);
-
-  // Pestañas de Gestión del Torneo ("participantes" | "productos_premios" | "pozo_efectivo")
+  // Pestaña de Gestión del Torneo ("participantes" | "productos_premios")
   const [tabGestionTorneo, setTabGestionTorneo] = useState("participantes");
 
   // Catálogo General de Premios e Inventario
@@ -171,11 +160,6 @@ export default function Torneos() {
   });
   const [importLugar, setImportLugar] = useState("Sede Capsule Corp Gaming - Cali (Cra 34 # 4-50)");
   const [importCosto, setImportCosto] = useState("35000");
-  const [importEsquema, setImportEsquema] = useState("top4_standard");
-  const [importPremioFisico1, setImportPremioFisico1] = useState("1 Booster Box OP-09");
-  const [importPremioFisico2, setImportPremioFisico2] = useState("12 Sobres Oficiales");
-  const [importPremioFisico3, setImportPremioFisico3] = useState("4 Sobres de Torneo");
-  const [importPremioFisico4, setImportPremioFisico4] = useState("2 Sobres de Torneo");
   const [participantesParseados, setParticipantesParseados] = useState([]);
   const [procesandoOcr, setProcesandoOcr] = useState(false);
   const [estadoOcr, setEstadoOcr] = useState("");
@@ -201,12 +185,10 @@ export default function Torneos() {
       setImportNombre(torneoExistente.nombre || "");
       setImportJuego(torneoExistente.juego || "One Piece TCG");
       setImportCosto(String(torneoExistente.costoInscripcion || 35000));
-      setImportEsquema(torneoExistente.esquemaPremios || "top4_standard");
     } else {
       setImportNombre("Torneo Store Championship OP-09 (Bandai TCG+)");
       setImportJuego("One Piece TCG");
       setImportCosto("35000");
-      setImportEsquema("top4_standard");
     }
     setImportTexto("");
     setParticipantesParseados([]);
@@ -220,7 +202,6 @@ export default function Torneos() {
     setImportNombre("Torneo Store Championship OP-09 (Bandai TCG+)");
     setImportJuego("One Piece TCG");
     setImportCosto("35000");
-    setImportEsquema("top4_standard");
   }
 
   async function handleSubirImagenBandai(e) {
@@ -252,41 +233,92 @@ export default function Torneos() {
     }
 
     const costo = Number(importCosto) || 0;
-    const pozoTotal = costo * participantesParseados.length;
 
-    const porcentajes = {
-      top4_standard: { 1: 0.50, 2: 0.30, 3: 0.10, 4: 0.10 },
-      top4_split: { 1: 0.50, 2: 0.25, 3: 0.125, 4: 0.125 },
-      top8_premier: { 1: 0.40, 2: 0.20, 3: 0.10, 4: 0.10, 5: 0.05, 6: 0.05, 7: 0.05, 8: 0.05 },
-      top2: { 1: 0.70, 2: 0.30 },
-      winner: { 1: 1.00 },
-    };
-    const tabla = porcentajes[importEsquema] || porcentajes.top4_standard;
+    // Buscar productos disponibles en el catálogo de premios para este juego
+    const itemsJuego = catalogoPremios.filter(
+      (cp) => cp.juego === importJuego || cp.juego === "General"
+    );
 
-    const premiosFisicos = {};
-    if (importPremioFisico1.trim()) premiosFisicos[1] = importPremioFisico1.trim();
-    if (importPremioFisico2.trim()) premiosFisicos[2] = importPremioFisico2.trim();
-    if (importPremioFisico3.trim()) premiosFisicos[3] = importPremioFisico3.trim();
-    if (importPremioFisico4.trim()) premiosFisicos[4] = importPremioFisico4.trim();
+    const prodDisplay = itemsJuego.find((p) => p.categoria === "Cajas / Displays") || catalogoPremios.find((p) => p.categoria === "Cajas / Displays");
+    const prodWinner = itemsJuego.find((p) => p.categoria === "Cartas Promo") || catalogoPremios.find((p) => p.categoria === "Cartas Promo");
+    const prodSobres = itemsJuego.find((p) => p.categoria === "Sobres") || catalogoPremios.find((p) => p.categoria === "Sobres");
+    const prodTorneo = itemsJuego.find((p) => p.categoria === "Sobres de Torneo") || catalogoPremios.find((p) => p.categoria === "Sobres de Torneo");
+
+    // Construir lista de productos de premiación del torneo
+    const productosPremiosTorneo = [];
+    if (prodDisplay) {
+      productosPremiosTorneo.push({
+        id: `pp-box-${Date.now()}`,
+        catalogoId: prodDisplay.id,
+        nombre: prodDisplay.nombre,
+        puesto: "1",
+        cantidad: 1,
+        imagen: prodDisplay.imagen,
+        valorCop: prodDisplay.valorCop,
+      });
+    }
+    if (prodWinner) {
+      productosPremiosTorneo.push({
+        id: `pp-win-${Date.now()}`,
+        catalogoId: prodWinner.id,
+        nombre: prodWinner.nombre,
+        puesto: "1",
+        cantidad: 1,
+        imagen: prodWinner.imagen,
+        valorCop: prodWinner.valorCop,
+      });
+    }
+    if (prodSobres) {
+      productosPremiosTorneo.push({
+        id: `pp-sob-${Date.now()}`,
+        catalogoId: prodSobres.id,
+        nombre: prodSobres.nombre,
+        puesto: "2",
+        cantidad: 12,
+        imagen: prodSobres.imagen,
+        valorCop: prodSobres.valorCop,
+      });
+    }
+    if (prodTorneo) {
+      productosPremiosTorneo.push({
+        id: `pp-t4-${Date.now()}`,
+        catalogoId: prodTorneo.id,
+        nombre: prodTorneo.nombre,
+        puesto: "top4",
+        cantidad: 2,
+        imagen: prodTorneo.imagen,
+        valorCop: prodTorneo.valorCop,
+      });
+      productosPremiosTorneo.push({
+        id: `pp-part-${Date.now()}`,
+        catalogoId: prodTorneo.id,
+        nombre: prodTorneo.nombre,
+        puesto: "todos",
+        cantidad: 1,
+        imagen: prodTorneo.imagen,
+        valorCop: prodTorneo.valorCop,
+      });
+    }
 
     const participantesConPremios = participantesParseados.map((p) => {
       const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
-      let premio = "";
-      if (numP && tabla[numP]) {
-        const partePozo = Math.round(pozoTotal * tabla[numP]);
-        premio = `$${partePozo.toLocaleString("es-CO")} COP`;
-        if (premiosFisicos[numP]) {
-          premio += ` + ${premiosFisicos[numP]}`;
-        }
+      let premioTexto = "";
+
+      if (numP === 1) {
+        premioTexto = [prodDisplay?.nombre, prodWinner?.nombre].filter(Boolean).join(" + ") || "1er Lugar (Premios de Catálogo)";
+      } else if (numP === 2) {
+        premioTexto = prodSobres ? `12x ${prodSobres.nombre}` : "2do Lugar (Premios de Catálogo)";
+      } else if (numP === 3 || numP === 4) {
+        premioTexto = prodTorneo ? `2x ${prodTorneo.nombre}` : "Top 4 (Premios de Catálogo)";
       } else {
-        premio = "Sobre de participación oficial";
+        premioTexto = prodTorneo ? `1x ${prodTorneo.nombre}` : "Sobre de Participación Oficial";
       }
 
       return {
         ...p,
         montoPagado: costo,
         estadoPago: "pagado",
-        premioGanado: premio,
+        premioGanado: premioTexto,
       };
     });
 
@@ -294,9 +326,8 @@ export default function Torneos() {
       const actualizado = await guardarTorneo({
         ...torneoDestinoImportacion,
         costoInscripcion: costo,
-        pozoPremios: pozoTotal,
-        esquemaPremios: importEsquema,
         participantes: participantesConPremios,
+        productosPremios: torneoDestinoImportacion.productosPremios?.length > 0 ? torneoDestinoImportacion.productosPremios : productosPremiosTorneo,
         estado: "finalizado",
       });
       setModalImportarAbierto(false);
@@ -313,12 +344,10 @@ export default function Torneos() {
       lugar: importLugar.trim(),
       costoInscripcion: costo,
       cupoMaximo: Math.max(participantesParseados.length, 16),
-      premios: `Pozo de $${pozoTotal.toLocaleString("es-CO")} COP distribuido automáticamente entre los mejores puestos.`,
-      pozoPremios: pozoTotal,
-      esquemaPremios: importEsquema,
-      gastosEvento: Math.round(pozoTotal * 0.2),
+      premios: "Premiación oficial con productos de la tienda (Catálogo de Premios).",
       estado: "finalizado",
       notas: `Importado automáticamente desde Bandai TCG+ (${participantesParseados.length} jugadores).`,
+      productosPremios: productosPremiosTorneo,
       participantes: participantesConPremios,
     };
 
@@ -330,19 +359,6 @@ export default function Torneos() {
     }
   }
 
-  // Al abrir torneo detalle, inicializar valores del pozo
-
-  // Al abrir torneo detalle, inicializar valores del pozo
-  useEffect(() => {
-    if (torneoDetalle) {
-      const numPart = torneoDetalle.participantes?.length || 0;
-      const costo = Number(torneoDetalle.costoInscripcion || 0);
-      const calcPozo = torneoDetalle.pozoPremios || (costo * numPart);
-      setPozoMonto(String(calcPozo || 0));
-      setPozoEsquema(torneoDetalle.esquemaPremios || "top4_standard");
-      setMensajePozo("");
-    }
-  }, [torneoDetalle?.id]);
 
   async function cargarDatos() {
     setCargando(true);
@@ -487,31 +503,6 @@ export default function Torneos() {
     }
   }
 
-  async function handleDistribuirPremios() {
-    if (!torneoDetalle) return;
-    setDistribuyendoPozo(true);
-    setMensajePozo("");
-
-    const premiosFisicos = {};
-    if (premioFisico1.trim()) premiosFisicos[1] = premioFisico1.trim();
-    if (premioFisico2.trim()) premiosFisicos[2] = premioFisico2.trim();
-    if (premioFisico3.trim()) premiosFisicos[3] = premioFisico3.trim();
-    if (premioFisico4.trim()) premiosFisicos[4] = premioFisico4.trim();
-
-    const actualizado = await distribuirPremiosTorneo(torneoDetalle.id, {
-      pozoTotal: Number(pozoMonto) || 0,
-      esquema: pozoEsquema,
-      premiosFisicos: Object.keys(premiosFisicos).length > 0 ? premiosFisicos : undefined,
-    });
-
-    setDistribuyendoPozo(false);
-    if (actualizado) {
-      setTorneoDetalle(actualizado);
-      setMensajePozo("¡Premios distribuidos con éxito entre los participantes con su puesto asignado!");
-      await cargarDatos();
-      setTimeout(() => setMensajePozo(""), 4500);
-    }
-  }
 
   // --- HANDLERS DEL CATÁLOGO DE PREMIOS (INVENTARIO) ---
   function handleSubirFotoCatalogo(e) {
@@ -1215,15 +1206,6 @@ export default function Torneos() {
                     )}
                   </span>
                 </button>
-
-                <button
-                  type="button"
-                  className={`torneo-tab-btn ${tabGestionTorneo === "pozo_efectivo" ? "active" : ""}`}
-                  onClick={() => setTabGestionTorneo("pozo_efectivo")}
-                >
-                  <Coins size={15} />
-                  <span>Pozo de Premios</span>
-                </button>
               </div>
 
               {/* ========================================================= */}
@@ -1482,183 +1464,6 @@ export default function Torneos() {
                 </div>
               )}
 
-              {/* ========================================================= */}
-              {/* PULL DE PREMIACIÓN (PRIZE POOL) EN EFECTIVO               */}
-              {/* ========================================================= */}
-              {tabGestionTorneo === "pozo_efectivo" && (
-                <div className="torneo-prize-pool-container">
-                <div className="prize-pool-header-row">
-                  <div className="pp-title-box">
-                    <div className="pp-icon-wrap">
-                      <Coins size={18} />
-                    </div>
-                    <div>
-                      <h4 className="pp-title">Pull de Premiación (Prize Pool)</h4>
-                      <p className="pp-subtitle">
-                        Calcula y distribuye automáticamente el pozo de premios entre los ganadores según su puesto en el torneo.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-toggle-pool"
-                    onClick={() => setPanelPozoAbierto(!panelPozoAbierto)}
-                  >
-                    {panelPozoAbierto ? "Ocultar Calculadora" : "Configurar Pozo de Premios"}
-                  </button>
-                </div>
-
-                {panelPozoAbierto && (
-                  <div className="prize-pool-body">
-                    {/* Controles de Configuración del Pozo */}
-                    <div className="pp-config-grid">
-                      <label className="form-field">
-                        <span>Pozo Total de Premios (COP) *</span>
-                        <div className="input-with-action">
-                          <input
-                            type="number"
-                            placeholder="Ej: 420000"
-                            value={pozoMonto}
-                            onChange={(e) => setPozoMonto(e.target.value)}
-                          />
-                          <button
-                            type="button"
-                            className="btn-calc-pool"
-                            title="Calcular pozo con base en jugadores inscritos actuales"
-                            onClick={() => {
-                              const total = (Number(torneoDetalle.costoInscripcion) || 0) * (torneoDetalle.participantes?.length || 0);
-                              setPozoMonto(String(total));
-                            }}
-                          >
-                            Autollenar ({torneoDetalle.participantes?.length || 0} jug.)
-                          </button>
-                        </div>
-                      </label>
-
-                      <label className="form-field">
-                        <span>Esquema de División por Puesto *</span>
-                        <select
-                          value={pozoEsquema}
-                          onChange={(e) => setPozoEsquema(e.target.value)}
-                        >
-                          <option value="top4_standard">Top 4 Estándar (1°: 50% | 2°: 30% | 3°: 10% | 4°: 10%)</option>
-                          <option value="top4_split">Top 4 Parejo (1°: 50% | 2°: 25% | 3°-4°: 12.5% c/u)</option>
-                          <option value="top8_premier">Top 8 Premier (1°: 40% | 2°: 20% | 3°-4°: 10% | 5°-8°: 5%)</option>
-                          <option value="top2">Top 2 Finalistas (1°: 70% | 2°: 30%)</option>
-                          <option value="winner">Winner Takes All (1°: 100%)</option>
-                        </select>
-                      </label>
-                    </div>
-
-                    {/* Premios físicos adicionales opcionales */}
-                    <div className="pp-physical-prizes-row">
-                      <span className="sub-tag">Premios Físicos Adicionales (Opcional):</span>
-                      <div className="physical-prizes-grid">
-                        <input
-                          type="text"
-                          placeholder="1°: Ej: 1 Booster Box OP-09 Sellada"
-                          value={premioFisico1}
-                          onChange={(e) => setPremioFisico1(e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          placeholder="2°: Ej: 12 Sobres Oficiales"
-                          value={premioFisico2}
-                          onChange={(e) => setPremioFisico2(e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          placeholder="3°: Ej: 4 Sobres de Torneo"
-                          value={premioFisico3}
-                          onChange={(e) => setPremioFisico3(e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          placeholder="4°: Ej: 2 Sobres de Torneo"
-                          value={premioFisico4}
-                          onChange={(e) => setPremioFisico4(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Previsualización en tiempo real de cómo se divide */}
-                    {(() => {
-                      const totalP = Number(pozoMonto) || 0;
-                      const porcentajes = {
-                        top4_standard: [
-                          { p: 1, label: "1° Lugar", pct: 0.50 },
-                          { p: 2, label: "2° Lugar", pct: 0.30 },
-                          { p: 3, label: "3° Lugar", pct: 0.10 },
-                          { p: 4, label: "4° Lugar", pct: 0.10 },
-                        ],
-                        top4_split: [
-                          { p: 1, label: "1° Lugar", pct: 0.50 },
-                          { p: 2, label: "2° Lugar", pct: 0.25 },
-                          { p: 3, label: "3° Lugar", pct: 0.125 },
-                          { p: 4, label: "4° Lugar", pct: 0.125 },
-                        ],
-                        top8_premier: [
-                          { p: 1, label: "1° Lugar", pct: 0.40 },
-                          { p: 2, label: "2° Lugar", pct: 0.20 },
-                          { p: 3, label: "3° Lugar", pct: 0.10 },
-                          { p: 4, label: "4° Lugar", pct: 0.10 },
-                          { p: 5, label: "5°-8°", pct: 0.05 },
-                        ],
-                        top2: [
-                          { p: 1, label: "1° Lugar", pct: 0.70 },
-                          { p: 2, label: "2° Lugar", pct: 0.30 },
-                        ],
-                        winner: [
-                          { p: 1, label: "1° Lugar (Campeón)", pct: 1.00 },
-                        ],
-                      };
-
-                      const lista = porcentajes[pozoEsquema] || porcentajes.top4_standard;
-
-                      return (
-                        <div className="pp-preview-breakdown">
-                          <span className="preview-label">Desglose calculado del pozo (${totalP.toLocaleString("es-CO")} COP):</span>
-                          <div className="pp-chips-grid">
-                            {lista.map((item, idx) => {
-                              const monto = Math.round(totalP * item.pct);
-                              return (
-                                <div key={idx} className="pp-chip">
-                                  <span className="chip-puesto">{item.label} ({(item.pct * 100).toFixed(0)}%)</span>
-                                  <strong className="chip-monto">${monto.toLocaleString("es-CO")} COP</strong>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Botón de Ejecución de Distribución */}
-                    <div className="pp-actions-footer">
-                      <button
-                        type="button"
-                        className="btn-distribuir-pozo"
-                        onClick={handleDistribuirPremios}
-                        disabled={distribuyendoPozo}
-                      >
-                        <Sparkles size={16} />
-                        <span>
-                          {distribuyendoPozo ? "Distribuyendo Premios…" : "Distribuir Pozo Automáticamente a los Ganadores"}
-                        </span>
-                      </button>
-
-                      {mensajePozo && (
-                        <div className="pp-success-toast">
-                          <CheckCircle2 size={16} />
-                          <span>{mensajePozo}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-              )}
-
               {/* PESTAÑA: PARTICIPANTES */}
               {tabGestionTorneo === "participantes" && (
                 <>
@@ -1865,7 +1670,7 @@ export default function Torneos() {
                                     type="text"
                                     value={textoPremioEdicion}
                                     onChange={(e) => setTextoPremioEdicion(e.target.value)}
-                                    placeholder="Premio COP o físico"
+                                    placeholder="Premio en producto físico"
                                     autoFocus
                                   />
                                   <button
@@ -2112,16 +1917,14 @@ export default function Torneos() {
                 </label>
               </div>
 
-              <div className="form-cols-row">
-                <label className="form-field full-width">
-                  <span>Pozo de Premios</span>
-                  <textarea
-                    rows={2}
-                    placeholder="Ej: 1er Lugar: Booster Box sellada. Top 4: Sobres de torneo oficiales. Todos: Sobre de participación."
-                    value={formPremios}
-                    onChange={(e) => setFormPremios(e.target.value)}
-                  />
-                </label>
+              <div className="torneo-form-premiacion-banner">
+                <Package size={18} />
+                <div>
+                  <strong>Premiación en Productos de la Tienda (Catálogo)</strong>
+                  <p>
+                    No se entrega premiación en efectivo. Todos los premios (Displays, Sobres Oficiales, Tournament Packs y Cartas Winner) se vinculan directamente desde el <em>Catálogo de Premios</em> de la tienda y se descuentan del inventario físico en automático.
+                  </p>
+                </div>
               </div>
 
               <div className="form-cols-row">
@@ -2316,40 +2119,16 @@ export default function Torneos() {
                     </label>
                   </div>
 
-                  <div className="form-cols-row">
-                    <label className="form-field">
-                      <span>Esquema de Pozo de Premios</span>
-                      <select
-                        value={importEsquema}
-                        onChange={(e) => setImportEsquema(e.target.value)}
-                      >
-                        <option value="top4_standard">Top 4 Estándar (1º 50%, 2º 30%, 3º-4º 10%)</option>
-                        <option value="top4_split">Top 4 Split (1º 50%, 2º 25%, 3º-4º 12.5%)</option>
-                        <option value="top8_premier">Top 8 Premier (1º 40%, 2º 20%, 3º-4º 10%, 5º-8º 5%)</option>
-                        <option value="top2">Top 2 (1º 70%, 2º 30%)</option>
-                        <option value="winner">Ganador se lleva todo (100%)</option>
-                      </select>
-                    </label>
-
-                    <label className="form-field">
-                      <span>Premio Físico 1er Lugar (Opcional)</span>
-                      <input
-                        type="text"
-                        placeholder="Ej: 1 Booster Box sellada OP-09"
-                        value={importPremioFisico1}
-                        onChange={(e) => setImportPremioFisico1(e.target.value)}
-                      />
-                    </label>
-
-                    <label className="form-field">
-                      <span>Premio Físico 2do Lugar (Opcional)</span>
-                      <input
-                        type="text"
-                        placeholder="Ej: 12 Sobres oficiales"
-                        value={importPremioFisico2}
-                        onChange={(e) => setImportPremioFisico2(e.target.value)}
-                      />
-                    </label>
+                  <div className="import-premiacion-cat-info">
+                    <div className="ipci-icon">
+                      <Package size={18} />
+                    </div>
+                    <div className="ipci-text">
+                      <strong>Premiación 100% en Productos de la Tienda (Catálogo)</strong>
+                      <p>
+                        No se entrega dinero en efectivo ni se requiere ingresar premios manualmente. Los premios (Displays, Sobres Oficiales, Tournament Packs y Cartas Winner) se vinculan automáticamente desde el Catálogo de Premios físicos según los puestos y se descuentan del inventario al confirmar.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -2363,9 +2142,7 @@ export default function Torneos() {
                   </div>
                   {participantesParseados.length > 0 && (
                     <span className="parsed-pool-calc">
-                      Pozo Total Estimado: ${(
-                        (Number(importCosto) || 0) * participantesParseados.length
-                      ).toLocaleString("es-CO")} COP
+                      <Sparkles size={13} /> Premiación física de catálogo activa
                     </span>
                   )}
                 </div>
@@ -2385,7 +2162,7 @@ export default function Torneos() {
                           <th>Nickname / Usuario</th>
                           <th>Puntos</th>
                           <th>OMW %</th>
-                          <th>Premio Calculado</th>
+                          <th>Premio en Producto Físico</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2410,12 +2187,14 @@ export default function Torneos() {
                               <td className="cell-prize">
                                 <span className="prize-preview-badge">
                                   {numP === 1
-                                    ? `$${Math.round(((Number(importCosto) || 0) * participantesParseados.length) * 0.50).toLocaleString("es-CO")} COP ${importPremioFisico1 ? `+ ${importPremioFisico1}` : ""}`
+                                    ? "🏆 1 Booster Box Sellada + Carta Winner"
                                     : numP === 2
-                                    ? `$${Math.round(((Number(importCosto) || 0) * participantesParseados.length) * 0.30).toLocaleString("es-CO")} COP ${importPremioFisico2 ? `+ ${importPremioFisico2}` : ""}`
+                                    ? "🥈 12 Sobres Oficiales"
                                     : (numP === 3 || numP === 4)
-                                    ? `$${Math.round(((Number(importCosto) || 0) * participantesParseados.length) * 0.10).toLocaleString("es-CO")} COP`
-                                    : "Sobre de participación oficial"}
+                                    ? "🥉 6 Sobres Oficiales"
+                                    : (numP >= 5 && numP <= 8)
+                                    ? "⭐ 2 Sobres Oficiales"
+                                    : "🎁 1 Tournament Pack Oficial"}
                                 </span>
                               </td>
                             </tr>
