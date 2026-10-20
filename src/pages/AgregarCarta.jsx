@@ -38,7 +38,7 @@ const FUENTES_JUEGOS = [
   { id: "onepiece", label: "One Piece TCG", badge: "OP TCG", placeholder: "Ej: Luffy, Zoro, Nami, OP05-060, ST01..." },
   { id: "pokemon", label: "Pokémon TCG", badge: "PKMN", placeholder: "Ej: Charizard, Pikachu, Mewtwo, 151..." },
   { id: "scryfall", label: "Magic: The Gathering", badge: "MTG", placeholder: "Ej: Black Lotus, Sol Ring, Lightning Bolt..." },
-  { id: "riftbound", label: "Riftbound TCG", badge: "RIFT", placeholder: "Ej: Vendetta, Genesis..." },
+  { id: "riftbound", label: "Riftbound TCG", badge: "RIFT", placeholder: "Ej: Ahri, Yasuo, Jinx, Master Yi, Origins..." },
 ];
 
 export default function AgregarCarta() {
