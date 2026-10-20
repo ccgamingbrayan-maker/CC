@@ -24,7 +24,12 @@ import {
   MessageCircle,
   Check,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  Award,
+  Coins,
+  Percent,
+  Mail,
+  UserCheck,
 } from "lucide-react";
 import {
   listarTorneos,
@@ -33,6 +38,7 @@ import {
   guardarParticipante,
   eliminarParticipante,
   calcularMetricasTorneo,
+  distribuirPremiosTorneo,
 } from "../lib/torneos.js";
 import { useAuth } from "../lib/AuthContext.jsx";
 
@@ -72,17 +78,47 @@ export default function Torneos() {
   const [formEstado, setFormEstado] = useState("proximo");
   const [formNotas, setFormNotas] = useState("");
 
-  // Formulario rápido de Participante dentro de modal detalle
+  // Formulario de Participante dentro de modal detalle
   const [pNombre, setPNombre] = useState("");
+  const [pEmail, setPEmail] = useState("");
   const [pTelefono, setPTelefono] = useState("");
   const [pDeck, setPDeck] = useState("");
+  const [pPuesto, setPPuesto] = useState("Participante");
+  const [pPremioGanado, setPPremioGanado] = useState("");
   const [pMontoPagado, setPMontoPagado] = useState("");
   const [pEstadoPago, setPEstadoPago] = useState("pagado");
   const [pNotas, setPNotas] = useState("");
 
+  // Pull de Premiación (Prize Pool)
+  const [pozoMonto, setPozoMonto] = useState("");
+  const [pozoEsquema, setPozoEsquema] = useState("top4_standard");
+  const [premioFisico1, setPremioFisico1] = useState("");
+  const [premioFisico2, setPremioFisico2] = useState("");
+  const [premioFisico3, setPremioFisico3] = useState("");
+  const [premioFisico4, setPremioFisico4] = useState("");
+  const [distribuyendoPozo, setDistribuyendoPozo] = useState(false);
+  const [mensajePozo, setMensajePozo] = useState("");
+  const [panelPozoAbierto, setPanelPozoAbierto] = useState(true);
+
+  // Edición rápida de premio individual
+  const [editandoPremioId, setEditandoPremioId] = useState(null);
+  const [textoPremioEdicion, setTextoPremioEdicion] = useState("");
+
   useEffect(() => {
     cargarDatos();
   }, []);
+
+  // Al abrir torneo detalle, inicializar valores del pozo
+  useEffect(() => {
+    if (torneoDetalle) {
+      const numPart = torneoDetalle.participantes?.length || 0;
+      const costo = Number(torneoDetalle.costoInscripcion || 0);
+      const calcPozo = torneoDetalle.pozoPremios || (costo * numPart);
+      setPozoMonto(String(calcPozo || 0));
+      setPozoEsquema(torneoDetalle.esquemaPremios || "top4_standard");
+      setMensajePozo("");
+    }
+  }, [torneoDetalle?.id]);
 
   async function cargarDatos() {
     setCargando(true);
@@ -167,8 +203,11 @@ export default function Torneos() {
 
     const participante = {
       nombre: pNombre.trim(),
+      email: pEmail.trim(),
       telefono: pTelefono.trim(),
       deck: pDeck.trim(),
+      puesto: pPuesto || "Participante",
+      premioGanado: pPremioGanado.trim(),
       montoPagado: pagado,
       estadoPago: pEstadoPago,
       notas: pNotas.trim(),
@@ -178,12 +217,66 @@ export default function Torneos() {
     if (actualizado) {
       setTorneoDetalle(actualizado);
       setPNombre("");
+      setPEmail("");
       setPTelefono("");
       setPDeck("");
+      setPPuesto("Participante");
+      setPPremioGanado("");
       setPMontoPagado("");
       setPEstadoPago("pagado");
       setPNotas("");
       await cargarDatos();
+    }
+  }
+
+  async function handleCambiarPuesto(p, nuevoPuesto) {
+    if (!torneoDetalle) return;
+    const actualizado = await guardarParticipante(torneoDetalle.id, {
+      ...p,
+      puesto: nuevoPuesto,
+    });
+    if (actualizado) {
+      setTorneoDetalle(actualizado);
+      await cargarDatos();
+    }
+  }
+
+  async function handleGuardarPremioManual(p, nuevoPremio) {
+    if (!torneoDetalle) return;
+    const actualizado = await guardarParticipante(torneoDetalle.id, {
+      ...p,
+      premioGanado: nuevoPremio.trim(),
+    });
+    if (actualizado) {
+      setTorneoDetalle(actualizado);
+      setEditandoPremioId(null);
+      await cargarDatos();
+    }
+  }
+
+  async function handleDistribuirPremios() {
+    if (!torneoDetalle) return;
+    setDistribuyendoPozo(true);
+    setMensajePozo("");
+
+    const premiosFisicos = {};
+    if (premioFisico1.trim()) premiosFisicos[1] = premioFisico1.trim();
+    if (premioFisico2.trim()) premiosFisicos[2] = premioFisico2.trim();
+    if (premioFisico3.trim()) premiosFisicos[3] = premioFisico3.trim();
+    if (premioFisico4.trim()) premiosFisicos[4] = premioFisico4.trim();
+
+    const actualizado = await distribuirPremiosTorneo(torneoDetalle.id, {
+      pozoTotal: Number(pozoMonto) || 0,
+      esquema: pozoEsquema,
+      premiosFisicos: Object.keys(premiosFisicos).length > 0 ? premiosFisicos : undefined,
+    });
+
+    setDistribuyendoPozo(false);
+    if (actualizado) {
+      setTorneoDetalle(actualizado);
+      setMensajePozo("¡Premios distribuidos con éxito entre los participantes con su puesto asignado!");
+      await cargarDatos();
+      setTimeout(() => setMensajePozo(""), 4500);
     }
   }
 
@@ -618,7 +711,182 @@ export default function Torneos() {
                 );
               })()}
 
-              {/* Formulario rápido para añadir participante */}
+              {/* ========================================================= */}
+              {/* PULL DE PREMIACIÓN (PRIZE POOL) AUTOMÁTICO               */}
+              {/* ========================================================= */}
+              <div className="torneo-prize-pool-container">
+                <div className="prize-pool-header-row">
+                  <div className="pp-title-box">
+                    <div className="pp-icon-wrap">
+                      <Coins size={18} />
+                    </div>
+                    <div>
+                      <h4 className="pp-title">Pull de Premiación (Prize Pool)</h4>
+                      <p className="pp-subtitle">
+                        Calcula y distribuye automáticamente el pozo de premios entre los ganadores según su puesto en el torneo.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-toggle-pool"
+                    onClick={() => setPanelPozoAbierto(!panelPozoAbierto)}
+                  >
+                    {panelPozoAbierto ? "Ocultar Calculadora" : "Configurar Pozo de Premios"}
+                  </button>
+                </div>
+
+                {panelPozoAbierto && (
+                  <div className="prize-pool-body">
+                    {/* Controles de Configuración del Pozo */}
+                    <div className="pp-config-grid">
+                      <label className="form-field">
+                        <span>Pozo Total de Premios (COP) *</span>
+                        <div className="input-with-action">
+                          <input
+                            type="number"
+                            placeholder="Ej: 420000"
+                            value={pozoMonto}
+                            onChange={(e) => setPozoMonto(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="btn-calc-pool"
+                            title="Calcular pozo con base en jugadores inscritos actuales"
+                            onClick={() => {
+                              const total = (Number(torneoDetalle.costoInscripcion) || 0) * (torneoDetalle.participantes?.length || 0);
+                              setPozoMonto(String(total));
+                            }}
+                          >
+                            Autollenar ({torneoDetalle.participantes?.length || 0} jug.)
+                          </button>
+                        </div>
+                      </label>
+
+                      <label className="form-field">
+                        <span>Esquema de División por Puesto *</span>
+                        <select
+                          value={pozoEsquema}
+                          onChange={(e) => setPozoEsquema(e.target.value)}
+                        >
+                          <option value="top4_standard">Top 4 Estándar (1°: 50% | 2°: 30% | 3°: 10% | 4°: 10%)</option>
+                          <option value="top4_split">Top 4 Parejo (1°: 50% | 2°: 25% | 3°-4°: 12.5% c/u)</option>
+                          <option value="top8_premier">Top 8 Premier (1°: 40% | 2°: 20% | 3°-4°: 10% | 5°-8°: 5%)</option>
+                          <option value="top2">Top 2 Finalistas (1°: 70% | 2°: 30%)</option>
+                          <option value="winner">Winner Takes All (1°: 100%)</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    {/* Premios físicos adicionales opcionales */}
+                    <div className="pp-physical-prizes-row">
+                      <span className="sub-tag">Premios Físicos Adicionales (Opcional):</span>
+                      <div className="physical-prizes-grid">
+                        <input
+                          type="text"
+                          placeholder="1°: Ej: 1 Booster Box OP-09 Sellada"
+                          value={premioFisico1}
+                          onChange={(e) => setPremioFisico1(e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="2°: Ej: 12 Sobres Oficiales"
+                          value={premioFisico2}
+                          onChange={(e) => setPremioFisico2(e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="3°: Ej: 4 Sobres de Torneo"
+                          value={premioFisico3}
+                          onChange={(e) => setPremioFisico3(e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="4°: Ej: 2 Sobres de Torneo"
+                          value={premioFisico4}
+                          onChange={(e) => setPremioFisico4(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Previsualización en tiempo real de cómo se divide */}
+                    {(() => {
+                      const totalP = Number(pozoMonto) || 0;
+                      const porcentajes = {
+                        top4_standard: [
+                          { p: 1, label: "1° Lugar", pct: 0.50, color: "#eab308" },
+                          { p: 2, label: "2° Lugar", pct: 0.30, color: "#94a3b8" },
+                          { p: 3, label: "3° Lugar", pct: 0.10, color: "#b45309" },
+                          { p: 4, label: "4° Lugar", pct: 0.10, color: "#38bdf8" },
+                        ],
+                        top4_split: [
+                          { p: 1, label: "1° Lugar", pct: 0.50, color: "#eab308" },
+                          { p: 2, label: "2° Lugar", pct: 0.25, color: "#94a3b8" },
+                          { p: 3, label: "3° Lugar", pct: 0.125, color: "#b45309" },
+                          { p: 4, label: "4° Lugar", pct: 0.125, color: "#38bdf8" },
+                        ],
+                        top8_premier: [
+                          { p: 1, label: "1° Lugar", pct: 0.40, color: "#eab308" },
+                          { p: 2, label: "2° Lugar", pct: 0.20, color: "#94a3b8" },
+                          { p: 3, label: "3° Lugar", pct: 0.10, color: "#b45309" },
+                          { p: 4, label: "4° Lugar", pct: 0.10, color: "#38bdf8" },
+                          { p: 5, label: "5°-8°", pct: 0.05, color: "#a855f7" },
+                        ],
+                        top2: [
+                          { p: 1, label: "1° Lugar", pct: 0.70, color: "#eab308" },
+                          { p: 2, label: "2° Lugar", pct: 0.30, color: "#94a3b8" },
+                        ],
+                        winner: [
+                          { p: 1, label: "1° Lugar (Campeón)", pct: 1.00, color: "#eab308" },
+                        ],
+                      };
+
+                      const lista = porcentajes[pozoEsquema] || porcentajes.top4_standard;
+
+                      return (
+                        <div className="pp-preview-breakdown">
+                          <span className="preview-label">Desglose calculado del pozo (${totalP.toLocaleString("es-CO")} COP):</span>
+                          <div className="pp-chips-grid">
+                            {lista.map((item, idx) => {
+                              const monto = Math.round(totalP * item.pct);
+                              return (
+                                <div key={idx} className="pp-chip" style={{ borderLeftColor: item.color }}>
+                                  <span className="chip-puesto">{item.label} ({(item.pct * 100).toFixed(0)}%)</span>
+                                  <strong className="chip-monto">${monto.toLocaleString("es-CO")} COP</strong>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Botón de Ejecución de Distribución */}
+                    <div className="pp-actions-footer">
+                      <button
+                        type="button"
+                        className="btn-distribuir-pozo"
+                        onClick={handleDistribuirPremios}
+                        disabled={distribuyendoPozo}
+                      >
+                        <Sparkles size={16} />
+                        <span>
+                          {distribuyendoPozo ? "Distribuyendo Premios…" : "Distribuir Pozo Automáticamente a los Ganadores"}
+                        </span>
+                      </button>
+
+                      {mensajePozo && (
+                        <div className="pp-success-toast">
+                          <CheckCircle2 size={16} />
+                          <span>{mensajePozo}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Formulario para inscribir participante */}
               <div className="torneo-add-player-box">
                 <h4 className="section-subtitle">
                   <Plus size={15} />
@@ -639,6 +907,16 @@ export default function Torneos() {
                     </label>
 
                     <label className="form-field">
+                      <span>Correo (Para anexar a su perfil)</span>
+                      <input
+                        type="email"
+                        placeholder="ejemplo@correo.com"
+                        value={pEmail}
+                        onChange={(e) => setPEmail(e.target.value)}
+                      />
+                    </label>
+
+                    <label className="form-field">
                       <span>Teléfono / WhatsApp</span>
                       <input
                         type="text"
@@ -647,7 +925,9 @@ export default function Torneos() {
                         onChange={(e) => setPTelefono(e.target.value)}
                       />
                     </label>
+                  </div>
 
+                  <div className="form-cols-row">
                     <label className="form-field">
                       <span>Mazo / Arquetipo</span>
                       <input
@@ -655,6 +935,32 @@ export default function Torneos() {
                         placeholder="Ej: Luffy Red-Purple / Charizard ex"
                         value={pDeck}
                         onChange={(e) => setPDeck(e.target.value)}
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Puesto en el Torneo</span>
+                      <select
+                        value={pPuesto}
+                        onChange={(e) => setPPuesto(e.target.value)}
+                      >
+                        <option value="Participante">Participante</option>
+                        <option value="1">1° Lugar (Campeón)</option>
+                        <option value="2">2° Lugar (Subcampeón)</option>
+                        <option value="3">3° Lugar</option>
+                        <option value="4">4° Lugar</option>
+                        <option value="Top 8">Top 8</option>
+                        <option value="Top 16">Top 16</option>
+                      </select>
+                    </label>
+
+                    <label className="form-field">
+                      <span>Premio Ganado (Opcional)</span>
+                      <input
+                        type="text"
+                        placeholder="Ej: $210.000 COP + 1 Box"
+                        value={pPremioGanado}
+                        onChange={(e) => setPPremioGanado(e.target.value)}
                       />
                     </label>
                   </div>
@@ -704,7 +1010,7 @@ export default function Torneos() {
               <div className="torneo-players-table-wrapper">
                 <div className="table-header-title">
                   <h4>Lista de Participantes ({torneoDetalle.participantes?.length || 0})</h4>
-                  <span className="table-subtitle">Haz clic en los botones para actualizar el pago al instante</span>
+                  <span className="table-subtitle">Asigna el puesto y estado de pago de cada jugador para sincronizarlo con su perfil</span>
                 </div>
 
                 {(!torneoDetalle.participantes || torneoDetalle.participantes.length === 0) ? (
@@ -714,9 +1020,10 @@ export default function Torneos() {
                     <thead>
                       <tr>
                         <th>#</th>
-                        <th>Jugador</th>
-                        <th>Contacto</th>
-                        <th>Mazo / Deck</th>
+                        <th>Jugador / Perfil</th>
+                        <th>Puesto</th>
+                        <th>Mazo</th>
+                        <th>Premio Ganado</th>
                         <th>Pagado</th>
                         <th>Deuda</th>
                         <th>Estado Pago</th>
@@ -729,15 +1036,107 @@ export default function Torneos() {
                         const pagado = Number(p.montoPagado || 0);
                         const pendiente = Math.max(0, costo - pagado);
 
+                        const pVal = String(p.puesto || "Participante");
+                        const es1 = pVal === "1" || pVal.includes("1°");
+                        const es2 = pVal === "2" || pVal.includes("2°");
+                        const es3 = pVal === "3" || pVal.includes("3°");
+                        const es4 = pVal === "4" || pVal.includes("4°");
+
                         return (
                           <tr key={p.id}>
                             <td className="col-idx">{idx + 1}</td>
                             <td className="col-name">
-                              <strong>{p.nombre}</strong>
-                              {p.notas && <small className="player-note">{p.notas}</small>}
+                              <div className="player-name-cell">
+                                <strong>{p.nombre}</strong>
+                                {p.email ? (
+                                  <span className="player-linked-chip" title="Enlazado al perfil del usuario">
+                                    <Mail size={11} />
+                                    <span>{p.email}</span>
+                                  </span>
+                                ) : (
+                                  <span className="player-no-email" title="Sin correo registrado (jugador presencial)">
+                                    {p.telefono || "Sin correo"}
+                                  </span>
+                                )}
+                                {p.notas && <small className="player-note">{p.notas}</small>}
+                              </div>
                             </td>
-                            <td className="col-phone">{p.telefono || "—"}</td>
+
+                            {/* SELECTOR RÁPIDO DE PUESTO */}
+                            <td className="col-puesto">
+                              <select
+                                className={`select-puesto-inline ${es1 ? "p-oro" : es2 ? "p-plata" : es3 ? "p-bronce" : es4 ? "p-top4" : ""}`}
+                                value={pVal}
+                                onChange={(e) => handleCambiarPuesto(p, e.target.value)}
+                              >
+                                <option value="Participante">Participante</option>
+                                <option value="1">🏆 1° Lugar</option>
+                                <option value="2">🥈 2° Lugar</option>
+                                <option value="3">🥉 3° Lugar</option>
+                                <option value="4">⭐ 4° Lugar</option>
+                                <option value="Top 8">Top 8</option>
+                                <option value="Top 16">Top 16</option>
+                              </select>
+                            </td>
+
                             <td className="col-deck">{p.deck || "—"}</td>
+
+                            {/* PREMIO GANADO CON EDICIÓN INLINE */}
+                            <td className="col-prize">
+                              {editandoPremioId === p.id ? (
+                                <div className="edit-prize-inline">
+                                  <input
+                                    type="text"
+                                    value={textoPremioEdicion}
+                                    onChange={(e) => setTextoPremioEdicion(e.target.value)}
+                                    placeholder="Premio COP o físico"
+                                    autoFocus
+                                  />
+                                  <button
+                                    type="button"
+                                    className="btn-save-inline-prize"
+                                    onClick={() => handleGuardarPremioManual(p, textoPremioEdicion)}
+                                  >
+                                    <Check size={13} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-cancel-inline-prize"
+                                    onClick={() => setEditandoPremioId(null)}
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </div>
+                              ) : p.premioGanado ? (
+                                <div className="prize-won-chip">
+                                  <Trophy size={12} className="prize-won-icon" />
+                                  <span className="prize-text" title={p.premioGanado}>{p.premioGanado}</span>
+                                  <button
+                                    type="button"
+                                    className="btn-edit-prize-btn"
+                                    title="Modificar premio"
+                                    onClick={() => {
+                                      setEditandoPremioId(p.id);
+                                      setTextoPremioEdicion(p.premioGanado || "");
+                                    }}
+                                  >
+                                    <Edit2 size={11} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="btn-add-prize-placeholder"
+                                  onClick={() => {
+                                    setEditandoPremioId(p.id);
+                                    setTextoPremioEdicion("");
+                                  }}
+                                >
+                                  + Asignar premio
+                                </button>
+                              )}
+                            </td>
+
                             <td className="col-paid">${pagado.toLocaleString("es-CO")}</td>
                             <td className="col-due">
                               {pendiente > 0 ? (

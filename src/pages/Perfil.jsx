@@ -1,8 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Heart, Package, Save, HeartOff, KeyRound, Layers, Sparkles } from "lucide-react";
+import {
+  User,
+  Heart,
+  Package,
+  Save,
+  HeartOff,
+  KeyRound,
+  Layers,
+  Sparkles,
+  Trophy,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { supabase } from "../lib/supabase.js";
+import { obtenerTorneosUsuario } from "../lib/torneos.js";
 import Cargando from "../components/Cargando.jsx";
 import ColeccionFisica from "../components/ColeccionFisica.jsx";
 import CreadorDecks from "../components/CreadorDecks.jsx";
@@ -90,6 +106,14 @@ export default function Perfil() {
               <Package size={16} />
               <span>Pedidos</span>
             </button>
+            <button
+              type="button"
+              className={`perfil-tab-btn ${tab === "torneos" ? "active" : ""}`}
+              onClick={() => setTab("torneos")}
+            >
+              <Trophy size={16} />
+              <span>Mis Torneos</span>
+            </button>
           </div>
         </nav>
 
@@ -103,6 +127,7 @@ export default function Perfil() {
         {tab === "decks" && <CreadorDecks user={user} />}
         {tab === "wishlist" && <Wishlist user={user} />}
         {tab === "pedidos" && <Pedidos user={user} />}
+        {tab === "torneos" && <MisTorneos user={user} />}
       </div>
     </section>
   );
@@ -365,6 +390,215 @@ function Pedidos({ user }) {
           </p>
         </div>
       ))}
+    </div>
+  );
+}
+
+function MisTorneos({ user }) {
+  const [torneos, setTorneos] = useState(null);
+
+  useEffect(() => {
+    obtenerTorneosUsuario(user).then((data) => {
+      setTorneos(data || []);
+    });
+  }, [user]);
+
+  if (torneos === null) return <Cargando texto="Cargando tu historial de torneos…" />;
+
+  if (torneos.length === 0) {
+    return (
+      <div className="perfil-panel perfil-vacio">
+        <Trophy size={44} style={{ color: "var(--dorado, #f59e0b)", marginBottom: 14 }} />
+        <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>
+          Aún no tienes torneos registrados
+        </h3>
+        <p style={{ maxWidth: "560px", margin: "0 auto 18px", lineHeight: "1.5", color: "var(--texto-suave)" }}>
+          Cuando te inscribas en los torneos oficiales de Capsule Corp Gaming con tu correo (<strong>{user.email}</strong>), aquí verás automáticamente en qué puesto quedaste, si pagaste o debes la inscripción, y todos los premios que hayas ganado.
+        </p>
+        <Link to="/torneos" className="btn-ir-torneos-hero">
+          <Trophy size={16} />
+          <span>Explorar Próximos Torneos</span>
+        </Link>
+      </div>
+    );
+  }
+
+  // Métricas del jugador
+  const totalJugados = torneos.length;
+  const campeonatos = torneos.filter((t) => {
+    const p = String(t.puesto || "").toLowerCase();
+    return p === "1" || p.includes("1°") || p.includes("campeon") || p.includes("campeón");
+  }).length;
+  const podios = torneos.filter((t) => {
+    const p = String(t.puesto || "").toLowerCase();
+    return p === "1" || p === "2" || p === "3" || p === "4" ||
+      p.includes("1°") || p.includes("2°") || p.includes("3°") || p.includes("4°") ||
+      p.includes("top 4");
+  }).length;
+  const deudaTotal = torneos.reduce((acc, t) => acc + (t.deuda || 0), 0);
+
+  return (
+    <div className="perfil-panel">
+      <div className="perfil-torneos-header">
+        <div>
+          <h3 style={{ margin: "0 0 6px" }}>Mis Torneos y Eventos ({torneos.length})</h3>
+          <p className="perfil-section-sub" style={{ margin: 0, color: "var(--texto-suave)", fontSize: "13.5px" }}>
+            Historial de torneos enlazados a tu cuenta: tus puestos, qué ganaste y estado de pago de inscripción.
+          </p>
+        </div>
+        <Link to="/torneos" className="btn-ir-torneos">
+          <Trophy size={15} />
+          <span>Ver Torneos Disponibles</span>
+        </Link>
+      </div>
+
+      {/* KPI Cards del jugador */}
+      <div className="perfil-torneos-kpi-row">
+        <div className="perfil-kpi-item">
+          <span className="p-kpi-label">Torneos Jugados</span>
+          <strong className="p-kpi-val">{totalJugados}</strong>
+        </div>
+        <div className="perfil-kpi-item gold">
+          <span className="p-kpi-label">Campeonatos (1° Lugar)</span>
+          <strong className="p-kpi-val">🏆 {campeonatos}</strong>
+        </div>
+        <div className="perfil-kpi-item purple">
+          <span className="p-kpi-label">Podios / Tops (Top 4)</span>
+          <strong className="p-kpi-val">🎖️ {podios}</strong>
+        </div>
+        <div className={`perfil-kpi-item ${deudaTotal > 0 ? "danger" : "green"}`}>
+          <span className="p-kpi-label">{deudaTotal > 0 ? "Saldo Pendiente" : "Estado de Cuenta"}</span>
+          <strong className="p-kpi-val">
+            {deudaTotal > 0 ? `$${deudaTotal.toLocaleString("es-CO")} COP` : "Al día (Sin deuda)"}
+          </strong>
+        </div>
+      </div>
+
+      {/* Listado de tarjetas de torneos del usuario */}
+      <div className="perfil-torneos-list">
+        {torneos.map((t) => {
+          const numPuesto = String(t.puesto || "");
+          const esPrimero = numPuesto === "1" || numPuesto.includes("1°") || numPuesto.toLowerCase().includes("campeón");
+          const esSegundo = numPuesto === "2" || numPuesto.includes("2°");
+          const esTercero = numPuesto === "3" || numPuesto.includes("3°");
+          const esTop4 = numPuesto === "4" || numPuesto.toLowerCase().includes("top 4");
+
+          let badgePuestoClass = "puesto-general";
+          let iconoPuesto = "🎖️";
+          let textoPuesto = `Puesto: ${numPuesto}`;
+
+          if (esPrimero) {
+            badgePuestoClass = "puesto-oro";
+            iconoPuesto = "🏆";
+            textoPuesto = "1° Lugar (Campeón)";
+          } else if (esSegundo) {
+            badgePuestoClass = "puesto-plata";
+            iconoPuesto = "🥈";
+            textoPuesto = "2° Lugar (Subcampeón)";
+          } else if (esTercero) {
+            badgePuestoClass = "puesto-bronce";
+            iconoPuesto = "🥉";
+            textoPuesto = "3° Lugar";
+          } else if (esTop4) {
+            badgePuestoClass = "puesto-top4";
+            iconoPuesto = "⭐";
+            textoPuesto = "Top 4";
+          }
+
+          const estaPagado = t.estadoPago === "pagado" || t.deuda === 0;
+          const esAbono = t.estadoPago === "abono" && t.deuda > 0;
+          const debeTotal = t.estadoPago === "debe" || (!estaPagado && !esAbono);
+
+          return (
+            <div key={`${t.torneoId}-${t.participanteId}`} className={`perfil-torneo-card ${esPrimero ? "first-place-glow" : ""}`}>
+              <div className="perfil-tc-header">
+                <div>
+                  <div className="perfil-tc-meta-row">
+                    <span className="perfil-tc-game-badge">{t.juego}</span>
+                    <span className={`perfil-tc-puesto-badge ${badgePuestoClass}`}>
+                      <span>{iconoPuesto}</span>
+                      <strong>{textoPuesto}</strong>
+                    </span>
+                  </div>
+                  <h4 className="perfil-tc-title">{t.nombreTorneo}</h4>
+                  <div className="perfil-tc-info-row">
+                    <span>
+                      📅 {new Date(t.fecha).toLocaleDateString("es-CO", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    <span>📍 {t.lugar}</span>
+                  </div>
+                </div>
+
+                {/* Badge de Pago */}
+                <div className="perfil-tc-pago-col">
+                  {estaPagado && (
+                    <div className="pago-status-pill pagado">
+                      <CheckCircle2 size={14} />
+                      <span>Pagado (${t.montoPagado.toLocaleString("es-CO")} COP)</span>
+                    </div>
+                  )}
+                  {esAbono && (
+                    <div className="pago-status-pill abono">
+                      <AlertCircle size={14} />
+                      <span>Abonó: ${t.montoPagado.toLocaleString("es-CO")} • Debe: ${t.deuda.toLocaleString("es-CO")} COP</span>
+                    </div>
+                  )}
+                  {debeTotal && (
+                    <div className="pago-status-pill debe">
+                      <AlertCircle size={14} />
+                      <span>Debe Inscripción: ${t.deuda.toLocaleString("es-CO")} COP</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Mazo usado */}
+              {t.deck && (
+                <div className="perfil-tc-deck-row">
+                  <span className="deck-label">Mazo jugado:</span>
+                  <strong className="deck-val">{t.deck}</strong>
+                </div>
+              )}
+
+              {/* QUÉ GANÓ (PREMIO OBTENIDO) */}
+              {t.premioGanado ? (
+                <div className="perfil-tc-premio-box">
+                  <div className="premio-icon-badge">
+                    <Sparkles size={18} />
+                  </div>
+                  <div className="premio-content">
+                    <span className="premio-title">Premio Ganado en el Torneo:</span>
+                    <strong className="premio-text">{t.premioGanado}</strong>
+                  </div>
+                </div>
+              ) : (
+                <div className="perfil-tc-premio-box neutral">
+                  <div className="premio-icon-badge">
+                    <Trophy size={16} />
+                  </div>
+                  <div className="premio-content">
+                    <span className="premio-title">Premios del Evento:</span>
+                    <span className="premio-text">{t.premiosTorneo || "Sobre de participación oficial del evento"}</span>
+                  </div>
+                </div>
+              )}
+
+              {t.notas && (
+                <div className="perfil-tc-nota">
+                  <small>Nota de la tienda: {t.notas}</small>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
