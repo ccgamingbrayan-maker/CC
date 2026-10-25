@@ -14,7 +14,9 @@ import {
   Loader2,
   BookOpen,
   Filter,
+  ScanLine,
 } from "lucide-react";
+import CardScanner from "./CardScanner.jsx";
 import { supabase } from "../lib/supabase.js";
 import {
   buscarPrintsOnePiece,
@@ -37,6 +39,7 @@ const JUEGOS_TABS = [
   { id: "onepiece", label: "One Piece TCG", icono: "🏴‍☠️" },
   { id: "pokemon", label: "Pokémon TCG", icono: "⚡" },
   { id: "magic", label: "Magic: The Gathering", icono: "🧙" },
+  { id: "scanner", label: "Escáner", icono: "📷" },
   { id: "manual", label: "Entrada Manual", icono: "✍️" },
 ];
 
@@ -741,8 +744,57 @@ export default function ColeccionFisica({ user }) {
               ))}
             </div>
 
-            {/* SI ESTÁ EN MODO API (ONE PIECE, POKÉMON O MAGIC) */}
-            {juegoActivo !== "manual" ? (
+            {/* SI ESTÁ EN MODO ESCÁNER */}
+            {juegoActivo === "scanner" ? (
+              <div className="modal-scanner-seccion">
+                <CardScanner
+                  onCardDetected={(cardData) => {
+                    // Al detectar una carta, pasar a la pestaña One Piece y buscar
+                    setJuegoActivo("onepiece");
+                    setQueryApi(cardData.nombre);
+                    // Ejecutar búsqueda automáticamente
+                    setTimeout(() => {
+                      const fakeEvent = { preventDefault: () => {} };
+                      setBuscandoApi(true);
+                      setCartaSeleccionada(null);
+                      setResultadosApi([]);
+                      const texto = cardData.nombre.trim();
+                      if (!texto) { setBuscandoApi(false); return; }
+                      Promise.all([
+                        buscarPrintsOnePiece(texto).catch(() => []),
+                        buscarDecksFiltered(texto).catch(() => []),
+                        buscarPromosFiltered(texto).catch(() => []),
+                        buscarDonFiltered(texto).catch(() => []),
+                      ]).then(([sets, decks, promos, don]) => {
+                        const combinados = [...sets, ...decks, ...promos, ...don];
+                        const unicos = [];
+                        const idsVistos = new Set();
+                        for (const c of combinados) {
+                          const key = c.id || c.imagen || `${c.numero}_${c.nombre}`;
+                          if (key && !idsVistos.has(key)) {
+                            idsVistos.add(key);
+                            unicos.push(c);
+                          }
+                        }
+                        unicos.sort((a, b) => {
+                          const espA = esVersionEspecialOnePiece(a);
+                          const espB = esVersionEspecialOnePiece(b);
+                          if (espA !== espB) return espA ? 1 : -1;
+                          return 0;
+                        });
+                        setResultadosApi(unicos);
+                      }).catch((err) => {
+                        console.error("Error búsqueda post-scan:", err);
+                      }).finally(() => {
+                        setBuscandoApi(false);
+                      });
+                    }, 100);
+                  }}
+                  onClose={() => setJuegoActivo("onepiece")}
+                />
+              </div>
+            ) : /* SI ESTÁ EN MODO API (ONE PIECE, POKÉMON O MAGIC) */
+            juegoActivo !== "manual" ? (
               <div className="modal-api-seccion">
                 {/* BUSCADOR DE API */}
                 <form onSubmit={ejecutarBusquedaApi} className="api-search-form">
