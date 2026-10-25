@@ -14603,6 +14603,20 @@ img { display: block; max-width: 100%; }
   transform: translateY(-1px);
 }
 
+.scanner-shutter-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0.65;
+  pointer-events: none;
+  z-index: 40;
+  animation: shutterFade 0.25s ease-out forwards;
+}
+@keyframes shutterFade {
+  0% { opacity: 0.65; }
+  100% { opacity: 0; }
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .scanner-camera-area {

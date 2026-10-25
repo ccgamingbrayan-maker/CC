@@ -14,16 +14,15 @@ import {
 const API_IDENTIFY_URL = "https://www.basecc.cyou/api/ai/identify";
 
 /**
- * CardScanner – Escáner de cartas TCG impulsado por la API de IA (Gemini Vision) de BaseCC:
- * - Marco delimitante vertical con proporción física exacta de carta TCG (63x88mm).
- * - Identificación precisa de código (ej. OP05-088) y nombre con 80%+ de acierto.
- * - Soporte para cartas normales y cartas DON!! con personajes.
+ * CardScanner – Escáner de cartas TCG con IA de BaseCC (Gemini Vision)
+ * - Marco delimitante vertical con proporción real de carta TCG (63x88mm).
+ * - Captura de área central con margen amplio (nunca corta el código ni el nombre).
+ * - Limpieza de nombres variantes para búsqueda precisa en la base de datos de One Piece.
+ * - Botón de captura manual tipo obturador (evita fotos borrosas en movimiento).
  * - Popup inferior con miniatura oficial, código, temporizador de 2.5s y botón [✕] para re-escanear.
- * - Botón de captura manual y subida directa de fotos.
  */
 export default function CardScanner({ onCardDetected, onClose }) {
   const videoRef = useRef(null);
-  const frameRef = useRef(null);
   const fileInputRef = useRef(null);
   const streamRef = useRef(null);
   const autoScanIntervalRef = useRef(null);
@@ -32,8 +31,9 @@ export default function CardScanner({ onCardDetected, onClose }) {
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [scanning, setScanning] = useState(false);
-  const [autoScanEnabled, setAutoScanEnabled] = useState(true);
-  const [scanStatusText, setScanStatusText] = useState("Listo para escanear");
+  const [shutterEffect, setShutterEffect] = useState(false);
+  const [autoScanEnabled, setAutoScanEnabled] = useState(false); // Manual por defecto para evitar fotos borrosas
+  const [scanStatusText, setScanStatusText] = useState("Alinea la carta y presiona Escanear");
   const [resultadoDetectado, setResultadoDetectado] = useState(null);
   const [popupVisible, setPopupVisible] = useState(false);
 
@@ -84,40 +84,17 @@ export default function CardScanner({ onCardDetected, onClose }) {
     setCameraReady(false);
   }
 
-  // Obtener las coordenadas reales del marco dentro del video (soporta object-fit: cover)
-  function obtenerCoordenadasMarco(video, frameEl) {
-    if (!video || !frameEl) return null;
-    const videoRect = video.getBoundingClientRect();
-    const frameRect = frameEl.getBoundingClientRect();
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-
-    if (!vw || !vh || !videoRect.width || !videoRect.height) return null;
-
-    const videoRatio = vw / vh;
-    const containerRatio = videoRect.width / videoRect.height;
-    let renderedW, renderedH, offsetX = 0, offsetY = 0;
-
-    if (containerRatio > videoRatio) {
-      renderedW = videoRect.width;
-      renderedH = videoRect.width / videoRatio;
-      offsetY = (renderedH - videoRect.height) / 2;
-    } else {
-      renderedH = videoRect.height;
-      renderedW = videoRect.height * videoRatio;
-      offsetX = (renderedW - videoRect.width) / 2;
-    }
-
-    const scale = vw / renderedW;
-    const x = Math.max(0, (frameRect.left - videoRect.left + offsetX) * scale);
-    const y = Math.max(0, (frameRect.top - videoRect.top + offsetY) * scale);
-    const w = Math.min(vw - x, frameRect.width * scale);
-    const h = Math.min(vh - y, frameRect.height * scale);
-
-    return { x, y, w, h };
+  // Limpiar el nombre de la carta para búsqueda en la base de datos (quita texto entre paréntesis como "(Judge Pack)")
+  function limpiarNombreCarta(raw) {
+    if (!raw) return "";
+    return raw
+      .replace(/\s*\(.*?\)/g, "")
+      .replace(/\s*\[.*?\]/g, "")
+      .replace(/^(DON!!|DON!)\s*/i, "")
+      .trim();
   }
 
-  // Enviar imagen a la API de IA de BaseCC (Gemini Vision)
+  // Consultar endpoint de IA de BaseCC (Gemini Vision)
   async function identificarConApi(base64Image) {
     try {
       const res = await fetch(API_IDENTIFY_URL, {
@@ -131,21 +108,31 @@ export default function CardScanner({ onCardDetected, onClose }) {
 
       if (data && data.success && (data.searchString || data.card)) {
         const card = data.card || {};
+        const rawName = card.name || data.searchString || "";
+        const cleanName = limpiarNombreCarta(rawName) || rawName;
+
+        let codigo = card.card_number || "";
+        if (!codigo && data.searchString) {
+          const matchCod = data.searchString.match(/\b(OP\d{2}[-\s]?\d{3}|ST\d{1,2}[-\s]?\d{3}|EB\d{2}[-\s]?\d{3}|PRB\d{2}[-\s]?\d{3}|P[-\s]?\d{1,3})\b/i);
+          if (matchCod) {
+            codigo = matchCod[1].replace(/\s+/g, "-").toUpperCase();
+          }
+        }
+
         let finalImg = card.image_url || "";
         if (finalImg && !finalImg.startsWith("http")) {
           finalImg = `https://www.basecc.cyou${finalImg.startsWith("/") ? "" : "/"}${finalImg}`;
         }
 
-        const codigo = card.card_number || data.searchString || "";
-        const nombre = card.name || (codigo.startsWith("OP") || codigo.startsWith("ST") ? codigo : data.searchString);
-        const expansion = card.set_code || card.set_name || "One Piece TCG";
+        const expansion = card.set_name || card.set_code || (codigo ? `Expansión ${codigo.split("-")[0]}` : "One Piece TCG");
 
         return {
-          nombre: nombre,
+          nombre: cleanName,
+          nombreCompleto: rawName,
           codigo: codigo,
           expansion: expansion,
           imagen: finalImg,
-          searchString: data.searchString || codigo || nombre,
+          searchString: data.searchString || codigo || cleanName,
         };
       }
       return null;
@@ -158,52 +145,61 @@ export default function CardScanner({ onCardDetected, onClose }) {
   // Capturar frame enfocado y consultar la IA
   const capturarYEscanear = useCallback(async () => {
     if (scanning || popupVisible) return;
-    if (!videoRef.current || !frameRef.current) return;
+    if (!videoRef.current) return;
 
     const video = videoRef.current;
     if (video.readyState < 2) return;
 
-    const coords = obtenerCoordenadasMarco(video, frameRef.current);
-    if (!coords || coords.w <= 20 || coords.h <= 20) return;
-
     setScanning(true);
-    setScanStatusText("Analizando carta con IA...");
+    setScanStatusText("📸 Analizando carta con IA...");
+
+    // Efecto de flash de obturador
+    setShutterEffect(true);
+    setTimeout(() => setShutterEffect(false), 250);
 
     try {
-      // Recortar la carta dentro del marco delimitante con resolución óptima
+      const vw = video.videoWidth || 1280;
+      const vh = video.videoHeight || 720;
+
+      // Recortar con margen amplio el 80% central del video (nunca corta bordes ni códigos)
+      const cropW = Math.round(vw * 0.80);
+      const cropH = Math.round(vh * 0.90);
+      const cropX = Math.round((vw - cropW) / 2);
+      const cropY = Math.round((vh - cropH) / 2);
+
       const canvas = document.createElement("canvas");
-      canvas.width = Math.min(900, Math.max(600, coords.w));
-      const scale = canvas.width / coords.w;
-      canvas.height = coords.h * scale;
+      canvas.width = 800;
+      canvas.height = Math.round(800 * (cropH / cropW));
 
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, coords.x, coords.y, coords.w, coords.h, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
 
-      const base64 = canvas.toDataURL("image/jpeg", 0.85);
+      const base64 = canvas.toDataURL("image/jpeg", 0.88);
 
-      // Consultar endpoint de IA de BaseCC
+      // Enviar a la IA
       const resultado = await identificarConApi(base64);
 
       if (resultado && (resultado.codigo || resultado.nombre)) {
         setResultadoDetectado(resultado);
         mostrarPopup();
       } else {
-        setScanStatusText("Alinea la carta dentro del marco");
+        setScanStatusText("No se reconoció la carta. Mantén la carta fija e intenta de nuevo.");
         setScanning(false);
       }
     } catch (err) {
       console.error("Error capturando frame:", err);
       setScanning(false);
+      setScanStatusText("Error al capturar. Intenta de nuevo.");
     }
   }, [scanning, popupVisible]);
 
-  // Manejo de subida manual de foto (para fotos de alta resolución o tomadas desde el carrete)
+  // Manejo de subida manual de foto
   function manejarSubidaFoto(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setScanning(true);
-    setScanStatusText("Analizando foto con IA...");
+    setScanStatusText("📸 Procesando foto con IA...");
 
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -219,14 +215,15 @@ export default function CardScanner({ onCardDetected, onClose }) {
         setResultadoDetectado(resultado);
         mostrarPopup();
       } else {
-        alert("No se detectó el código o nombre de la carta en la imagen. Intenta con una foto más clara e iluminada.");
+        alert("No se detectó el código o nombre de la carta en la foto. Intenta con una imagen más nítida.");
         setScanning(false);
+        setScanStatusText("Alinea la carta y presiona Escanear");
       }
     };
     reader.readAsDataURL(file);
   }
 
-  // Auto-escaneo continuo cada 2.5 segundos
+  // Auto-escaneo cada 3.5s si el usuario activa el modo automático
   useEffect(() => {
     if (!autoScanEnabled || !cameraReady || scanning || popupVisible) {
       if (autoScanIntervalRef.current) clearInterval(autoScanIntervalRef.current);
@@ -235,14 +232,14 @@ export default function CardScanner({ onCardDetected, onClose }) {
 
     autoScanIntervalRef.current = setInterval(() => {
       capturarYEscanear();
-    }, 2500);
+    }, 3500);
 
     return () => {
       if (autoScanIntervalRef.current) clearInterval(autoScanIntervalRef.current);
     };
   }, [autoScanEnabled, cameraReady, scanning, popupVisible, capturarYEscanear]);
 
-  // Mostrar popup con temporizador de 2.5 segundos
+  // Mostrar popup por 2.5 segundos
   function mostrarPopup() {
     setPopupVisible(true);
     setScanning(false);
@@ -250,7 +247,7 @@ export default function CardScanner({ onCardDetected, onClose }) {
 
     if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
 
-    // Auto-cierre a los 2.5s para volver a escanear si no se interactúa
+    // Auto-cierre a los 2.5s para continuar escaneando si no se acepta
     popupTimerRef.current = setTimeout(() => {
       rechazarYReescanear();
     }, 2500);
@@ -264,6 +261,7 @@ export default function CardScanner({ onCardDetected, onClose }) {
     if (resultadoDetectado && onCardDetected) {
       onCardDetected({
         nombre: resultadoDetectado.nombre,
+        nombreCompleto: resultadoDetectado.nombreCompleto,
         expansion: resultadoDetectado.expansion,
         codigo: resultadoDetectado.codigo,
         imagen: resultadoDetectado.imagen,
@@ -279,7 +277,7 @@ export default function CardScanner({ onCardDetected, onClose }) {
     setPopupVisible(false);
     setResultadoDetectado(null);
     setScanning(false);
-    setScanStatusText("Listo para escanear");
+    setScanStatusText("Alinea la carta y presiona Escanear");
   }
 
   return (
@@ -289,15 +287,18 @@ export default function CardScanner({ onCardDetected, onClose }) {
         <div className="scanner-header-info">
           <ScanLine size={18} style={{ color: "var(--acento, #a855f7)" }} />
           <span>Escáner TCG con IA de BaseCC</span>
-          <span className="scanner-live-badge">80%+ Precisión</span>
+          <span className="scanner-live-badge">Gemini Vision</span>
         </div>
         <p className="scanner-instrucciones">
-          Coloca la carta dentro del marco. <strong>El nombre y código</strong> deben quedar en la zona inferior.
+          Enfoca la carta en el marco y presiona <strong>Escanear</strong>. La IA detectará el código (ej. OP05-088) y nombre oficial.
         </p>
       </div>
 
       {/* Visor de cámara */}
       <div className="scanner-camera-area">
+        {/* Efecto de destello al capturar */}
+        {shutterEffect && <div className="scanner-shutter-flash" />}
+
         {cameraError ? (
           <div className="scanner-error-box">
             <Camera size={44} style={{ opacity: 0.35, marginBottom: "12px" }} />
@@ -333,21 +334,19 @@ export default function CardScanner({ onCardDetected, onClose }) {
             <div className="scanner-overlay-mask" />
 
             {/* Marco delimitante con proporción física exacta de carta TCG (63x88mm) */}
-            <div ref={frameRef} className="scanner-card-frame">
+            <div className="scanner-card-frame">
               <div className="tcg-corner top-left" />
               <div className="tcg-corner top-right" />
               <div className="tcg-corner bottom-left" />
               <div className="tcg-corner bottom-right" />
 
               {/* Línea láser animada */}
-              {(scanning || autoScanEnabled) && !popupVisible && (
-                <div className="tcg-scan-laser" />
-              )}
+              {scanning && <div className="tcg-scan-laser" />}
 
               {/* Guía superior */}
               {!scanning && !popupVisible && (
                 <div className="tcg-frame-top-guide">
-                  <span>Alinea los bordes de la carta</span>
+                  <span>Encuadra la carta aquí</span>
                 </div>
               )}
 
@@ -355,7 +354,7 @@ export default function CardScanner({ onCardDetected, onClose }) {
               <div className="tcg-bottom-target-zone">
                 <div className="target-zone-badge">
                   <Sparkles size={11} />
-                  <span>Zona de Nombre y Código</span>
+                  <span>Nombre y Código abajo</span>
                 </div>
               </div>
             </div>
@@ -388,16 +387,16 @@ export default function CardScanner({ onCardDetected, onClose }) {
         </div>
 
         <div className="scanner-actions-group">
-          {/* Botón manual para capturar al instante */}
+          {/* Botón manual para capturar al instante (grande y destacado) */}
           <button
             type="button"
             className="btn-accion-scanner btn-escanear-manual"
             onClick={capturarYEscanear}
-            disabled={scanning || popupVisible}
-            title="Escanear carta enfocada ahora"
+            disabled={scanning || popupVisible || !cameraReady}
+            title="Capturar y escanear carta enfocada ahora"
           >
-            <Zap size={15} />
-            <span>Escanear</span>
+            <Camera size={16} />
+            <span>Escanear carta</span>
           </button>
 
           {/* Botón para subir foto del carrete */}
@@ -416,7 +415,7 @@ export default function CardScanner({ onCardDetected, onClose }) {
             type="button"
             className={`btn-toggle-autoscan ${autoScanEnabled ? "activo" : ""}`}
             onClick={() => setAutoScanEnabled(!autoScanEnabled)}
-            title="Activar / desactivar escaneo continuo"
+            title="Activar / desactivar escaneo continuo automático"
           >
             Auto: {autoScanEnabled ? "ON" : "OFF"}
           </button>
