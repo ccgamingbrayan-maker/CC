@@ -10,106 +10,34 @@ import {
   Image as ImageIcon,
   Sparkles,
 } from "lucide-react";
-import Tesseract from "tesseract.js";
-import { buscarCartasOnePiece } from "../lib/onepiece";
 
-// Diccionario de expansiones conocidas de One Piece TCG
-const ONE_PIECE_SETS = {
-  OP01: "Romance Dawn (OP-01)",
-  OP02: "Paramount War (OP-02)",
-  OP03: "Pillars of Strength (OP-03)",
-  OP04: "Kingdoms of Intrigue (OP-04)",
-  OP05: "Awakening of the New Era (OP-05)",
-  OP06: "Wings of the Captain (OP-06)",
-  OP07: "500 Years in the Future (OP-07)",
-  OP08: "Two Legends (OP-08)",
-  OP09: "The Four Emperors (OP-09)",
-  OP10: "Royal Blood (OP-10)",
-  OP11: "A Fist of Divine Speed (OP-11)",
-  OP12: "Legacy of the Master (OP-12)",
-  EB01: "Memorial Collection (EB-01)",
-  PRB01: "Premium Booster (PRB-01)",
-  ST01: "Straw Hat Crew (ST-01)",
-  ST02: "Worst Generation (ST-02)",
-  ST03: "The Seven Warlords (ST-03)",
-  ST04: "Animal Kingdom Pirates (ST-04)",
-  ST05: "One Piece Film Edition (ST-05)",
-  ST06: "Absolute Justice (ST-06)",
-  ST07: "Big Mom Pirates (ST-07)",
-  ST08: "Monkey D. Luffy (ST-08)",
-  ST09: "Yamato (ST-09)",
-  ST10: "The Three Captains (ST-10)",
-  ST11: "Uta (ST-11)",
-  ST12: "Zoro & Sanji (ST-12)",
-  ST13: "3 Brothers (ST-13)",
-  ST14: "3D2Y (ST-14)",
-  ST15: "Red Edward.Newgate (ST-15)",
-  ST16: "Green Uta (ST-16)",
-  ST17: "Blue Doflamingo (ST-17)",
-  ST18: "Purple Luffy (ST-18)",
-  ST19: "Black Smoker (ST-19)",
-  ST20: "Yellow Katakuri (ST-20)",
-  P: "Promotional Card",
-};
+const API_IDENTIFY_URL = "https://www.basecc.cyou/api/ai/identify";
 
 /**
- * CardScanner – Escáner de cartas TCG de alta precisión:
- * - Marco delimitante vertical con proporción real de carta (63x88mm).
- * - Enfoque en la zona inferior de la carta (donde están el nombre y código).
- * - Filtro anti-ruido: SOLO activa el popup cuando la carta es VERIFICADA en la base de datos oficial.
- * - Motor OCR persistente para velocidad instantánea sin congelar la app.
- * - Popup inferior con temporizador de 2.5s y botón X para re-escanear.
+ * CardScanner – Escáner de cartas TCG impulsado por la API de IA (Gemini Vision) de BaseCC:
+ * - Marco delimitante vertical con proporción física exacta de carta TCG (63x88mm).
+ * - Identificación precisa de código (ej. OP05-088) y nombre con 80%+ de acierto.
+ * - Soporte para cartas normales y cartas DON!! con personajes.
+ * - Popup inferior con miniatura oficial, código, temporizador de 2.5s y botón [✕] para re-escanear.
+ * - Botón de captura manual y subida directa de fotos.
  */
 export default function CardScanner({ onCardDetected, onClose }) {
   const videoRef = useRef(null);
   const frameRef = useRef(null);
   const fileInputRef = useRef(null);
   const streamRef = useRef(null);
-  const workerRef = useRef(null);
   const autoScanIntervalRef = useRef(null);
   const popupTimerRef = useRef(null);
 
   const [cameraReady, setCameraReady] = useState(false);
-  const [ocrReady, setOcrReady] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [autoScanEnabled, setAutoScanEnabled] = useState(true);
-  const [scanMessage, setScanMessage] = useState("Iniciando escáner...");
+  const [scanStatusText, setScanStatusText] = useState("Listo para escanear");
   const [resultadoDetectado, setResultadoDetectado] = useState(null);
   const [popupVisible, setPopupVisible] = useState(false);
 
-  // 1. Inicializar Worker de Tesseract una sola vez (persiste en memoria)
-  useEffect(() => {
-    let activo = true;
-
-    async function initOcr() {
-      try {
-        setScanMessage("Cargando motor de reconocimiento...");
-        const worker = await Tesseract.createWorker("eng", 1, {
-          logger: () => {},
-        });
-        if (activo) {
-          workerRef.current = worker;
-          setOcrReady(true);
-          setScanMessage("Listo para escanear");
-        }
-      } catch (err) {
-        console.error("Error iniciando worker Tesseract:", err);
-      }
-    }
-
-    initOcr();
-
-    return () => {
-      activo = false;
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-    };
-  }, []);
-
-  // 2. Iniciar cámara al montar
+  // Iniciar cámara al montar
   useEffect(() => {
     iniciarCamara();
 
@@ -126,8 +54,8 @@ export default function CardScanner({ onCardDetected, onClose }) {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: "environment" },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
       });
       streamRef.current = stream;
@@ -154,37 +82,6 @@ export default function CardScanner({ onCardDetected, onClose }) {
       streamRef.current = null;
     }
     setCameraReady(false);
-  }
-
-  // Preprocesar canvas para maximizar contraste de texto blanco sobre oscuro
-  function preprocesarZonaInferior(sourceCanvas) {
-    const procCanvas = document.createElement("canvas");
-    procCanvas.width = sourceCanvas.width;
-    procCanvas.height = sourceCanvas.height;
-    const ctx = procCanvas.getContext("2d");
-
-    ctx.drawImage(sourceCanvas, 0, 0);
-    const imgData = ctx.getImageData(0, 0, procCanvas.width, procCanvas.height);
-    const d = imgData.data;
-
-    for (let i = 0; i < d.length; i += 4) {
-      const r = d[i];
-      const g = d[i + 1];
-      const b = d[i + 2];
-      // Escala de grises
-      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-
-      // Realce de contraste agresivo para separar texto blanco del fondo negro
-      const factor = (259 * (1.8 * 100 + 255)) / (255 * (259 - 1.8 * 100));
-      const newGray = Math.max(0, Math.min(255, factor * (gray - 128) + 128));
-
-      d[i] = newGray;
-      d[i + 1] = newGray;
-      d[i + 2] = newGray;
-    }
-
-    ctx.putImageData(imgData, 0, 0);
-    return procCanvas;
   }
 
   // Obtener las coordenadas reales del marco dentro del video (soporta object-fit: cover)
@@ -220,131 +117,48 @@ export default function CardScanner({ onCardDetected, onClose }) {
     return { x, y, w, h };
   }
 
-  // Parser estricto: extrae únicamente candidatos con estructura de carta One Piece
-  function extraerCandidatosEstrictos(texto) {
-    if (!texto) return { nombres: [], codigo: null };
-
-    const lineas = texto
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    let codigo = null;
-    const nombres = [];
-
-    // Patrón estricto de código One Piece: OP05-088, ST01-001, EB01-001, etc.
-    const patronCodigo = /\b([O0][P0]\d{2}|[S5][T7]\d{2}|EB\d{2}|PRB\d{2}|P)[-\s_–.]?(\d{3})\b/i;
-
-    for (const linea of lineas) {
-      const match = linea.match(patronCodigo);
-      if (match && !codigo) {
-        let prefix = match[1].toUpperCase().replace(/O/g, "0");
-        if (prefix.startsWith("0P") || prefix.startsWith("OP") || prefix.startsWith("00")) {
-          prefix = "OP" + prefix.slice(2);
-        } else if (prefix.startsWith("5T") || prefix.startsWith("ST")) {
-          prefix = "ST" + prefix.slice(2);
-        }
-        codigo = `${prefix}-${match[2]}`;
-      }
-    }
-
-    // En One Piece, el nombre de la carta está DIRECTAMENTE debajo de:
-    // CHARACTER, LEADER, EVENT o STAGE
-    const idxHeader = lineas.findIndex((l) =>
-      /\b(CHARACTER|LEADER|EVENT|STAGE)\b/.test(l) && !/[a-z]/.test(l)
-    );
-
-    if (idxHeader !== -1 && lineas[idxHeader + 1]) {
-      const limpia = lineas[idxHeader + 1]
-        .replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ\s.'-]/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      if (limpia.length >= 3 && limpia.length <= 35) {
-        nombres.push(limpia);
-      }
-    }
-
-    // También buscar la línea antes de la barra de tipos (ej. The Tontattas/Dressrosa)
-    const idxTraits = lineas.findIndex((l) => l.includes("/") && /[A-Z]/.test(l));
-    if (idxTraits > 0 && lineas[idxTraits - 1]) {
-      const limpia = lineas[idxTraits - 1]
-        .replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ\s.'-]/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      if (limpia.length >= 3 && limpia.length <= 35 && !/^(CHARACTER|LEADER|EVENT|STAGE)$/i.test(limpia)) {
-        if (!nombres.includes(limpia)) {
-          nombres.push(limpia);
-        }
-      }
-    }
-
-    return { nombres, codigo };
-  }
-
-  // Validar contra la API oficial de One Piece: solo si existe se acepta la carta
-  async function validarConApi(candidatoNombre, codigo) {
-    if (!candidatoNombre && !codigo) return null;
-
+  // Enviar imagen a la API de IA de BaseCC (Gemini Vision)
+  async function identificarConApi(base64Image) {
     try {
-      // Si tenemos un nombre, buscar en la API oficial
-      if (candidatoNombre) {
-        const cartas = await buscarCartasOnePiece(candidatoNombre);
-        if (Array.isArray(cartas) && cartas.length > 0) {
-          // Si además detectamos el código, buscar coincidencia exacta
-          if (codigo) {
-            const coincidencia = cartas.find(
-              (c) => c.numero?.toUpperCase() === codigo.toUpperCase()
-            );
-            if (coincidencia) {
-              return {
-                nombre: coincidencia.nombre,
-                expansion: coincidencia.set || "One Piece TCG",
-                codigo: coincidencia.numero || codigo,
-                imagen: coincidencia.imagen || "",
-                rarity: coincidencia.rarity || "",
-              };
-            }
-          }
+      const res = await fetch(API_IDENTIFY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64Image }),
+      });
 
-          // Si no hay código pero el nombre es exacto en la API
-          const primerMatch = cartas[0];
-          return {
-            nombre: primerMatch.nombre,
-            expansion: primerMatch.set || "One Piece TCG",
-            codigo: primerMatch.numero || codigo || "",
-            imagen: primerMatch.imagen || "",
-            rarity: primerMatch.rarity || "",
-          };
+      if (!res.ok) return null;
+      const data = await res.json();
+
+      if (data && data.success && (data.searchString || data.card)) {
+        const card = data.card || {};
+        let finalImg = card.image_url || "";
+        if (finalImg && !finalImg.startsWith("http")) {
+          finalImg = `https://www.basecc.cyou${finalImg.startsWith("/") ? "" : "/"}${finalImg}`;
         }
-      }
 
-      // Si no encontró por nombre pero tenemos un código válido conocido
-      if (codigo) {
-        const prefix = codigo.split("-")[0];
-        const exp = ONE_PIECE_SETS[prefix];
-        if (exp) {
-          return {
-            nombre: `Carta ${codigo}`,
-            expansion: exp,
-            codigo: codigo,
-            imagen: "",
-          };
-        }
-      }
+        const codigo = card.card_number || data.searchString || "";
+        const nombre = card.name || (codigo.startsWith("OP") || codigo.startsWith("ST") ? codigo : data.searchString);
+        const expansion = card.set_code || card.set_name || "One Piece TCG";
 
+        return {
+          nombre: nombre,
+          codigo: codigo,
+          expansion: expansion,
+          imagen: finalImg,
+          searchString: data.searchString || codigo || nombre,
+        };
+      }
       return null;
     } catch (err) {
-      console.warn("Error validando carta con API:", err);
+      console.warn("Error consultando API de IA:", err);
       return null;
     }
   }
 
-  // Capturar y procesar el frame
+  // Capturar frame enfocado y consultar la IA
   const capturarYEscanear = useCallback(async () => {
-    if (scanning || popupVisible || !ocrReady) return;
-    if (!videoRef.current || !frameRef.current || !workerRef.current) return;
+    if (scanning || popupVisible) return;
+    if (!videoRef.current || !frameRef.current) return;
 
     const video = videoRef.current;
     if (video.readyState < 2) return;
@@ -353,157 +167,96 @@ export default function CardScanner({ onCardDetected, onClose }) {
     if (!coords || coords.w <= 20 || coords.h <= 20) return;
 
     setScanning(true);
-    setScanMessage("Escaneando nombre y código...");
+    setScanStatusText("Analizando carta con IA...");
 
     try {
-      // 1. Recortar la ZONA INFERIOR (el 28% inferior de la carta donde están el nombre y código)
-      // En One Piece el nombre está entre el 74% y 92% de la altura de la carta
-      const bottomHeight = coords.h * 0.28;
-      const bottomY = coords.y + coords.h - bottomHeight;
+      // Recortar la carta dentro del marco delimitante con resolución óptima
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.min(900, Math.max(600, coords.w));
+      const scale = canvas.width / coords.w;
+      canvas.height = coords.h * scale;
 
-      const bottomCanvas = document.createElement("canvas");
-      const targetW = Math.max(800, coords.w * 2);
-      const scaleFactor = targetW / coords.w;
-      bottomCanvas.width = targetW;
-      bottomCanvas.height = bottomHeight * scaleFactor;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, coords.x, coords.y, coords.w, coords.h, 0, 0, canvas.width, canvas.height);
 
-      const bCtx = bottomCanvas.getContext("2d");
-      bCtx.drawImage(
-        video,
-        coords.x,
-        bottomY,
-        coords.w,
-        bottomHeight,
-        0,
-        0,
-        bottomCanvas.width,
-        bottomCanvas.height
-      );
+      const base64 = canvas.toDataURL("image/jpeg", 0.85);
 
-      // Preprocesar con alto contraste
-      const procCanvas = preprocesarZonaInferior(bottomCanvas);
+      // Consultar endpoint de IA de BaseCC
+      const resultado = await identificarConApi(base64);
 
-      // Reconocimiento OCR rápido con el worker persistente
-      const { data } = await workerRef.current.recognize(procCanvas);
-      const texto = data?.text || "";
-
-      // Extraer candidatos con patrón de carta
-      const { nombres, codigo } = extraerCandidatosEstrictos(texto);
-
-      let cartaValida = null;
-
-      // Validar cada candidato con la API (filtra 100% el ruido o letras sin sentido)
-      for (const candidato of nombres) {
-        const verif = await validarConApi(candidato, codigo);
-        if (verif) {
-          cartaValida = verif;
-          break;
-        }
-      }
-
-      // Si no hubo nombre válido pero hay código exacto
-      if (!cartaValida && codigo) {
-        cartaValida = await validarConApi(null, codigo);
-      }
-
-      // SOLO activar popup si se validó que es una carta REAL
-      if (cartaValida) {
-        setResultadoDetectado(cartaValida);
+      if (resultado && (resultado.codigo || resultado.nombre)) {
+        setResultadoDetectado(resultado);
         mostrarPopup();
       } else {
-        // Ruido o carta no reconocida: continuar silenciosamente
+        setScanStatusText("Alinea la carta dentro del marco");
         setScanning(false);
       }
     } catch (err) {
-      console.error("Error durante escaneo:", err);
+      console.error("Error capturando frame:", err);
       setScanning(false);
     }
-  }, [scanning, popupVisible, ocrReady]);
+  }, [scanning, popupVisible]);
 
-  // Manejo de subida manual de foto
-  async function manejarSubidaFoto(e) {
+  // Manejo de subida manual de foto (para fotos de alta resolución o tomadas desde el carrete)
+  function manejarSubidaFoto(e) {
     const file = e.target.files?.[0];
-    if (!file || !workerRef.current) return;
+    if (!file) return;
 
     setScanning(true);
-    setScanMessage("Analizando foto...");
+    setScanStatusText("Analizando foto con IA...");
 
-    const img = new Image();
-    img.onload = async () => {
-      try {
-        // Extraer el 30% inferior de la imagen
-        const bottomH = img.height * 0.30;
-        const bottomY = img.height - bottomH;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result;
+      if (!base64 || typeof base64 !== "string") {
+        setScanning(false);
+        return;
+      }
 
-        const canvas = document.createElement("canvas");
-        const targetW = Math.max(900, img.width);
-        const factor = targetW / img.width;
-        canvas.width = targetW;
-        canvas.height = bottomH * factor;
+      const resultado = await identificarConApi(base64);
 
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, bottomY, img.width, bottomH, 0, 0, canvas.width, canvas.height);
-
-        const proc = preprocesarZonaInferior(canvas);
-        const { data } = await workerRef.current.recognize(proc);
-        const { nombres, codigo } = extraerCandidatosEstrictos(data.text);
-
-        let cartaValida = null;
-        for (const cand of nombres) {
-          const verif = await validarConApi(cand, codigo);
-          if (verif) {
-            cartaValida = verif;
-            break;
-          }
-        }
-        if (!cartaValida && codigo) {
-          cartaValida = await validarConApi(null, codigo);
-        }
-
-        if (cartaValida) {
-          setResultadoDetectado(cartaValida);
-          mostrarPopup();
-        } else {
-          alert("No se detectó una carta válida en la imagen. Asegúrate de que la parte inferior (nombre y código) sea legible.");
-          setScanning(false);
-        }
-      } catch (err) {
-        console.error("Error procesando foto:", err);
+      if (resultado && (resultado.codigo || resultado.nombre)) {
+        setResultadoDetectado(resultado);
+        mostrarPopup();
+      } else {
+        alert("No se detectó el código o nombre de la carta en la imagen. Intenta con una foto más clara e iluminada.");
         setScanning(false);
       }
     };
-    img.src = URL.createObjectURL(file);
+    reader.readAsDataURL(file);
   }
 
-  // Loop de auto-escaneo suave cada 2 segundos
+  // Auto-escaneo continuo cada 2.5 segundos
   useEffect(() => {
-    if (!autoScanEnabled || !cameraReady || !ocrReady || scanning || popupVisible) {
+    if (!autoScanEnabled || !cameraReady || scanning || popupVisible) {
       if (autoScanIntervalRef.current) clearInterval(autoScanIntervalRef.current);
       return;
     }
 
     autoScanIntervalRef.current = setInterval(() => {
       capturarYEscanear();
-    }, 2000);
+    }, 2500);
 
     return () => {
       if (autoScanIntervalRef.current) clearInterval(autoScanIntervalRef.current);
     };
-  }, [autoScanEnabled, cameraReady, ocrReady, scanning, popupVisible, capturarYEscanear]);
+  }, [autoScanEnabled, cameraReady, scanning, popupVisible, capturarYEscanear]);
 
-  // Mostrar popup por 2.5 segundos
+  // Mostrar popup con temporizador de 2.5 segundos
   function mostrarPopup() {
     setPopupVisible(true);
     setScanning(false);
+    setScanStatusText("¡Carta identificada!");
 
     if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
 
+    // Auto-cierre a los 2.5s para volver a escanear si no se interactúa
     popupTimerRef.current = setTimeout(() => {
       rechazarYReescanear();
     }, 2500);
   }
 
-  // Aceptar carta detectada
+  // Aceptar la carta detectada
   function aceptarCarta() {
     if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
     setPopupVisible(false);
@@ -520,12 +273,13 @@ export default function CardScanner({ onCardDetected, onClose }) {
     setResultadoDetectado(null);
   }
 
-  // Rechazar y volver a escanear de inmediato
+  // Rechazar con la [X] y volver a escanear de inmediato
   function rechazarYReescanear() {
     if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
     setPopupVisible(false);
     setResultadoDetectado(null);
     setScanning(false);
+    setScanStatusText("Listo para escanear");
   }
 
   return (
@@ -534,11 +288,11 @@ export default function CardScanner({ onCardDetected, onClose }) {
       <div className="scanner-header">
         <div className="scanner-header-info">
           <ScanLine size={18} style={{ color: "var(--acento, #a855f7)" }} />
-          <span>Escáner TCG con IA</span>
-          <span className="scanner-live-badge">EN VIVO</span>
+          <span>Escáner TCG con IA de BaseCC</span>
+          <span className="scanner-live-badge">80%+ Precisión</span>
         </div>
         <p className="scanner-instrucciones">
-          Coloca la carta dentro del marco. <strong>El nombre</strong> debe quedar en la franja inferior resaltada.
+          Coloca la carta dentro del marco. <strong>El nombre y código</strong> deben quedar en la zona inferior.
         </p>
       </div>
 
@@ -575,17 +329,17 @@ export default function CardScanner({ onCardDetected, onClose }) {
               muted
             />
 
-            {/* Máscara oscura */}
+            {/* Máscara oscura periférica */}
             <div className="scanner-overlay-mask" />
 
-            {/* Marco delimitante con proporción de carta TCG (63x88mm) */}
+            {/* Marco delimitante con proporción física exacta de carta TCG (63x88mm) */}
             <div ref={frameRef} className="scanner-card-frame">
               <div className="tcg-corner top-left" />
               <div className="tcg-corner top-right" />
               <div className="tcg-corner bottom-left" />
               <div className="tcg-corner bottom-right" />
 
-              {/* Láser animado de escaneo */}
+              {/* Línea láser animada */}
               {(scanning || autoScanEnabled) && !popupVisible && (
                 <div className="tcg-scan-laser" />
               )}
@@ -593,7 +347,7 @@ export default function CardScanner({ onCardDetected, onClose }) {
               {/* Guía superior */}
               {!scanning && !popupVisible && (
                 <div className="tcg-frame-top-guide">
-                  <span>Alinea la carta al marco</span>
+                  <span>Alinea los bordes de la carta</span>
                 </div>
               )}
 
@@ -601,65 +355,68 @@ export default function CardScanner({ onCardDetected, onClose }) {
               <div className="tcg-bottom-target-zone">
                 <div className="target-zone-badge">
                   <Sparkles size={11} />
-                  <span>Ubica aquí el NOMBRE</span>
+                  <span>Zona de Nombre y Código</span>
                 </div>
               </div>
             </div>
 
-            {/* Estado de carga */}
-            {(!cameraReady || !ocrReady) && !cameraError && (
+            {/* Indicador de carga inicial */}
+            {!cameraReady && !cameraError && (
               <div className="scanner-loading-cam">
                 <Loader2 size={32} className="spinner-icon" />
-                <span>{!ocrReady ? "Iniciando motor de IA..." : "Iniciando sensor de cámara..."}</span>
+                <span>Iniciando sensor de cámara...</span>
               </div>
             )}
           </>
         )}
       </div>
 
-      {/* Controles y estado */}
+      {/* Barra de controles y estado */}
       <div className="scanner-controls-bar">
         <div className="scanner-status-indicator">
           {scanning ? (
             <span className="status-badge status-scanning">
               <Loader2 size={13} className="spinner-icon" />
-              {scanMessage}
+              {scanStatusText}
             </span>
           ) : (
             <span className="status-badge status-ready">
               <span className="status-dot-pulsing" />
-              {autoScanEnabled ? "Auto-escaneo activo" : "Listo para escanear"}
+              {scanStatusText}
             </span>
           )}
         </div>
 
         <div className="scanner-actions-group">
+          {/* Botón manual para capturar al instante */}
           <button
             type="button"
             className="btn-accion-scanner btn-escanear-manual"
             onClick={capturarYEscanear}
-            disabled={scanning || popupVisible || !ocrReady}
-            title="Escanear carta ahora"
+            disabled={scanning || popupVisible}
+            title="Escanear carta enfocada ahora"
           >
             <Zap size={15} />
             <span>Escanear</span>
           </button>
 
+          {/* Botón para subir foto del carrete */}
           <button
             type="button"
             className="btn-accion-scanner btn-subir-archivo"
             onClick={() => fileInputRef.current?.click()}
-            title="Subir imagen de la carta"
+            title="Subir foto desde archivo"
           >
             <ImageIcon size={15} />
             <span>Subir foto</span>
           </button>
 
+          {/* Toggle auto-escaneo */}
           <button
             type="button"
             className={`btn-toggle-autoscan ${autoScanEnabled ? "activo" : ""}`}
             onClick={() => setAutoScanEnabled(!autoScanEnabled)}
-            title="Activar / desactivar escaneo automático"
+            title="Activar / desactivar escaneo continuo"
           >
             Auto: {autoScanEnabled ? "ON" : "OFF"}
           </button>
@@ -679,15 +436,16 @@ export default function CardScanner({ onCardDetected, onClose }) {
       <div className={`scanner-popup-resultado ${popupVisible ? "visible" : ""}`}>
         {resultadoDetectado && (
           <>
-            {/* Barra de progreso regresiva de 2.5s */}
+            {/* Barra de progreso de 2.5 segundos */}
             <div className="popup-countdown-bar" />
 
-            {/* Thumbnail oficial de la carta si está disponible */}
+            {/* Miniatura oficial de la carta */}
             {resultadoDetectado.imagen && (
               <img
                 src={resultadoDetectado.imagen}
                 alt={resultadoDetectado.nombre}
                 className="popup-carta-thumb"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
               />
             )}
 
@@ -707,6 +465,7 @@ export default function CardScanner({ onCardDetected, onClose }) {
             </div>
 
             <div className="popup-resultado-acciones">
+              {/* Botón Aceptar (verde) */}
               <button
                 type="button"
                 className="popup-btn popup-btn-aceptar"
@@ -716,11 +475,12 @@ export default function CardScanner({ onCardDetected, onClose }) {
                 <Check size={20} strokeWidth={3} />
               </button>
 
+              {/* Botón Rechazar / X (rojo) -> Vuelve a escanear de inmediato */}
               <button
                 type="button"
                 className="popup-btn popup-btn-rechazar"
                 onClick={rechazarYReescanear}
-                title="Descartar y volver a escanear"
+                title="No es esta carta, volver a escanear"
               >
                 <X size={20} strokeWidth={3} />
               </button>

@@ -751,14 +751,27 @@ export default function ColeccionFisica({ user }) {
                   onCardDetected={(cardData) => {
                     // Al detectar una carta, pasar a la pestaña One Piece y buscar
                     setJuegoActivo("onepiece");
-                    const textoBusqueda = cardData.nombre?.startsWith("Carta ") && cardData.codigo
-                      ? cardData.codigo
-                      : (cardData.nombre || cardData.codigo || "");
+                    const nombreLimpio = cardData.nombre
+                      ? cardData.nombre.replace(/\(.*?\)/g, "").trim()
+                      : "";
+                    const textoBusqueda = nombreLimpio || cardData.codigo || "";
                     setQueryApi(textoBusqueda);
+
+                    // Pre-seleccionar si tenemos la imagen o datos directos
+                    if (cardData.nombre) {
+                      setCartaSeleccionada({
+                        nombre: cardData.nombre,
+                        expansion: cardData.expansion || "One Piece TCG",
+                        codigo: cardData.codigo || "",
+                        rareza: "Standard",
+                        imagen: cardData.imagen || "",
+                        juego: "onepiece",
+                      });
+                    }
+
                     // Ejecutar búsqueda automáticamente
                     setTimeout(() => {
                       setBuscandoApi(true);
-                      setCartaSeleccionada(null);
                       setResultadosApi([]);
                       const texto = textoBusqueda.trim();
                       if (!texto) { setBuscandoApi(false); return; }
