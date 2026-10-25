@@ -14115,10 +14115,7 @@ img { display: block; max-width: 100%; }
 }
 
 /* ======================================================================
-   CARD SCANNER – Escaneo de cartas con cámara + OCR
-   ====================================================================== */
-
-.modal-scanner-seccion {
+   CARD SCANNER – Es.modal-scanner-seccion {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -14127,15 +14124,16 @@ img { display: block; max-width: 100%; }
 .card-scanner-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   position: relative;
+  width: 100%;
 }
 
 /* Header del escáner */
 .scanner-header {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .scanner-header-info {
   display: flex;
@@ -14145,193 +14143,270 @@ img { display: block; max-width: 100%; }
   font-size: 15px;
   color: var(--texto, #ededed);
 }
+.scanner-live-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 999px;
+  animation: livePulse 2s infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 .scanner-instrucciones {
   margin: 0;
   font-size: 12.5px;
   color: var(--texto-suave, #9CA3AF);
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
-/* Área de la cámara */
+/* Área del visor de cámara */
 .scanner-camera-area {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  max-height: 420px;
-  background: #0a0a0a;
+  min-height: 380px;
+  max-height: 520px;
+  background: #06060c;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid var(--t10, rgba(237, 237, 237, 0.1));
+  border: 1px solid var(--t12, rgba(237, 237, 237, 0.12));
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .scanner-video {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-/* Overlay oscuro alrededor del marco */
-.scanner-overlay {
+/* Máscara de documento */
+.scanner-overlay-mask {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   pointer-events: none;
-}
-.scanner-overlay::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to bottom,
-      rgba(0, 0, 0, 0.55) 0%,
-      rgba(0, 0, 0, 0.15) 25%,
-      transparent 25%,
-      transparent 75%,
-      rgba(0, 0, 0, 0.15) 75%,
-      rgba(0, 0, 0, 0.55) 100%
-    );
-  z-index: 1;
-}
-.scanner-overlay::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to right,
-      rgba(0, 0, 0, 0.55) 0%,
-      rgba(0, 0, 0, 0.15) 15%,
-      transparent 15%,
-      transparent 85%,
-      rgba(0, 0, 0, 0.15) 85%,
-      rgba(0, 0, 0, 0.55) 100%
-    );
   z-index: 1;
 }
 
-/* Marco delimitante (estilo document scanner) */
-.scanner-frame {
+/* MARCO DELIMITANTE EXACTO PARA CARTA TCG (63mm x 88mm -> ratio ~0.716) */
+.scanner-card-frame {
   position: relative;
-  width: 70%;
-  height: 50%;
+  height: 84%;
+  aspect-ratio: 63 / 88;
+  max-width: 82%;
+  border-radius: 14px;
+  border: 2px solid rgba(168, 85, 247, 0.85);
+  box-shadow:
+    0 0 0 9999px rgba(5, 5, 12, 0.72),
+    0 0 20px rgba(168, 85, 247, 0.35) inset,
+    0 0 16px rgba(168, 85, 247, 0.3);
   z-index: 2;
-}
-
-/* Esquinas del marco */
-.frame-corner {
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  z-index: 3;
-}
-.frame-corner::before,
-.frame-corner::after {
-  content: "";
-  position: absolute;
-  background: #a855f7;
-  border-radius: 2px;
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
-}
-.frame-corner.top-left {
-  top: 0;
-  left: 0;
-}
-.frame-corner.top-left::before {
-  top: 0; left: 0; width: 28px; height: 3px;
-}
-.frame-corner.top-left::after {
-  top: 0; left: 0; width: 3px; height: 28px;
-}
-
-.frame-corner.top-right {
-  top: 0;
-  right: 0;
-}
-.frame-corner.top-right::before {
-  top: 0; right: 0; width: 28px; height: 3px;
-}
-.frame-corner.top-right::after {
-  top: 0; right: 0; width: 3px; height: 28px;
-}
-
-.frame-corner.bottom-left {
-  bottom: 0;
-  left: 0;
-}
-.frame-corner.bottom-left::before {
-  bottom: 0; left: 0; width: 28px; height: 3px;
-}
-.frame-corner.bottom-left::after {
-  bottom: 0; left: 0; width: 3px; height: 28px;
-}
-
-.frame-corner.bottom-right {
-  bottom: 0;
-  right: 0;
-}
-.frame-corner.bottom-right::before {
-  bottom: 0; right: 0; width: 28px; height: 3px;
-}
-.frame-corner.bottom-right::after {
-  bottom: 0; right: 0; width: 3px; height: 28px;
-}
-
-/* Línea animada de escaneo */
-.scan-line-anim {
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  height: 2px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    #a855f7 15%,
-    #c084fc 50%,
-    #a855f7 85%,
-    transparent 100%
-  );
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.6),
-              0 0 24px rgba(168, 85, 247, 0.3);
-  border-radius: 2px;
-  animation: scanLineMove 1.8s ease-in-out infinite;
-  z-index: 4;
-}
-
-@keyframes scanLineMove {
-  0% {
-    top: 8%;
-    opacity: 0.3;
-  }
-  50% {
-    top: 90%;
-    opacity: 1;
-  }
-  100% {
-    top: 8%;
-    opacity: 0.3;
-  }
-}
-
-/* Texto guía dentro del marco */
-.frame-guide-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 13px;
-  font-weight: 500;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+/* Esquinas de soporte estilo escáner de alta tecnología */
+.tcg-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  z-index: 4;
+}
+.tcg-corner::before,
+.tcg-corner::after {
+  content: "";
+  position: absolute;
+  background: #c084fc;
+  box-shadow: 0 0 8px #a855f7;
+}
+.tcg-corner.top-left { top: -2px; left: -2px; }
+.tcg-corner.top-left::before { top: 0; left: 0; width: 24px; height: 3.5px; border-radius: 2px; }
+.tcg-corner.top-left::after { top: 0; left: 0; width: 3.5px; height: 24px; border-radius: 2px; }
+
+.tcg-corner.top-right { top: -2px; right: -2px; }
+.tcg-corner.top-right::before { top: 0; right: 0; width: 24px; height: 3.5px; border-radius: 2px; }
+.tcg-corner.top-right::after { top: 0; right: 0; width: 3.5px; height: 24px; border-radius: 2px; }
+
+.tcg-corner.bottom-left { bottom: -2px; left: -2px; }
+.tcg-corner.bottom-left::before { bottom: 0; left: 0; width: 24px; height: 3.5px; border-radius: 2px; }
+.tcg-corner.bottom-left::after { bottom: 0; left: 0; width: 3.5px; height: 24px; border-radius: 2px; }
+
+.tcg-corner.bottom-right { bottom: -2px; right: -2px; }
+.tcg-corner.bottom-right::before { bottom: 0; right: 0; width: 24px; height: 3.5px; border-radius: 2px; }
+.tcg-corner.bottom-right::after { bottom: 0; right: 0; width: 3.5px; height: 24px; border-radius: 2px; }
+
+/* Láser animado de escaneo */
+.tcg-scan-laser {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  height: 2.5px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(168, 85, 247, 0.6) 15%,
+    #e879f9 50%,
+    rgba(168, 85, 247, 0.6) 85%,
+    transparent 100%
+  );
+  box-shadow: 0 0 14px #c084fc, 0 0 26px rgba(168, 85, 247, 0.7);
+  animation: cardScanCycle 2.4s ease-in-out infinite;
+  z-index: 5;
+}
+@keyframes cardScanCycle {
+  0% { top: 4%; opacity: 0.2; }
+  45% { top: 92%; opacity: 1; }
+  55% { top: 92%; opacity: 1; }
+  100% { top: 4%; opacity: 0.2; }
+}
+
+/* Guía superior del marco */
+.tcg-frame-top-guide {
+  padding: 10px;
   text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
   pointer-events: none;
   z-index: 3;
 }
 
-/* Loading de cámara */
+/* ZONA INFERIOR DEMARCADA: DONDE ESTÁN EL NOMBRE Y EL CÓDIGO */
+.tcg-bottom-target-zone {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 38%;
+  background: linear-gradient(to top, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 75%, transparent 100%);
+  border-top: 2px dashed rgba(245, 158, 11, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 6px;
+  pointer-events: none;
+  z-index: 3;
+  box-shadow: 0 -4px 14px rgba(245, 158, 11, 0.12);
+}
+.target-zone-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.9);
+  color: #000;
+  font-size: 10.5px;
+  font-weight: 800;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+/* Controles y estado */
+.scanner-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 2px;
+}
+.scanner-status-indicator {
+  display: flex;
+  align-items: center;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-suave, #9CA3AF);
+}
+.status-badge.status-scanning {
+  color: #c084fc;
+}
+.status-dot-pulsing {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: livePulse 1.5s infinite;
+}
+
+.scanner-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-accion-scanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+.btn-escanear-manual {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(147, 51, 234, 0.35);
+}
+.btn-escanear-manual:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 18px rgba(147, 51, 234, 0.5);
+}
+.btn-escanear-manual:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-subir-archivo {
+  background: var(--t08, rgba(237, 237, 237, 0.08));
+  color: var(--texto, #ededed);
+  border: 1px solid var(--t15, rgba(237, 237, 237, 0.15));
+}
+.btn-subir-archivo:hover {
+  background: var(--t12, rgba(237, 237, 237, 0.12));
+}
+
+.btn-toggle-autoscan {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border: 1px solid var(--t12, rgba(237, 237, 237, 0.12));
+  background: transparent;
+  color: var(--texto-suave, #9CA3AF);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-toggle-autoscan.activo {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+/* Loading y errores de cámara */
 .scanner-loading-cam {
   position: absolute;
   inset: 0;
@@ -14339,34 +14414,37 @@ img { display: block; max-width: 100%; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: #0a0a0a;
+  gap: 12px;
+  background: #080812;
   color: var(--texto-suave, #9CA3AF);
-  font-size: 13px;
+  font-size: 13.5px;
   z-index: 10;
 }
-
-/* Error de cámara */
 .scanner-error-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 32px;
+  padding: 28px;
   text-align: center;
   color: var(--texto-suave, #9CA3AF);
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.55;
 }
-.btn-reintentar-camara {
+.scanner-error-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.btn-reintentar-camara,
+.btn-subir-foto-camara {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 12px;
   padding: 8px 16px;
-  background: var(--t06, rgba(237, 237, 237, 0.06));
-  border: 1px solid var(--t12, rgba(237, 237, 237, 0.12));
+  background: var(--t08, rgba(237, 237, 237, 0.08));
+  border: 1px solid var(--t15, rgba(237, 237, 237, 0.15));
   color: var(--texto, #ededed);
   font-size: 13px;
   font-weight: 600;
@@ -14374,51 +14452,13 @@ img { display: block; max-width: 100%; }
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-reintentar-camara:hover {
-  background: var(--t10, rgba(237, 237, 237, 0.1));
-}
-
-/* Botón de escaneo */
-.btn-escanear-carta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  font-family: inherit;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.2s;
-  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35);
-  align-self: center;
-}
-.btn-escanear-carta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(168, 85, 247, 0.5);
-}
-.btn-escanear-carta:active {
-  transform: scale(0.97);
-}
-
-/* Estado procesando */
-.scanner-estado-procesando {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  color: var(--acento, #a855f7);
-  font-size: 13px;
-  font-weight: 600;
+.btn-reintentar-camara:hover,
+.btn-subir-foto-camara:hover {
+  background: var(--t12, rgba(237, 237, 237, 0.12));
 }
 
 /* ======================================================================
-   POPUP DE RESULTADO (bottom toast)
+   POPUP DE RESULTADO CON TEMPORIZADOR DE 2.5 SEGUNDOS
    ====================================================================== */
 
 .scanner-popup-resultado {
@@ -14429,21 +14469,21 @@ img { display: block; max-width: 100%; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
-  background: #1e1b4b;
-  background: linear-gradient(135deg, rgba(30, 27, 75, 0.97), rgba(49, 46, 129, 0.95));
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  border-radius: 14px;
+  gap: 14px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(24, 21, 60, 0.98), rgba(40, 20, 80, 0.96));
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 16px;
   box-shadow:
-    0 -4px 24px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(168, 85, 247, 0.15) inset;
+    0 -8px 32px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(168, 85, 247, 0.25) inset;
   transform: translateY(120%);
   opacity: 0;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s;
-  z-index: 20;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s;
+  z-index: 30;
   pointer-events: none;
+  overflow: hidden;
 }
 .scanner-popup-resultado.visible {
   transform: translateY(0);
@@ -14451,88 +14491,129 @@ img { display: block; max-width: 100%; }
   pointer-events: auto;
 }
 
-/* Info de la carta detectada */
+/* Barra de progreso regresiva de 2.5s */
+.popup-countdown-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #ec4899, #a855f7, #3b82f6);
+  animation: countdownShrink 2.5s linear forwards;
+}
+@keyframes countdownShrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
 .popup-resultado-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.popup-badge-code {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge-codigo-res {
+  display: inline-block;
+  padding: 2px 7px;
+  background: rgba(168, 85, 247, 0.25);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  color: #e9d5ff;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.popup-countdown-text {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 600;
 }
 .popup-nombre-carta {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.2px;
 }
 .popup-expansion-carta {
-  margin: 3px 0 0 0;
-  font-size: 12px;
+  margin: 0;
+  font-size: 12.5px;
   color: #c4b5fd;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Botones del popup */
+/* Acciones del popup */
 .popup-resultado-acciones {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
 }
 .popup-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   transition: transform 0.12s, box-shadow 0.15s;
 }
 .popup-btn:active {
-  transform: scale(0.9);
+  transform: scale(0.92);
 }
-
 .popup-btn-aceptar {
   background: linear-gradient(135deg, #059669, #10b981);
   color: #fff;
-  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 .popup-btn-aceptar:hover {
-  box-shadow: 0 5px 18px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+  transform: translateY(-1px);
 }
-
 .popup-btn-rechazar {
   background: linear-gradient(135deg, #dc2626, #ef4444);
   color: #fff;
-  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
 }
 .popup-btn-rechazar:hover {
-  box-shadow: 0 5px 18px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.55);
+  transform: translateY(-1px);
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .scanner-camera-area {
-    aspect-ratio: 3 / 4;
-    max-height: 360px;
+    min-height: 360px;
   }
-  .scanner-frame {
-    width: 80%;
-    height: 55%;
+  .scanner-card-frame {
+    height: 88%;
   }
-  .frame-corner {
-    width: 22px;
-    height: 22px;
+  .scanner-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
   }
-  .frame-corner::before { width: 22px !important; }
-  .frame-corner::after { height: 22px !important; }
+  .scanner-actions-group {
+    justify-content: space-between;
+  }
+  .btn-accion-scanner {
+    flex: 1;
+    justify-content: center;
+  }
   .popup-nombre-carta {
-    font-size: 13px;
-  }
-  .btn-escanear-carta {
-    width: 100%;
+    font-size: 13.5px;
   }
 }
+

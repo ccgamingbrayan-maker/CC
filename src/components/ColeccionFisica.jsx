@@ -751,14 +751,16 @@ export default function ColeccionFisica({ user }) {
                   onCardDetected={(cardData) => {
                     // Al detectar una carta, pasar a la pestaña One Piece y buscar
                     setJuegoActivo("onepiece");
-                    setQueryApi(cardData.nombre);
+                    const textoBusqueda = cardData.nombre?.startsWith("Carta ") && cardData.codigo
+                      ? cardData.codigo
+                      : (cardData.nombre || cardData.codigo || "");
+                    setQueryApi(textoBusqueda);
                     // Ejecutar búsqueda automáticamente
                     setTimeout(() => {
-                      const fakeEvent = { preventDefault: () => {} };
                       setBuscandoApi(true);
                       setCartaSeleccionada(null);
                       setResultadosApi([]);
-                      const texto = cardData.nombre.trim();
+                      const texto = textoBusqueda.trim();
                       if (!texto) { setBuscandoApi(false); return; }
                       Promise.all([
                         buscarPrintsOnePiece(texto).catch(() => []),
@@ -783,6 +785,15 @@ export default function ColeccionFisica({ user }) {
                           return 0;
                         });
                         setResultadosApi(unicos);
+                        // Auto-seleccionar si coincide el código exacto
+                        if (cardData.codigo) {
+                          const coincidencia = unicos.find(
+                            (c) => c.numero?.toUpperCase() === cardData.codigo.toUpperCase()
+                          );
+                          if (coincidencia) {
+                            seleccionarCartaApi(coincidencia);
+                          }
+                        }
                       }).catch((err) => {
                         console.error("Error búsqueda post-scan:", err);
                       }).finally(() => {
