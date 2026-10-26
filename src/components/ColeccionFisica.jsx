@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Layers,
   Plus,
@@ -82,6 +82,7 @@ function esVersionEspecialOnePiece(c) {
 }
 
 export default function ColeccionFisica({ user }) {
+  const previewRef = useRef(null);
   const [coleccion, setColeccion] = useState([]);
   const [cargandoColeccion, setCargandoColeccion] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -260,6 +261,12 @@ export default function ColeccionFisica({ user }) {
       imagen: carta.imagen || carta.image_uris?.normal || carta.image_uris?.large || "",
       juego: juegoActivo,
     });
+    // Scroll automático suave al preview en móvil
+    if (typeof window !== "undefined" && window.innerWidth <= 768 && previewRef.current) {
+      setTimeout(() => {
+        previewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 50);
+    }
   }
 
   // Confirmar y agregar la carta seleccionada desde la API
@@ -478,7 +485,7 @@ export default function ColeccionFisica({ user }) {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+        <div className="coleccion-header-actions">
           <button
             type="button"
             className="auth-boton btn-escanear-ia-header"
@@ -566,11 +573,10 @@ export default function ColeccionFisica({ user }) {
           <p style={{ maxWidth: "440px", margin: "0 auto 24px auto", fontSize: "14px", lineHeight: "1.6" }}>
             Busca cualquier carta en la API oficial de One Piece, Pokémon o Magic para agregarla con su foto oficial, rareza y expansión en un solo clic.
           </p>
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="coleccion-empty-actions">
             <button
               type="button"
               className="auth-boton btn-escanear-ia-header"
-              style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
               onClick={() => setMostrarEscaner(true)}
             >
               <Camera size={16} /> Escanear con IA
@@ -578,10 +584,9 @@ export default function ColeccionFisica({ user }) {
             <button
               type="button"
               className="auth-boton"
-              style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
               onClick={() => setMostrarModal(true)}
             >
-              <Plus size={16} /> Agregar carta desde API
+              <Plus size={16} /> Buscar en API
             </button>
           </div>
         </div>
@@ -919,7 +924,7 @@ export default function ColeccionFisica({ user }) {
                   </div>
 
                   {/* PANEL LATERAL: CARTA SELECCIONADA Y CONFIGURACIÓN */}
-                  <div className="api-preview-col">
+                  <div className="api-preview-col" ref={previewRef}>
                     <div className="api-preview-card">
                       <div className="preview-header">
                         <h4>Detalles de tu carta</h4>
