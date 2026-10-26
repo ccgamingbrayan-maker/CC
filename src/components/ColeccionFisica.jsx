@@ -14,7 +14,9 @@ import {
   Loader2,
   BookOpen,
   Filter,
+  Camera,
 } from "lucide-react";
+import CardScanner from "./CardScanner.jsx";
 import { supabase } from "../lib/supabase.js";
 import {
   buscarPrintsOnePiece,
@@ -84,6 +86,7 @@ export default function ColeccionFisica({ user }) {
   const [cargandoColeccion, setCargandoColeccion] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarEscaner, setMostrarEscaner] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [expansionFiltro, setExpansionFiltro] = useState("todas");
   const [expansionesColapsadas, setExpansionesColapsadas] = useState({});
@@ -475,18 +478,29 @@ export default function ColeccionFisica({ user }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="auth-boton coleccion-btn-agregar"
-          onClick={() => {
-            setMostrarModal(true);
-            setCartaSeleccionada(null);
-            setResultadosApi([]);
-            setQueryApi("");
-          }}
-        >
-          <Plus size={16} /> Agregar carta desde API
-        </button>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="auth-boton btn-escanear-ia-header"
+            onClick={() => setMostrarEscaner(true)}
+            title="Escanear carta física de One Piece con IA (Gemini 2.5 Flash)"
+          >
+            <Camera size={16} /> Escanear con IA
+          </button>
+
+          <button
+            type="button"
+            className="auth-boton coleccion-btn-agregar"
+            onClick={() => {
+              setMostrarModal(true);
+              setCartaSeleccionada(null);
+              setResultadosApi([]);
+              setQueryApi("");
+            }}
+          >
+            <Plus size={16} /> Agregar carta desde API
+          </button>
+        </div>
       </div>
 
       {/* METRICAS MINIMALISTAS */}
@@ -552,14 +566,24 @@ export default function ColeccionFisica({ user }) {
           <p style={{ maxWidth: "440px", margin: "0 auto 24px auto", fontSize: "14px", lineHeight: "1.6" }}>
             Busca cualquier carta en la API oficial de One Piece, Pokémon o Magic para agregarla con su foto oficial, rareza y expansión en un solo clic.
           </p>
-          <button
-            type="button"
-            className="auth-boton"
-            style={{ margin: "0 auto", display: "inline-flex", alignItems: "center", gap: "8px" }}
-            onClick={() => setMostrarModal(true)}
-          >
-            <Plus size={16} /> Agregar mi primera carta
-          </button>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="auth-boton btn-escanear-ia-header"
+              style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+              onClick={() => setMostrarEscaner(true)}
+            >
+              <Camera size={16} /> Escanear con IA
+            </button>
+            <button
+              type="button"
+              className="auth-boton"
+              style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+              onClick={() => setMostrarModal(true)}
+            >
+              <Plus size={16} /> Agregar carta desde API
+            </button>
+          </div>
         </div>
       ) : gruposPorExpansion.length === 0 ? (
         <div className="perfil-vacio" style={{ padding: "36px 20px" }}>
@@ -770,6 +794,19 @@ export default function ColeccionFisica({ user }) {
                     {buscandoApi ? <Loader2 size={16} className="spinner-icon" /> : <Search size={16} />}
                     Buscar en API
                   </button>
+                  {juegoActivo === "onepiece" && (
+                    <button
+                      type="button"
+                      className="btn-abrir-escaner-modal"
+                      onClick={() => {
+                        setMostrarModal(false);
+                        setMostrarEscaner(true);
+                      }}
+                      title="Escanear carta física con IA (Gemini 2.5 Flash)"
+                    >
+                      <Camera size={16} /> Escanear con IA
+                    </button>
+                  )}
                 </form>
 
                 {/* SELECTOR DE RAREZA EN BÚSQUEDA (ONE PIECE): MENOR RAREZA (NORMAL / BASE) POR DEFAULT VS AA */}
@@ -1120,6 +1157,16 @@ export default function ColeccionFisica({ user }) {
             )}
           </div>
         </div>
+      )}
+
+      {/* MODAL DE ESCÁNER DE ONE PIECE CON IA GEMINI */}
+      {mostrarEscaner && (
+        <CardScanner
+          onAgregarColeccion={async (nuevaCarta) => {
+            await guardarCartaEnBaseDatos(nuevaCarta);
+          }}
+          onClose={() => setMostrarEscaner(false)}
+        />
       )}
     </div>
   );
