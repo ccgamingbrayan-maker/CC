@@ -3,9 +3,13 @@ import { createServerClient, parseCookieHeader, serializeCookieHeader } from '@s
 export function createClient(request) {
   const headers = new Headers()
 
+  const envProcess = typeof globalThis !== "undefined" && globalThis.process ? globalThis.process.env : undefined;
+  const url = envProcess?.VITE_SUPABASE_URL || import.meta.env?.VITE_SUPABASE_URL;
+  const publishableKey = envProcess?.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY;
+
   const supabase = createServerClient(
-    process.env.VITE_SUPABASE_URL,
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    url,
+    publishableKey,
     {
       cookies: {
         getAll() {

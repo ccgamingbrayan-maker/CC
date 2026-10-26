@@ -191,7 +191,7 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
         } catch (geminiErr) {
           console.warn("Fallo con Gemini API Key, intentando respaldo:", geminiErr);
           if (geminiErr.message?.includes("API key not valid")) {
-            throw new Error("La API Key de Gemini ingresada no es válida. Revisa tu clave en ai.google.dev");
+            throw new Error("La API Key de Gemini ingresada no es válida. Revisa tu clave en ai.google.dev", { cause: geminiErr });
           }
           // Intento con respaldo BaseCC
           resultadoIa = await escanearConBaseCcFallback(base64Data).catch(() => null);

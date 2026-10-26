@@ -385,6 +385,18 @@ export function mapTorneoParaSupabase(t) {
   };
 }
 
+async function getAuthHeaders() {
+  const headers = { "Content-Type": "application/json" };
+  try {
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+    }
+  } catch (e) {}
+  return headers;
+}
+
 /**
  * Obtiene la lista completa de torneos (Backend > Supabase > LocalStorage)
  */
@@ -444,18 +456,6 @@ export async function guardarTorneo(torneo) {
     torneos.unshift(registro);
   }
   guardarLocal(torneos);
-
-async function getAuthHeaders() {
-  const headers = { "Content-Type": "application/json" };
-  try {
-    if (supabase) {
-      const { data } = await supabase.auth.getSession();
-      const token = data?.session?.access_token;
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-    }
-  } catch (e) {}
-  return headers;
-}
 
   // Sincronizar en Backend
   try {

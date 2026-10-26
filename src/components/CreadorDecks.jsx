@@ -780,7 +780,7 @@ export default function CreadorDecks({ user }) {
   const analisisDeck = useMemo(() => {
     if (!deckSeleccionado || !deckSeleccionado.cartas) return null;
 
-    let totalNecesarias = 0;
+    const totalNecesarias = deckSeleccionado.cartas.reduce((acc, c) => acc + (c.cantidad || 0), 0);
     let totalTienes = 0;
     let totalFaltantes = 0;
     let faltantesDisponiblesTienda = 0;
@@ -793,8 +793,8 @@ export default function CreadorDecks({ user }) {
 
     const clean = (s) => (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-    const listaAnalizada = deckSeleccionado.cartas.map((item) => {
-      totalNecesarias += item.cantidad;
+    const listaAnalizada = [];
+    for (const item of deckSeleccionado.cartas) {
 
       const tipoUpper = (item.tipo || "").toUpperCase();
       if (tipoUpper === "LEADER" || item.rareza === "L") {
@@ -930,7 +930,7 @@ export default function CreadorDecks({ user }) {
         costoTotalFaltantesTienda += copiasComprables * Number(enTienda.precio || 0);
       }
 
-      return {
+      listaAnalizada.push({
         ...item,
         tienes,
         faltan,
@@ -941,8 +941,8 @@ export default function CreadorDecks({ user }) {
         rarezaActiva,
         tieneAA: tieneAAReal,
         esAA,
-      };
-    });
+      });
+    }
 
     const porcentaje =
       totalNecesarias > 0
