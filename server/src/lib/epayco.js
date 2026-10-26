@@ -50,9 +50,17 @@ export async function crearSesionPago(datos) {
 // Valida la firma x_signature que ePayco envia en el webhook de confirmacion.
 // Formula oficial: sha256(p_cust_id_cliente^p_key^x_ref_payco^x_transaction_id^x_amount^x_currency_code)
 export function firmaEsValida({ x_ref_payco, x_transaction_id, x_amount, x_currency_code, x_signature }) {
+  const customerId = process.env.EPAYCO_CUSTOMER_ID;
+  const pKey = process.env.EPAYCO_P_KEY;
+
+  if (!customerId || !pKey || !x_signature) {
+    console.warn("[ePayco] Faltan variables de entorno o firma para validar el webhook.");
+    return false;
+  }
+
   const cadena = [
-    process.env.EPAYCO_CUSTOMER_ID,
-    process.env.EPAYCO_P_KEY,
+    customerId,
+    pKey,
     x_ref_payco,
     x_transaction_id,
     x_amount,
@@ -60,5 +68,13 @@ export function firmaEsValida({ x_ref_payco, x_transaction_id, x_amount, x_curre
   ].join("^");
 
   const firmaCalculada = crypto.createHash("sha256").update(cadena).digest("hex");
-  return firmaCalculada === x_signature;
+
+  try {
+    const a = Buffer.from(firmaCalculada, "utf8");
+    const b = Buffer.from(String(x_signature), "utf8");
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }

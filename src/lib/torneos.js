@@ -445,11 +445,24 @@ export async function guardarTorneo(torneo) {
   }
   guardarLocal(torneos);
 
+async function getAuthHeaders() {
+  const headers = { "Content-Type": "application/json" };
+  try {
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+    }
+  } catch (e) {}
+  return headers;
+}
+
   // Sincronizar en Backend
   try {
+    const authHeaders = await getAuthHeaders();
     await fetch(`${API_URL}/api/torneos`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify(registro),
       signal: AbortSignal.timeout(3000),
     });
@@ -474,8 +487,10 @@ export async function eliminarTorneo(id) {
   guardarLocal(torneos);
 
   try {
+    const authHeaders = await getAuthHeaders();
     await fetch(`${API_URL}/api/torneos/${id}`, {
       method: "DELETE",
+      headers: authHeaders,
       signal: AbortSignal.timeout(3000),
     });
   } catch (e) {}
@@ -537,9 +552,10 @@ export async function guardarParticipante(torneoId, participante) {
 
   // Sincronizar backend
   try {
+    const authHeaders = await getAuthHeaders();
     await fetch(`${API_URL}/api/torneos/${torneoId}/participantes`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify(pRegistro),
       signal: AbortSignal.timeout(3000),
     });
@@ -562,8 +578,10 @@ export async function eliminarParticipante(torneoId, participanteId) {
   guardarLocal(torneos);
 
   try {
+    const authHeaders = await getAuthHeaders();
     await fetch(`${API_URL}/api/torneos/${torneoId}/participantes/${participanteId}`, {
       method: "DELETE",
+      headers: authHeaders,
       signal: AbortSignal.timeout(3000),
     });
   } catch (e) {}

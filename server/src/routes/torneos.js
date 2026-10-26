@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { supabaseAdmin } from "../lib/supabaseAdmin.js";
+import { requireAdmin } from "../middleware/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,7 +47,7 @@ router.get("/", async (_req, res) => {
 });
 
 // POST /api/torneos (crear o editar torneo)
-router.post("/", async (req, res) => {
+router.post("/", requireAdmin, async (req, res) => {
   const torneo = req.body;
   if (!torneo || !torneo.nombre) {
     return res.status(400).json({ error: "El nombre del torneo es obligatorio" });
@@ -85,7 +86,7 @@ router.post("/", async (req, res) => {
 });
 
 // DELETE /api/torneos/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAdmin, async (req, res) => {
   const { id } = req.params;
   const torneos = leerTorneos().filter((t) => t.id !== id);
   guardarTorneos(torneos);
@@ -100,7 +101,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // POST /api/torneos/:id/participantes (agregar o editar participante)
-router.post("/:id/participantes", async (req, res) => {
+router.post("/:id/participantes", requireAdmin, async (req, res) => {
   const { id } = req.params;
   const participante = req.body;
   const torneos = leerTorneos();
@@ -158,7 +159,7 @@ router.post("/:id/participantes", async (req, res) => {
 });
 
 // DELETE /api/torneos/:id/participantes/:pId
-router.delete("/:id/participantes/:pId", async (req, res) => {
+router.delete("/:id/participantes/:pId", requireAdmin, async (req, res) => {
   const { id, pId } = req.params;
   const torneos = leerTorneos();
   const tIdx = torneos.findIndex((t) => t.id === id);
@@ -180,7 +181,7 @@ router.delete("/:id/participantes/:pId", async (req, res) => {
 });
 
 // POST /api/torneos/:id/distribuir-premios (distribución automática del pull de premios)
-router.post("/:id/distribuir-premios", async (req, res) => {
+router.post("/:id/distribuir-premios", requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { pozoTotal, esquema, premiosFisicos } = req.body;
   const torneos = leerTorneos();

@@ -1,22 +1,10 @@
 import { Router } from "express";
 import { supabaseAdmin } from "../lib/supabaseAdmin.js";
 import { crearSesionPago, firmaEsValida } from "../lib/epayco.js";
-import { enviarCorreoConfirmacionPedido, enviarCorreoPrueba } from "../lib/mailer.js";
+import { enviarCorreoConfirmacionPedido } from "../lib/mailer.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
-
-// Identifica al usuario a partir del token de sesion de Supabase que manda
-// el frontend (Authorization: Bearer <access_token>).
-async function requireAuth(req, res, next) {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  if (!token) return res.status(401).json({ error: "No autenticado" });
-
-  const { data, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !data.user) return res.status(401).json({ error: "Sesion invalida" });
-
-  req.userId = data.user.id;
-  next();
-}
 
 // Vuelve a leer el carrito y los precios/stock REALES desde la base de datos.
 // Nunca se confia en montos que pudiera mandar el navegador.
@@ -125,6 +113,12 @@ router.post("/confirmacion", async (req, res) => {
 
     if (pedido.estado !== "pendiente") return res.status(200).send("OK"); // ya procesado, evita duplicados
 
+    // Validación estricta de monto y moneda contra el pedido real en base de datos
+    if (Number(datos.x_amount) !== Number(pedido.total) || (datos.x_currency_code && datos.x_currency_code !== "COP")) {
+      console.error(`[ePayco] Discrepancia en monto o moneda para pedido #${pedidoId}. Esperado: ${pedido.total} COP, Recibido: ${datos.x_amount} ${datos.x_currency_code}`);
+      return res.status(400).send("Amount mismatch");
+    }
+
     const nuevoEstado =
       datos.x_response === "Aceptada"
         ? "pagado"
@@ -173,22 +167,6 @@ router.post("/confirmacion", async (req, res) => {
   } catch (err) {
     console.error("Error procesando webhook de ePayco:", err);
     res.status(500).send("Internal Server Error");
-  }
-});
-
-// Ruta para probar el diseño del correo directamente
-router.all("/probar-correo", async (req, res) => {
-  try {
-    const destinatario = req.body?.email || req.query?.email || process.env.EMAIL_USER;
-    const info = await enviarCorreoPrueba(destinatario);
-    res.json({
-      ok: true,
-      mensaje: `¡Correo de prueba enviado con éxito a ${destinatario || "tu correo"}!`,
-      messageId: info.messageId,
-    });
-  } catch (err) {
-    console.error("Error en correo de prueba:", err);
-    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
