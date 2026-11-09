@@ -174,6 +174,10 @@ export default function Navbar() {
                         <User size={15} />
                         <span>Mi perfil</span>
                       </Link>
+                      <Link to="/perfil?tab=coleccion" onClick={() => setMenuAbierto(false)}>
+                        <Layers size={15} />
+                        <span>Mi Colección (Escáner)</span>
+                      </Link>
                       {esAdmin && (
                         <>
                           <Link to="/admin/agregar" onClick={() => setMenuAbierto(false)}>

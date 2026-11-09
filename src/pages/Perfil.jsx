@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   User,
   Heart,
@@ -27,7 +27,8 @@ import CreadorDecks from "../components/CreadorDecks.jsx";
 export default function Perfil() {
   const { user, cargando } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState("datos");
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => searchParams.get("tab") || "coleccion");
 
   useEffect(() => {
     if (!cargando && !user) navigate("/login", { replace: true });

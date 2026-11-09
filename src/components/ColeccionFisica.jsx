@@ -367,7 +367,7 @@ export default function ColeccionFisica({ user }) {
           const cartaFallback = { ...carta, id: Date.now().toString(), user_id: user.id };
           const nuevaLista = [cartaFallback, ...coleccion];
           setColeccion(nuevaLista);
-          supabase.auth.updateUser({ data: { coleccion: nuevaLista } }).catch(() => {});
+          supabase.auth.updateUser({ data: { coleccion: nuevaLista } }).catch(() => { });
         }
       }
     } catch (err) {
@@ -490,9 +490,10 @@ export default function ColeccionFisica({ user }) {
             type="button"
             className="auth-boton btn-escanear-ia-header"
             onClick={() => setMostrarEscaner(true)}
-            title="Escanear carta física de One Piece con IA (Gemini 2.5 Flash)"
+            title="Escanear carta física de One Piece con la cámara de tu celular"
           >
-            <Camera size={16} /> Escanear con IA
+            <Camera size={16} />
+            <span>Agregar con Escáner</span>
           </button>
 
           <button
@@ -505,7 +506,8 @@ export default function ColeccionFisica({ user }) {
               setQueryApi("");
             }}
           >
-            <Plus size={16} /> Agregar carta desde API
+            <Plus size={16} />
+            <span>Buscar en API</span>
           </button>
         </div>
       </div>
@@ -579,14 +581,16 @@ export default function ColeccionFisica({ user }) {
               className="auth-boton btn-escanear-ia-header"
               onClick={() => setMostrarEscaner(true)}
             >
-              <Camera size={16} /> Escanear con IA
+              <Camera size={16} />
+              <span>Agregar con Escáner</span>
             </button>
             <button
               type="button"
               className="auth-boton"
               onClick={() => setMostrarModal(true)}
             >
-              <Plus size={16} /> Buscar en API
+              <Plus size={16} />
+              <span>Buscar en API</span>
             </button>
           </div>
         </div>
@@ -783,8 +787,8 @@ export default function ColeccionFisica({ user }) {
                         juegoActivo === "onepiece"
                           ? "Ej: Luffy, Zoro, Nami, OP05-060, ST01..."
                           : juegoActivo === "pokemon"
-                          ? "Ej: Charizard, Pikachu, Mewtwo..."
-                          : "Ej: Black Lotus, Lightning Bolt..."
+                            ? "Ej: Charizard, Pikachu, Mewtwo..."
+                            : "Ej: Black Lotus, Lightning Bolt..."
                       }
                       value={queryApi}
                       onChange={(e) => setQueryApi(e.target.value)}
@@ -807,9 +811,10 @@ export default function ColeccionFisica({ user }) {
                         setMostrarModal(false);
                         setMostrarEscaner(true);
                       }}
-                      title="Escanear carta física con IA (Gemini 2.5 Flash)"
+                      title="Escanear carta física con la cámara"
                     >
-                      <Camera size={16} /> Escanear con IA
+                      <Camera size={16} />
+                      <span>Agregar con Escáner</span>
                     </button>
                   )}
                 </form>
@@ -1163,6 +1168,18 @@ export default function ColeccionFisica({ user }) {
           </div>
         </div>
       )}
+
+      {/* BOTÓN FLOTANTE PERMANENTE PARA CELULAR: AGREGAR CON ESCÁNER */}
+      <button
+        type="button"
+        className="btn-flotante-escanear-movil"
+        onClick={() => setMostrarEscaner(true)}
+        aria-label="Agregar con escáner"
+        title="Escanear carta física con la cámara"
+      >
+        <Camera size={20} />
+        <span>Agregar con Escáner</span>
+      </button>
 
       {/* MODAL DE ESCÁNER DE ONE PIECE CON IA GEMINI */}
       {mostrarEscaner && (
