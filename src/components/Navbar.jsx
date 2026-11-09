@@ -107,14 +107,6 @@ export default function Navbar() {
                 <span>Admin</span>
               </Link>
               <Link
-                to="/admin/torneos"
-                className={`nav-pill nav-pill-torneos ${location.pathname.startsWith("/admin/torneos") || location.pathname.startsWith("/torneos") ? "active" : ""}`}
-                title="Gestión de Torneos TCG"
-              >
-                <Trophy size={15} />
-                <span>Torneos</span>
-              </Link>
-              <Link
                 to="/admin/clientes"
                 className={`nav-pill nav-pill-clientes ${location.pathname.startsWith("/admin/clientes") || location.pathname === "/clientes" ? "active" : ""}`}
                 title="Clientes"

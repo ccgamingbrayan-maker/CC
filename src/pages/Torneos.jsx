@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Cargando from "../components/Cargando.jsx";
 import {
   Trophy,
   Calendar,
@@ -82,9 +83,30 @@ const JUEGOS_FILTRO = [
 ];
 
 export default function Torneos() {
-  const { esAdmin } = useAuth();
+  const { user, esAdmin, cargando: cargandoAuth } = useAuth();
+  const navigate = useNavigate();
+
+  // BLOQUEO ABSOLUTO: Los clientes o visitantes jamás pueden ver ni gestionar torneos
+  useEffect(() => {
+    if (!cargandoAuth && !esAdmin) {
+      if (user) {
+        navigate("/perfil?tab=torneos", { replace: true });
+      } else {
+        navigate("/login", { replace: true });
+      }
+    }
+  }, [cargandoAuth, esAdmin, user, navigate]);
+
   const [torneos, setTorneos] = useState([]);
   const [cargando, setCargando] = useState(true);
+
+  if (cargandoAuth) {
+    return <Cargando texto="Verificando permisos de administrador..." />;
+  }
+
+  if (!esAdmin) {
+    return null;
+  }
 
   // Filtros
   const [filtroJuego, setFiltroJuego] = useState("todos");

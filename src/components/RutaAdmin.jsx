@@ -4,10 +4,13 @@ import Cargando from "./Cargando.jsx";
 
 // Envuelve rutas que solo el admin puede ver.
 export default function RutaAdmin({ children }) {
-  const { esAdmin, cargando } = useAuth();
+  const { user, esAdmin, cargando } = useAuth();
 
   if (cargando) return <Cargando />;
-  if (!esAdmin) return <Navigate to="/login" replace />;
+  if (!esAdmin) {
+    if (user) return <Navigate to="/perfil?tab=torneos" replace />;
+    return <Navigate to="/login" replace />;
+  }
 
   return children;
 }

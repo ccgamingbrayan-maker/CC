@@ -23,9 +23,10 @@ import { obtenerTorneosUsuario } from "../lib/torneos.js";
 import Cargando from "../components/Cargando.jsx";
 import ColeccionFisica from "../components/ColeccionFisica.jsx";
 import CreadorDecks from "../components/CreadorDecks.jsx";
+import Torneos from "./Torneos.jsx";
 
 export default function Perfil() {
-  const { user, cargando } = useAuth();
+  const { user, esAdmin, cargando } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(() => searchParams.get("tab") || "coleccion");
@@ -127,6 +128,22 @@ export default function Perfil() {
               <Trophy size={16} />
               <span>Mis Torneos</span>
             </button>
+            {esAdmin && (
+              <button
+                type="button"
+                className={`perfil-tab-btn perfil-tab-admin-torneos ${tab === "gestion_torneos" ? "active" : ""}`}
+                onClick={() => setTab("gestion_torneos")}
+                style={{
+                  background: tab === "gestion_torneos" ? "linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(249, 115, 22, 0.2) 100%)" : "rgba(234, 179, 8, 0.08)",
+                  borderColor: "rgba(234, 179, 8, 0.4)",
+                  color: "#fbbf24",
+                  fontWeight: 700,
+                }}
+              >
+                <Trophy size={16} />
+                <span>Gestión Torneos (Admin)</span>
+              </button>
+            )}
           </div>
         </nav>
 
@@ -141,6 +158,11 @@ export default function Perfil() {
         {tab === "wishlist" && <Wishlist user={user} />}
         {tab === "pedidos" && <Pedidos user={user} />}
         {tab === "torneos" && <MisTorneos user={user} />}
+        {tab === "gestion_torneos" && esAdmin && (
+          <div className="perfil-admin-torneos-panel" style={{ marginTop: "16px" }}>
+            <Torneos />
+          </div>
+        )}
       </div>
     </section>
   );

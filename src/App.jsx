@@ -18,11 +18,11 @@ import Cargando from "./components/Cargando.jsx";
 import { useCart } from "./lib/CartContext.jsx";
 import { useAuth } from "./lib/AuthContext.jsx";
 
-// Guard para torneos: Admin accede al panel, Clientes van a su perfil de torneos jugados
+// Guard para torneos: Admin va a su panel, Clientes van a su perfil de torneos jugados
 function RutaTorneosGuard() {
   const { user, esAdmin, cargando } = useAuth();
   if (cargando) return <Cargando texto="Verificando acceso…" />;
-  if (esAdmin) return <Torneos />;
+  if (esAdmin) return <Navigate to="/admin/torneos" replace />;
   if (user) return <Navigate to="/perfil?tab=torneos" replace />;
   return <Navigate to="/login" replace />;
 }
