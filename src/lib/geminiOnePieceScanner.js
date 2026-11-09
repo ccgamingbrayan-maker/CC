@@ -517,11 +517,18 @@ async function llamarGeminiConImagenCustomSchema(cleanBase64, apiKey, prompt, sc
  * Motor de ejecución de Gemini con fallback entre modelos y reintentos
  */
 async function ejecutarLlamadaGemini(payload, apiKey) {
-  const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+  // Lista actualizada de modelos vigentes en la API de Google Gemini
+  // "gemini-flash-latest" siempre apunta a la versión más moderna y estable
+  const models = [
+    "gemini-flash-latest",
+    "gemini-3.8-flash",
+    "gemini-flash-lite-latest",
+    "gemini-2.5-flash",
+  ];
   let lastError = null;
 
   for (const model of models) {
-    // Hasta 2 intentos por modelo (por si hay errores transitorios)
+    // Hasta 2 intentos por modelo (por si hay picos de demanda o errores transitorios)
     for (let intento = 0; intento < 2; intento++) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -538,26 +545,30 @@ async function ejecutarLlamadaGemini(payload, apiKey) {
 
           // Si es error de API key, fallar inmediatamente
           if (msg.includes("API key not valid") || msg.includes("API_KEY_INVALID")) {
-            throw new Error(msg);
+            throw new Error("API_KEY_INVALID: " + msg);
           }
 
-          // Si el modelo no existe, pasar al siguiente
-          if (status === 404 || msg.includes("not found") || msg.includes("not supported")) {
+          // Si el modelo no existe o está discontinuado, pasar al siguiente modelo
+          if (
+            status === 404 ||
+            msg.includes("not found") ||
+            msg.includes("not supported") ||
+            msg.includes("no longer available")
+          ) {
             lastError = new Error(msg);
-            break; // No reintentar el mismo modelo
+            break; // No reintentar el mismo modelo, probar el siguiente
           }
 
-          // Error 429 (rate limit) o 503 — reintentar tras pausa
+          // Error 429 (rate limit) o 503 (spike de demanda) — esperar y reintentar
           if (status === 429 || status === 503) {
             lastError = new Error(msg);
             if (intento === 0) {
-              await new Promise((r) => setTimeout(r, 1500));
+              await new Promise((r) => setTimeout(r, 1200));
               continue;
             }
-            break;
+            break; // Probar siguiente modelo
           }
 
-          // Error 400 por payload — no reintentar mismo modelo
           if (status === 400) {
             lastError = new Error(msg);
             break;
@@ -567,13 +578,23 @@ async function ejecutarLlamadaGemini(payload, apiKey) {
         }
 
         const data = await res.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawText) {
+        const candidate = data?.candidates?.[0];
+        // Encontrar la parte que contiene texto (manejando modelos con thinking/thought signatures)
+        const parts = candidate?.content?.parts || [];
+        const textPart = parts.find((p) => typeof p.text === "string" && p.text.trim())?.text;
+
+        if (!textPart) {
           lastError = new Error("Respuesta vacía de Gemini");
           break; // Probar otro modelo
         }
 
-        const parsed = JSON.parse(rawText);
+        // Limpiar bloques de código markdown ```json ... ``` si vienen en la respuesta
+        let cleanText = textPart.trim();
+        if (cleanText.startsWith("```")) {
+          cleanText = cleanText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+        }
+
+        const parsed = JSON.parse(cleanText);
         return parsed;
       } catch (err) {
         lastError = err;
@@ -581,9 +602,8 @@ async function ejecutarLlamadaGemini(payload, apiKey) {
           err.message?.includes("API key not valid") ||
           err.message?.includes("API_KEY_INVALID")
         ) {
-          throw err; // No reintentar errores de API key
+          throw err;
         }
-        // Si es error de red, reintentar
         if (intento === 0 && err.name === "TypeError") {
           await new Promise((r) => setTimeout(r, 1000));
           continue;

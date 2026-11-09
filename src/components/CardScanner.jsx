@@ -201,7 +201,7 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
 
       if (keyActual) {
         try {
-          setEstadoTexto("Analizando carta con IA (Gemini 2.5 Flash)...");
+          setEstadoTexto("Analizando carta con IA (Gemini Flash)...");
           resultadoIa = await escanearCartaConGemini(base64Data, keyActual);
         } catch (geminiErr) {
           console.warn("Fallo con Gemini API Key, intentando respaldo:", geminiErr);
@@ -288,10 +288,14 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
     }
 
     const scale = vw / renderedW;
-    const x = Math.max(0, (fRect.left - vRect.left + offX) * scale);
-    const y = Math.max(0, (fRect.top - vRect.top + offY) * scale);
-    const w = Math.min(vw - x, fRect.width * scale);
-    const h = Math.min(vh - y, fRect.height * scale);
+    // Margen de seguridad del 6% para evitar recortar bordes o el código Bandai inferior
+    const padX = fRect.width * 0.06 * scale;
+    const padY = fRect.height * 0.06 * scale;
+
+    const x = Math.max(0, (fRect.left - vRect.left + offX) * scale - padX);
+    const y = Math.max(0, (fRect.top - vRect.top + offY) * scale - padY);
+    const w = Math.min(vw - x, fRect.width * scale + padX * 2);
+    const h = Math.min(vh - y, fRect.height * scale + padY * 2);
 
     const canvas = document.createElement("canvas");
 
@@ -335,6 +339,12 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
   // Botón manual "Capturar y Escanear"
   function handleCapturarManual() {
     if (procesando) return;
+    try {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(35);
+      }
+    } catch {}
+
     const base64 = capturarFrame();
     if (!base64) {
       setErrorMensaje("La cámara aún se está inicializando. Espera un segundo.");
@@ -464,7 +474,7 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
             <div className="op-key-panel-info">
               <Key size={16} style={{ color: "#a855f7", flexShrink: 0 }} />
               <div>
-                <strong>Google Gemini API Key (Gemini 2.5 Flash)</strong>
+                <strong>Google Gemini API Key (Gemini Flash)</strong>
                 <p>
                   Obtén tu API key gratuita en{" "}
                   <a
