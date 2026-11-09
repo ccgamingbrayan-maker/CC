@@ -23,6 +23,7 @@ import {
   buscarYEmparejarCarta,
   getGeminiApiKey,
   setGeminiApiKey,
+  preprocesarImagenParaIA,
 } from "../lib/geminiOnePieceScanner.js";
 
 const CONDICIONES = [
@@ -79,23 +80,36 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
     setTorchOn(false);
 
     try {
-      // Configuración flexible que funciona tanto en iOS Safari como Android y Desktop
+      // Configuración de ALTA RESOLUCIÓN — necesaria para leer el código Bandai pequeño
       let stream = null;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: modo },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            focusMode: { ideal: "continuous" },
           },
           audio: false,
         });
       } catch (errConstraint) {
-        // Fallback simplificado si el dispositivo tiene restricciones estrictas
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: modo },
-          audio: false,
-        });
+        // Segundo intento con resolución intermedia
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: modo },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+            audio: false,
+          });
+        } catch {
+          // Fallback mínimo si el dispositivo tiene restricciones estrictas
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: modo },
+            audio: false,
+          });
+        }
       }
 
       streamRef.current = stream;
@@ -180,20 +194,22 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
     setCantidad(1);
 
     try {
-      setEstadoTexto("Analizando carta con IA (Gemini 2.5 Flash)...");
+      setEstadoTexto("Mejorando imagen para máxima precisión...");
 
       let resultadoIa = null;
       const keyActual = apiKey || getGeminiApiKey();
 
       if (keyActual) {
         try {
+          setEstadoTexto("Analizando carta con IA (Gemini 2.5 Flash)...");
           resultadoIa = await escanearCartaConGemini(base64Data, keyActual);
         } catch (geminiErr) {
           console.warn("Fallo con Gemini API Key, intentando respaldo:", geminiErr);
-          if (geminiErr.message?.includes("API key not valid")) {
-            throw new Error("La API Key de Gemini ingresada no es válida. Revisa tu clave en ai.google.dev", { cause: geminiErr });
+          if (geminiErr.message?.includes("API key not valid") || geminiErr.message?.includes("API_KEY_INVALID")) {
+            throw new Error("La API Key de Gemini ingresada no es válida. Revisa tu clave en ai.google.dev");
           }
           // Intento con respaldo BaseCC
+          setEstadoTexto("Consultando servidor de respaldo BaseCC...");
           resultadoIa = await escanearConBaseCcFallback(base64Data).catch(() => null);
           if (!resultadoIa) throw geminiErr;
         }
@@ -204,35 +220,46 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
       }
 
       if (!resultadoIa) {
-        throw new Error("No se pudo identificar la carta. Asegúrate de enfocarla bien.");
+        throw new Error("No se pudo identificar la carta. Intenta con mejor iluminación y enfoque.");
       }
 
       if (resultadoIa.es_one_piece === false) {
-        throw new Error("La imagen analizada no parece ser una carta de One Piece TCG.");
+        throw new Error("La imagen analizada no parece ser una carta de One Piece TCG. Asegúrate de que la carta esté centrada en el marco.");
       }
 
-      setEstadoTexto("Buscando arte oficial en OPTCG API...");
+      // Mostrar progreso con datos parciales
+      const codigoTexto = resultadoIa.codigo ? ` (${resultadoIa.codigo})` : "";
+      setEstadoTexto(`Carta detectada: ${resultadoIa.nombre}${codigoTexto}. Buscando en base oficial...`);
+
       const match = await buscarYEmparejarCarta(resultadoIa);
 
       if (!match.cartaSeleccionada && match.variantes.length === 0) {
+        // Dar más información al usuario sobre qué se detectó
+        const detalles = [];
+        if (resultadoIa.codigo) detalles.push(`código: ${resultadoIa.codigo}`);
+        if (resultadoIa.nombre) detalles.push(`nombre: "${resultadoIa.nombre}"`);
+        const info = detalles.length > 0 ? ` (${detalles.join(", ")})` : "";
         throw new Error(
-          `Se identificó "${resultadoIa.nombre || resultadoIa.codigo}", pero no se encontró en la base oficial. Puedes buscarla manualmente.`
+          `Se identificó la carta${info}, pero no se encontró en la base oficial de OPTCG. Puedes buscarla manualmente.`
         );
       }
 
       setResultadoMatch(match);
       setCartaActiva(match.cartaSeleccionada || match.variantes[0]);
-      setEstadoTexto("¡Carta identificada con éxito!");
+
+      // Mensaje de éxito con nivel de confianza
+      const confianzaEmoji = resultadoIa.confianza === "alta" ? "🎯" : resultadoIa.confianza === "media" ? "✅" : "⚠️";
+      setEstadoTexto(`${confianzaEmoji} ¡Carta identificada! Confianza: ${resultadoIa.confianza}`);
     } catch (err) {
       console.error("Error durante el escaneo:", err);
-      setErrorMensaje(err.message || "Error al procesar la carta. Intenta de nuevo.");
+      setErrorMensaje(err.message || "Error al procesar la carta. Intenta de nuevo con mejor iluminación.");
       setEstadoTexto("Listo para intentar de nuevo");
     } finally {
       setProcesando(false);
     }
   }
 
-  // Obtener recorte del marco de la carta
+  // Obtener recorte del marco de la carta con resolución ÓPTIMA para IA
   function capturarFrame() {
     if (!videoRef.current || !frameRef.current) return null;
     const video = videoRef.current;
@@ -267,15 +294,42 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
     const h = Math.min(vh - y, fRect.height * scale);
 
     const canvas = document.createElement("canvas");
-    // Resolución óptima balanceada (~800px) para máxima nitidez en el código y bajo peso
-    const targetW = Math.min(900, Math.max(640, w));
+
+    // RESOLUCIÓN ALTA: mínimo 1200px de ancho para que Gemini pueda leer
+    // el código Bandai en la esquina inferior derecha con claridad
+    const targetW = Math.min(1600, Math.max(1200, w));
     const finalScale = targetW / w;
-    canvas.width = targetW;
-    canvas.height = h * finalScale;
+    canvas.width = Math.round(targetW);
+    canvas.height = Math.round(h * finalScale);
 
     const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.drawImage(video, x, y, w, h, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.9);
+
+    // Exportar con calidad alta (0.93 para balance calidad/tamaño)
+    return canvas.toDataURL("image/jpeg", 0.93);
+  }
+
+  // Captura COMPLETA del video sin recorte (fallback para fotos subidas)
+  function capturarVideoCompleto() {
+    if (!videoRef.current) return null;
+    const video = videoRef.current;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh) return null;
+
+    const canvas = document.createElement("canvas");
+    const targetW = Math.min(1600, Math.max(1200, vw));
+    const scale = targetW / vw;
+    canvas.width = Math.round(targetW);
+    canvas.height = Math.round(vh * scale);
+
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.93);
   }
 
   // Botón manual "Capturar y Escanear"

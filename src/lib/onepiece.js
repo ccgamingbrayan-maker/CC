@@ -22,6 +22,87 @@ async function fetchOnePieceJson(url) {
   return res.json();
 }
 
+/**
+ * Búsqueda DIRECTA por código Bandai (card_set_id) — Máxima precisión.
+ * Usa el endpoint /api/sets/card/{card_id}/ que devuelve la carta exacta.
+ * También busca variantes (_P1, _P2, etc.) del mismo código.
+ *
+ * @param {string} codigoBandai - código como "OP05-088", "ST01-001", "P-041"
+ * @returns {Promise<Array>} - array de cartas encontradas (incluye variantes)
+ */
+export async function buscarPorCodigoBandai(codigoBandai) {
+  if (!codigoBandai) return [];
+
+  const codigo = codigoBandai.trim().toUpperCase();
+  const resultados = [];
+  const idsVistos = new Set();
+
+  // 1. Búsqueda directa por código exacto
+  const directUrl = `https://www.optcgapi.com/api/sets/card/${encodeURIComponent(codigo)}/`;
+  const directResult = await fetchOnePieceJson(directUrl);
+
+  if (directResult) {
+    // Puede ser un objeto o un array
+    const cards = Array.isArray(directResult) ? directResult : [directResult];
+    for (const card of cards) {
+      if (card && (card.card_name || card.card_set_id)) {
+        const formatted = formatOnePieceCard(card);
+        const key = formatted.id || formatted.imagen || `${formatted.numero}_${formatted.nombre}`;
+        if (!idsVistos.has(key)) {
+          idsVistos.add(key);
+          resultados.push(formatted);
+        }
+      }
+    }
+  }
+
+  // 2. Buscar variantes paralelas (_P1, _P2, etc.) si se encontró la base
+  const varianteSuffixes = ["_P1", "_P2", "_P3", "_P4"];
+  const variantePromises = varianteSuffixes.map(async (suffix) => {
+    try {
+      const varUrl = `https://www.optcgapi.com/api/sets/card/${encodeURIComponent(codigo + suffix)}/`;
+      const varResult = await fetchOnePieceJson(varUrl);
+      if (varResult) {
+        const cards = Array.isArray(varResult) ? varResult : [varResult];
+        return cards
+          .filter((c) => c && (c.card_name || c.card_set_id))
+          .map(formatOnePieceCard);
+      }
+    } catch {
+      // Variante no existe — normal
+    }
+    return [];
+  });
+
+  const variantesResults = await Promise.all(variantePromises);
+  for (const vars of variantesResults) {
+    for (const v of vars) {
+      const key = v.id || v.imagen || `${v.numero}_${v.nombre}`;
+      if (!idsVistos.has(key)) {
+        idsVistos.add(key);
+        resultados.push(v);
+      }
+    }
+  }
+
+  // 3. Fallback: si el lookup directo falló, buscar por nombre en /sets/filtered
+  // usando el código como query (a veces card_name contiene el código)
+  if (resultados.length === 0) {
+    const fallback = await buscarCartasOnePiece(codigo);
+    if (fallback && fallback.length > 0) {
+      for (const c of fallback) {
+        const key = c.id || c.imagen || `${c.numero}_${c.nombre}`;
+        if (!idsVistos.has(key)) {
+          idsVistos.add(key);
+          resultados.push(c);
+        }
+      }
+    }
+  }
+
+  return resultados;
+}
+
 export async function buscarCartasOnePiece(query) {
   if (!query) return [];
   const url = `https://www.optcgapi.com/api/sets/filtered/?card_name=${encodeURIComponent(query)}`;
