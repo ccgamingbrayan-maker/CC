@@ -529,13 +529,12 @@ async function llamarGeminiConImagenCustomSchema(cleanBase64, apiKey, prompt, sc
  */
 async function ejecutarLlamadaGemini(payload, apiKey) {
   // Lista actualizada de modelos vigentes en la API de Google Gemini (v1beta)
-  // "gemini-flash-lite-latest" tiene la mayor cuota disponible y responde en <1s con visión
+  // "gemini-3.5-flash-lite" es el más rápido, con soporte nativo de visión y schema estructurado
   const models = [
-    "gemini-flash-lite-latest",
     "gemini-3.5-flash-lite",
+    "gemini-flash-lite-latest",
     "gemini-3.1-flash-lite",
     "gemini-flash-latest",
-    "gemini-3.8-flash",
   ];
   let lastError = null;
 

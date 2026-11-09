@@ -846,6 +846,153 @@ export async function descontarStockCatalogoPorTorneo(torneoId) {
 }
 
 /**
+ * Revierte el descuento de stock de un torneo (devuelve las unidades al inventario)
+ */
+export async function revertirDescuentoStockCatalogoPorTorneo(torneoId) {
+  const torneos = cargarLocal();
+  const tIndex = torneos.findIndex((t) => t.id === torneoId);
+  if (tIndex < 0) return { error: "Torneo no encontrado" };
+
+  const torneo = torneos[tIndex];
+  if (!torneo.stockPremiosDescontado) {
+    return { error: "El stock de este torneo no estaba descontado." };
+  }
+
+  const participantes = torneo.participantes || [];
+  const catalogo = cargarCatalogoLocal();
+
+  const aRestaurarMap = {};
+  for (const p of participantes) {
+    const prods = p.productosPremios || [];
+    for (const pr of prods) {
+      const cantidad = Math.max(1, Number(pr.cantidad) || 1);
+      const catItem = catalogo.find(
+        (c) => c.id === pr.catalogoId || c.id === pr.id || c.nombre.toLowerCase().trim() === pr.nombre.toLowerCase().trim()
+      );
+      if (catItem) {
+        aRestaurarMap[catItem.id] = (aRestaurarMap[catItem.id] || 0) + cantidad;
+      }
+    }
+  }
+
+  const itemsRestaurados = [];
+  for (const [catId, cant] of Object.entries(aRestaurarMap)) {
+    const idx = catalogo.findIndex((c) => c.id === catId);
+    if (idx >= 0) {
+      const stockAnterior = catalogo[idx].stock || 0;
+      const nuevoStock = stockAnterior + cant;
+      catalogo[idx].stock = nuevoStock;
+      itemsRestaurados.push({
+        id: catId,
+        nombre: catalogo[idx].nombre,
+        restaurado: cant,
+        nuevoStock,
+      });
+
+      try {
+        if (supabase) {
+          await supabase.from("catalogo_premios").update({
+            stock: nuevoStock,
+            actualizado_en: new Date().toISOString(),
+          }).eq("id", catId);
+        }
+      } catch (e) {}
+    }
+  }
+
+  guardarCatalogoLocal(catalogo);
+  torneo.stockPremiosDescontado = false;
+  torneo.fechaUltimoDescuentoStock = null;
+  torneos[tIndex] = torneo;
+  guardarLocal(torneos);
+
+  try {
+    await guardarTorneo(torneo);
+  } catch (e) {}
+
+  return { torneo, itemsRestaurados, catalogo };
+}
+
+/**
+ * Obtiene el resumen de sincronización de stock entre el torneo y el catálogo de premios
+ */
+export function obtenerResumenStockTorneo(torneo) {
+  if (!torneo) return null;
+  const participantes = torneo.participantes || [];
+  const catalogo = cargarCatalogoLocal();
+
+  const prodWinner = catalogo.find((p) => p.categoria === "Kits de Torneo" || p.nombre.toLowerCase().includes("winner"));
+  const prodPack = catalogo.find((p) => p.categoria === "Sobres de Torneo" || p.nombre.toLowerCase().includes("tournament pack"));
+
+  const baseId = torneo.productoBasePremioId;
+  const prodSobres = (baseId ? catalogo.find((p) => p.id === baseId) : null)
+    || catalogo.find((p) => p.categoria === "Sobres" && p.juego === (torneo.juego || "One Piece TCG"))
+    || catalogo.find((p) => p.categoria === "Sobres");
+
+  const precioSobre = prodSobres?.valorCop || 22000;
+  const calculo = calcularPremiacionOficialOnePiece(participantes.length, participantes, precioSobre);
+
+  const requeridos = [];
+
+  // Sobres de tienda
+  if (prodSobres) {
+    const req = calculo.totalSobresTienda;
+    requeridos.push({
+      id: prodSobres.id,
+      nombre: prodSobres.nombre,
+      categoria: prodSobres.categoria,
+      imagen: prodSobres.imagen,
+      requerido: req,
+      stockActual: prodSobres.stock || 0,
+      suficiente: (prodSobres.stock || 0) >= req,
+      detalle: `${calculo.sobresTop} para el Top + ${calculo.sobresRifa} para la Rifa`,
+    });
+  }
+
+  // Winner Pack
+  if (prodWinner) {
+    requeridos.push({
+      id: prodWinner.id,
+      nombre: prodWinner.nombre,
+      categoria: prodWinner.categoria,
+      imagen: prodWinner.imagen,
+      requerido: 1,
+      stockActual: prodWinner.stock || 0,
+      suficiente: (prodWinner.stock || 0) >= 1,
+      detalle: "1 sobre para el 1er Lugar (Campeón)",
+    });
+  }
+
+  // Tournament Packs
+  if (prodPack) {
+    const req = participantes.length;
+    requeridos.push({
+      id: prodPack.id,
+      nombre: prodPack.nombre,
+      categoria: prodPack.categoria,
+      imagen: prodPack.imagen,
+      requerido: req,
+      stockActual: prodPack.stock || 0,
+      suficiente: (prodPack.stock || 0) >= req,
+      detalle: `${req} sobres (1 por cada jugador inscrito)`,
+    });
+  }
+
+  const todoSuficiente = requeridos.every((r) => r.suficiente);
+
+  return {
+    requeridos,
+    todoSuficiente,
+    calculo,
+    stockDescontado: !!torneo.stockPremiosDescontado,
+    fechaDescuento: torneo.fechaUltimoDescuentoStock,
+    prodSobres,
+    prodWinner,
+    prodPack,
+  };
+}
+
+/**
  * Guarda o actualiza los productos de premiación configurados para un torneo
  */
 export async function guardarProductosPremiosTorneo(torneoId, productos) {
@@ -1437,7 +1584,7 @@ export function calcularPremiacionOficialOnePiece(numJugadores, participantes = 
  * - Tournament packs oficiales a todos
  * - Rifa obligatoria mantenida
  */
-export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock = false } = {}) {
+export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock = false, productoBaseId = null } = {}) {
   const torneos = cargarLocal();
   const tIndex = torneos.findIndex((t) => t.id === torneoId);
   if (tIndex < 0) return null;
@@ -1448,14 +1595,77 @@ export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock 
 
   const prodWinner = catalogo.find((p) => p.categoria === "Kits de Torneo" || p.nombre.toLowerCase().includes("winner"));
   const prodPack = catalogo.find((p) => p.categoria === "Sobres de Torneo" || p.nombre.toLowerCase().includes("tournament pack"));
-  const prodSobres = catalogo.find((p) => p.categoria === "Sobres" && p.juego === "One Piece TCG") || catalogo.find((p) => p.categoria === "Sobres");
 
-  const stockWinner = prodWinner?.stock ?? 7;
-  const stockPacks = prodPack?.stock ?? 56;
+  // Producto base de sobres de tienda para este torneo
+  const baseId = productoBaseId || torneo.productoBasePremioId;
+  const prodSobres = (baseId ? catalogo.find((p) => p.id === baseId) : null)
+    || catalogo.find((p) => p.categoria === "Sobres" && p.juego === (torneo.juego || "One Piece TCG"))
+    || catalogo.find((p) => p.categoria === "Sobres")
+    || { id: "premio-sobres-op09", nombre: "Sobres Oficiales OP-09 (Tienda)", stock: 96, valorCop: 22000, categoria: "Sobres", imagen: "" };
+
   const precioSobre = prodSobres?.valorCop || 22000;
-
   const calculo = calcularPremiacionOficialOnePiece(participantes.length, participantes, precioSobre);
 
+  // Armar lista global de productos de premiación configurados para este torneo
+  const productosPremiosConfigurados = [];
+  if (prodWinner) {
+    productosPremiosConfigurados.push({
+      id: `cfg-w-${prodWinner.id}`,
+      catalogoId: prodWinner.id,
+      nombre: prodWinner.nombre,
+      categoria: prodWinner.categoria,
+      imagen: prodWinner.imagen,
+      cantidad: 1,
+      puesto: "1",
+      valorCop: prodWinner.valorCop || 0,
+    });
+  }
+
+  for (const [puestoStr, cant] of Object.entries(calculo.sobresPorPuesto)) {
+    if (cant > 0 && prodSobres) {
+      productosPremiosConfigurados.push({
+        id: `cfg-top-${puestoStr}-${prodSobres.id}`,
+        catalogoId: prodSobres.id,
+        nombre: prodSobres.nombre,
+        categoria: prodSobres.categoria,
+        imagen: prodSobres.imagen,
+        cantidad: cant,
+        puesto: puestoStr,
+        valorCop: prodSobres.valorCop || 0,
+      });
+    }
+  }
+
+  if (calculo.sobresRifa > 0 && prodSobres) {
+    productosPremiosConfigurados.push({
+      id: `cfg-rifa-${prodSobres.id}`,
+      catalogoId: prodSobres.id,
+      nombre: `${prodSobres.nombre} (Rifa)`,
+      categoria: prodSobres.categoria,
+      imagen: prodSobres.imagen,
+      cantidad: calculo.sobresRifa,
+      puesto: "rifa",
+      valorCop: prodSobres.valorCop || 0,
+    });
+  }
+
+  if (prodPack) {
+    productosPremiosConfigurados.push({
+      id: `cfg-tp-${prodPack.id}`,
+      catalogoId: prodPack.id,
+      nombre: prodPack.nombre,
+      categoria: prodPack.categoria,
+      imagen: prodPack.imagen,
+      cantidad: 1,
+      puesto: "todos",
+      valorCop: prodPack.valorCop || 0,
+    });
+  }
+
+  torneo.productoBasePremioId = prodSobres.id;
+  torneo.productosPremios = productosPremiosConfigurados;
+
+  // Asignar premios estructurados a cada participante
   const actualizados = participantes.map((p) => {
     const numP = parseInt(String(p.puesto || "").replace(/\D/g, ""), 10);
     const wins = p.wins !== undefined && p.wins !== null
@@ -1464,29 +1674,66 @@ export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock 
     const ccCoins = Math.max(0, wins);
 
     const premiosItems = [];
+    const prodsJugador = [];
 
     // CC Coins por victorias para el Prize Wall
     premiosItems.push(`🪙 ${ccCoins} CC Coin${ccCoins === 1 ? "" : "s"} (${wins} win${wins === 1 ? "" : "s"})`);
 
     // Sobre Winner exclusivo para 1er lugar
-    if (numP === 1 && stockWinner > 0) {
-      premiosItems.push(prodWinner ? `1x ${prodWinner.nombre}` : "1x Sobre Winner Oficial");
+    if (numP === 1 && prodWinner) {
+      premiosItems.push(`1x ${prodWinner.nombre}`);
+      prodsJugador.push({
+        id: prodWinner.id,
+        catalogoId: prodWinner.id,
+        nombre: prodWinner.nombre,
+        categoria: prodWinner.categoria,
+        imagen: prodWinner.imagen,
+        cantidad: 1,
+        puesto: "1",
+      });
     }
 
     // Sobres de tienda para el Top premiado
-    const cantSobresTienda = calculo.sobresPorPuesto[numP];
-    if (cantSobresTienda && cantSobresTienda > 0) {
-      premiosItems.push(`${cantSobresTienda}x ${prodSobres?.nombre || "Sobres Oficiales OP-09"}`);
+    const cantSobresTienda = calculo.sobresPorPuesto[numP] || 0;
+    if (cantSobresTienda > 0 && prodSobres) {
+      premiosItems.push(`${cantSobresTienda}x ${prodSobres.nombre}`);
+      prodsJugador.push({
+        id: prodSobres.id,
+        catalogoId: prodSobres.id,
+        nombre: prodSobres.nombre,
+        categoria: prodSobres.categoria,
+        imagen: prodSobres.imagen,
+        cantidad: cantSobresTienda,
+        puesto: String(numP),
+      });
     }
 
-    // Tournament pack de participación del kit mensual
-    if (stockPacks > 0) {
-      premiosItems.push(prodPack ? `1x ${prodPack.nombre}` : "1x Tournament Pack");
+    // Tournament pack de participación del kit mensual (todos)
+    if (prodPack) {
+      premiosItems.push(`1x ${prodPack.nombre}`);
+      prodsJugador.push({
+        id: prodPack.id,
+        catalogoId: prodPack.id,
+        nombre: prodPack.nombre,
+        categoria: prodPack.categoria,
+        imagen: prodPack.imagen,
+        cantidad: 1,
+        puesto: "asistencia",
+      });
     }
 
     // Si este jugador ya era ganador de rifa
-    if (torneo.ganadorRifa && torneo.ganadorRifa.id === p.id) {
-      premiosItems.push(`1x ${prodSobres?.nombre || "Sobre Oficial OP-09"} (Ganador Rifa)`);
+    if (torneo.ganadorRifa && torneo.ganadorRifa.id === p.id && prodSobres) {
+      premiosItems.push(`1x ${prodSobres.nombre} (Ganador Rifa)`);
+      prodsJugador.push({
+        id: `rifa-${prodSobres.id}`,
+        catalogoId: prodSobres.id,
+        nombre: `${prodSobres.nombre} (Sobre de Rifa)`,
+        categoria: prodSobres.categoria,
+        imagen: prodSobres.imagen,
+        cantidad: 1,
+        puesto: "rifa",
+      });
     }
 
     const textoPremio = premiosItems.join(" + ");
@@ -1497,6 +1744,7 @@ export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock 
       ccCoins,
       montoPagado: Number(torneo.costoInscripcion || 26000),
       premioGanado: textoPremio,
+      productosPremios: prodsJugador,
     };
   });
 
@@ -1504,15 +1752,17 @@ export async function aplicarPremiacionOficialTorneo(torneoId, { descontarStock 
   torneos[tIndex] = torneo;
   guardarLocal(torneos);
 
+  let itemsDescontados = [];
   if (descontarStock) {
-    await descontarStockCatalogoPorTorneo(torneoId);
+    const resDesc = await descontarStockCatalogoPorTorneo(torneoId);
+    itemsDescontados = resDesc?.itemsDescontados || [];
   }
 
   try {
     await guardarTorneo(torneo);
   } catch (e) {}
 
-  return torneo;
+  return { torneo, itemsDescontados, calculo };
 }
 
 /**

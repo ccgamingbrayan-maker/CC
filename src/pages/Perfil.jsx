@@ -448,12 +448,8 @@ function MisTorneos({ user }) {
           Aún no tienes torneos registrados
         </h3>
         <p style={{ maxWidth: "560px", margin: "0 auto 18px", lineHeight: "1.5", color: "var(--texto-suave)" }}>
-          Cuando te inscribas en los torneos oficiales de Capsule Corp Gaming con tu correo (<strong>{user.email}</strong>), aquí verás automáticamente en qué puesto quedaste, si pagaste o debes la inscripción, y todos los premios que hayas ganado.
+          Cuando participes en los torneos oficiales de Capsule Corp Gaming con tu correo (<strong>{user.email}</strong>), aquí verás automáticamente tus posiciones oficiales, estadísticas de juego, estado de pago de inscripciones y todos los premios y productos obtenidos.
         </p>
-        <Link to="/torneos" className="btn-ir-torneos-hero">
-          <Trophy size={16} />
-          <span>Explorar Próximos Torneos</span>
-        </Link>
       </div>
     );
   }
@@ -478,13 +474,9 @@ function MisTorneos({ user }) {
         <div>
           <h3 style={{ margin: "0 0 6px" }}>Mis Torneos y Eventos ({torneos.length})</h3>
           <p className="perfil-section-sub" style={{ margin: 0, color: "var(--texto-suave)", fontSize: "13.5px" }}>
-            Historial de torneos enlazados a tu cuenta: tus puestos, qué ganaste y estado de pago de inscripción.
+            Historial de torneos enlazados a tu cuenta: tus puestos oficiales, qué productos ganaste y estado de pago de inscripción.
           </p>
         </div>
-        <Link to="/torneos" className="btn-ir-torneos">
-          <Trophy size={15} />
-          <span>Ver Torneos Disponibles</span>
-        </Link>
       </div>
 
       {/* KPI Cards del jugador */}

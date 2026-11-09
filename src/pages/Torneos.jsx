@@ -53,6 +53,8 @@ import {
   eliminarProductoCatalogo,
   ajustarStockCatalogo,
   descontarStockCatalogoPorTorneo,
+  revertirDescuentoStockCatalogoPorTorneo,
+  obtenerResumenStockTorneo,
   calcularPremiacionOficialOnePiece,
   aplicarPremiacionOficialTorneo,
   sortearRifaTorneo,
@@ -660,12 +662,48 @@ export default function Torneos() {
     }, 600);
   }
 
-  async function handleRecalcularPremiacionOficial() {
+  async function handleRecalcularPremiacionOficial(descontar = false) {
     if (!torneoDetalle) return;
-    const actualizado = await aplicarPremiacionOficialTorneo(torneoDetalle.id);
-    if (actualizado) {
-      setTorneoDetalle(actualizado);
-      await cargarDatos();
+    const res = await aplicarPremiacionOficialTorneo(torneoDetalle.id, {
+      descontarStock: descontar,
+      productoBaseId: torneoDetalle.productoBasePremioId,
+    });
+    if (res?.torneo) {
+      setTorneoDetalle(res.torneo);
+      setTorneos((prev) => prev.map((t) => (t.id === res.torneo.id ? res.torneo : t)));
+      const catActualizado = await listarCatalogoPremios();
+      setCatalogoPremios(catActualizado);
+
+      if (descontar && res.itemsDescontados?.length > 0) {
+        const descTexto = res.itemsDescontados
+          .map((i) => `${i.descontado}x ${i.nombre} (quedan ${i.stockRestante})`)
+          .join(" • ");
+        setMensajeProdPremio(`Premios sincronizados y descontados: ${descTexto}`);
+      } else {
+        setMensajeProdPremio("Premiación oficial 100% calculada y asignada a los participantes.");
+      }
+      setTimeout(() => setMensajeProdPremio(""), 6000);
+    }
+  }
+
+  async function handleRevertirStock() {
+    if (!torneoDetalle) return;
+    if (!window.confirm("¿Seguro que deseas revertir el descuento de stock? Las unidades asignadas se devolverán al inventario del catálogo de premios.")) return;
+    const res = await revertirDescuentoStockCatalogoPorTorneo(torneoDetalle.id);
+    if (res?.torneo) {
+      setTorneoDetalle(res.torneo);
+      setTorneos((prev) => prev.map((t) => (t.id === res.torneo.id ? res.torneo : t)));
+      const catActualizado = await listarCatalogoPremios();
+      setCatalogoPremios(catActualizado);
+      if (res.itemsRestaurados?.length > 0) {
+        const restTexto = res.itemsRestaurados
+          .map((i) => `+${i.restaurado} ${i.nombre} (nuevo stock: ${i.nuevoStock})`)
+          .join(" • ");
+        setMensajeProdPremio(`Stock devuelto al catálogo: ${restTexto}`);
+      } else {
+        setMensajeProdPremio("Descuento de stock revertido.");
+      }
+      setTimeout(() => setMensajeProdPremio(""), 6000);
     }
   }
 
@@ -1619,11 +1657,20 @@ export default function Torneos() {
                       <button
                         type="button"
                         className="btn-tm-action secondary"
-                        onClick={handleRecalcularPremiacionOficial}
-                        title="Aplica la premiación oficial: Sobres al Top según cantidad de jugadores, Winner al 1° y Tournament Packs"
+                        onClick={() => handleRecalcularPremiacionOficial(false)}
+                        title="Calcula la premiación oficial: Sobres al Top según cantidad de jugadores, Winner al 1° y Tournament Packs"
                       >
                         <Sparkles size={14} />
-                        <span>Premiación Oficial 100%</span>
+                        <span>Calcular Premiación 100%</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-tm-action primary"
+                        onClick={() => handleRecalcularPremiacionOficial(true)}
+                        title="Aplica la premiación oficial y descuenta automáticamente el stock correspondiente del inventario"
+                      >
+                        <CheckCircle2 size={14} />
+                        <span>Sincronizar y Descontar Stock</span>
                       </button>
                     </div>
                   </div>
@@ -2057,18 +2104,169 @@ export default function Torneos() {
               {/* ========================================================= */}
               {tabGestionTorneo === "productos_premios" && (
                 <div className="torneo-prize-products-container">
-                  <div className="prize-products-header-row">
+                  {/* PANEL DE CONTROL DE SINCRONIZACIÓN DE STOCK Y PRODUCTOS DE TORNEO */}
+                  {(() => {
+                    const resumenStock = obtenerResumenStockTorneo(torneoDetalle);
+                    const sobresDisponibles = catalogoPremios.filter(
+                      (c) => c.categoria === "Sobres"
+                    );
+
+                    return (
+                      <div className="torneo-sync-inventory-panel">
+                        <div className="tsip-header">
+                          <div className="tsip-title-group">
+                            <div className="tsip-icon-badge">
+                              <Package size={22} />
+                            </div>
+                            <div>
+                              <div className="tsip-title-row">
+                                <h4 className="tsip-title">Sincronización de Premios con Inventario</h4>
+                                <span className="badge-tep-guarantee">
+                                  <Sparkles size={13} />
+                                  <span>Repartición 100% Oficial</span>
+                                </span>
+                              </div>
+                              <p className="tsip-sub">
+                                Sincroniza los sobres de tienda y los kits oficiales de Bandai con el stock real del catálogo. Al descontar, las unidades se restan de la base de datos de la tienda.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="tsip-status-badge">
+                            {torneoDetalle.stockPremiosDescontado ? (
+                              <span className="badge-stock-descontado-ok">
+                                <Check size={13} /> Stock Descontado en Inventario
+                              </span>
+                            ) : (
+                              <span className="badge-stock-pendiente">
+                                <Clock size={13} /> Pendiente por Descontar
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Selector de expansión de sobres base */}
+                        <div className="tsip-booster-select-row">
+                          <div className="tsip-bs-info">
+                            <strong className="tsip-bs-label">Producto Base (Sobres de Tienda para Top y Rifa):</strong>
+                            <span className="tsip-bs-desc">
+                              Selecciona la expansión de sobres oficial disponible que se repartirá en este torneo.
+                            </span>
+                          </div>
+                          <select
+                            className="tsip-booster-select"
+                            value={torneoDetalle.productoBasePremioId || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTorneoDetalle((prev) => ({ ...prev, productoBasePremioId: val }));
+                              guardarTorneo({ ...torneoDetalle, productoBasePremioId: val });
+                            }}
+                          >
+                            <option value="">-- Detección automática según juego ({torneoDetalle.juego}) --</option>
+                            {sobresDisponibles.map((sob) => (
+                              <option key={sob.id} value={sob.id}>
+                                {sob.nombre} • Stock: {sob.stock} uds (${(sob.valorCop || 22000).toLocaleString("es-CO")} COP)
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Checklist de disponibilidad en tiempo real */}
+                        {resumenStock && (
+                          <div className="tsip-checklist-grid">
+                            {resumenStock.requeridos.map((reqItem) => (
+                              <div key={reqItem.id} className={`tsip-check-card ${reqItem.suficiente ? "status-ok" : "status-deficit"}`}>
+                                <div className="tsip-card-thumb">
+                                  {reqItem.imagen ? (
+                                    <img src={reqItem.imagen} alt={reqItem.nombre} />
+                                  ) : (
+                                    <Package size={24} />
+                                  )}
+                                </div>
+                                <div className="tsip-card-content">
+                                  <div className="tsip-card-title-row">
+                                    <strong className="tsip-item-name" title={reqItem.nombre}>{reqItem.nombre}</strong>
+                                    <span className={`tsip-status-pill ${reqItem.suficiente ? "pill-ok" : "pill-warn"}`}>
+                                      {reqItem.suficiente ? "✅ Stock Disponible" : "⚠️ Stock Insuficiente"}
+                                    </span>
+                                  </div>
+                                  <div className="tsip-card-metric-row">
+                                    <span>Necesarios: <strong>{reqItem.requerido} uds</strong></span>
+                                    <span>En Inventario: <strong className={reqItem.suficiente ? "text-success" : "text-danger"}>{reqItem.stockActual} uds</strong></span>
+                                  </div>
+                                  <span className="tsip-card-detail">{reqItem.detalle}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Botones de acción de sincronización */}
+                        <div className="tsip-action-bar">
+                          <div className="tsip-left-actions">
+                            <button
+                              type="button"
+                              className="btn-sync-action secondary"
+                              onClick={() => handleRecalcularPremiacionOficial(false)}
+                              title="Calcula y asigna los premios a los participantes sin descontar del inventario"
+                            >
+                              <Sparkles size={14} />
+                              <span>Calcular y Asignar Premios</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-sync-action primary"
+                              onClick={() => handleRecalcularPremiacionOficial(true)}
+                              title="Asigna los premios a los participantes y descuenta automáticamente las unidades del inventario"
+                            >
+                              <CheckCircle2 size={14} />
+                              <span>⚡ Sincronizar y Descontar Inventario</span>
+                            </button>
+                          </div>
+
+                          <div className="tsip-right-actions">
+                            {torneoDetalle.stockPremiosDescontado && (
+                              <button
+                                type="button"
+                                className="btn-sync-action danger"
+                                onClick={handleRevertirStock}
+                                title="Devuelve al inventario del catálogo los productos descontados para este torneo"
+                              >
+                                <RefreshCw size={14} />
+                                <span>Revertir Descuento</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn-sync-action neutral"
+                              onClick={() => setModalCatalogoAbierto(true)}
+                              title="Abrir catálogo para añadir stock o nuevos productos"
+                            >
+                              <Package size={14} />
+                              <span>Catálogo ({catalogoPremios.length})</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-sync-action neutral"
+                              onClick={handleCargarKitsMensuales}
+                              title="Reponer inventario de kits mensuales Bandai (7 Winner + 56 Tournament Packs)"
+                            >
+                              <Gift size={14} />
+                              <span>Cargar Kits Mensuales</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="prize-products-header-row" style={{ marginTop: "24px" }}>
                     <div>
                       <div className="pp-title-with-badge">
-                        <h4 className="pp-title">Premios del Torneo (Catálogo de Inventario)</h4>
-                        {torneoDetalle.stockPremiosDescontado && (
-                          <span className="badge-stock-descontado-ok" title="El stock ya fue descontado automáticamente del catálogo">
-                            <Check size={13} /> Stock descontado en catálogo
-                          </span>
-                        )}
+                        <h4 className="pp-title">Premios Adicionales / Personalizados</h4>
                       </div>
                       <p className="pp-subtitle">
-                        Selecciona los productos directamente del catálogo general. Al asignar la premiación, las unidades se descuentan en automático del inventario.
+                        Si el torneo tiene premios especiales adicionales (playmats, cajas completas, cartas promo), puedes vincularlos aquí.
                       </p>
                     </div>
 
@@ -2081,16 +2279,6 @@ export default function Torneos() {
                       >
                         <Package size={15} />
                         <span>Abrir Catálogo ({catalogoPremios.length})</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-asignar-descontar-primary"
-                        onClick={handleAsignarYDescontarStock}
-                        disabled={descontandoStock || !torneoDetalle.productosPremios || torneoDetalle.productosPremios.length === 0}
-                        title="Asigna los premios a los participantes y descuenta las unidades del inventario del catálogo"
-                      >
-                        <Sparkles size={15} />
-                        <span>{descontandoStock ? "Descontando stock…" : "Asignar y Descontar Stock"}</span>
                       </button>
                     </div>
                   </div>

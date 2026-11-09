@@ -278,9 +278,10 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
     }
 
     const scale = vw / renderedW;
-    // Margen de seguridad del 6% para evitar recortar bordes o el código Bandai inferior
-    const padX = fRect.width * 0.06 * scale;
-    const padY = fRect.height * 0.06 * scale;
+    // Margen de seguridad generoso (18%) para asegurar que el código Bandai inferior
+    // y el nombre superior nunca queden cortados si el usuario no alinea perfecto
+    const padX = fRect.width * 0.18 * scale;
+    const padY = fRect.height * 0.18 * scale;
 
     const x = Math.max(0, (fRect.left - vRect.left + offX) * scale - padX);
     const y = Math.max(0, (fRect.top - vRect.top + offY) * scale - padY);

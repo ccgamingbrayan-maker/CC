@@ -96,14 +96,6 @@ export default function Navbar() {
             <span className="dot-preventa-pulse" />
             <span>Pre-Ventas</span>
           </Link>
-          <Link
-            to="/torneos"
-            className={`nav-pill nav-pill-torneos ${location.pathname.startsWith("/torneos") ? "active" : ""}`}
-            title="Torneos y eventos presenciales TCG"
-          >
-            <Trophy size={15} />
-            <span>Torneos</span>
-          </Link>
           {esAdmin && (
             <>
               <Link
@@ -113,6 +105,14 @@ export default function Navbar() {
               >
                 <ShieldCheck size={15} />
                 <span>Admin</span>
+              </Link>
+              <Link
+                to="/admin/torneos"
+                className={`nav-pill nav-pill-torneos ${location.pathname.startsWith("/admin/torneos") || location.pathname.startsWith("/torneos") ? "active" : ""}`}
+                title="Gestión de Torneos TCG"
+              >
+                <Trophy size={15} />
+                <span>Torneos</span>
               </Link>
               <Link
                 to="/admin/clientes"
@@ -178,11 +178,19 @@ export default function Navbar() {
                         <Layers size={15} />
                         <span>Mi Colección (Escáner)</span>
                       </Link>
+                      <Link to="/perfil?tab=torneos" onClick={() => setMenuAbierto(false)}>
+                        <Trophy size={15} />
+                        <span>Mis Torneos Jugados</span>
+                      </Link>
                       {esAdmin && (
                         <>
                           <Link to="/admin/agregar" onClick={() => setMenuAbierto(false)}>
                             <ShieldCheck size={15} />
                             <span>Panel Admin</span>
+                          </Link>
+                          <Link to="/admin/torneos" onClick={() => setMenuAbierto(false)}>
+                            <Trophy size={15} />
+                            <span>Gestión de Torneos</span>
                           </Link>
                           <Link to="/admin/clientes" onClick={() => setMenuAbierto(false)}>
                             <Users size={15} />
