@@ -16181,118 +16181,73 @@ img {
   }
 
   /* Formulario de búsqueda en el modal adaptado a móvil */
-  .api-search-form {
+  .api-search-form,
+  .api-buscador-form {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    gap: 8px !important;
+  }
 
-    .api-search-form,
-    .api-buscador-form {
-      display: grid !important;
-      grid-template-columns: 1fr auto !important;
-      gap: 8px !important;
-    }
+  .api-search-form .coleccion-search-box,
+  .api-buscador-form .coleccion-search-box,
+  .api-buscador-form .api-search-input-wrap {
+    grid-column: 1 !important;
+  }
 
-    .api-search-form .coleccion-search-box {
+  .api-search-form .btn-api-search,
+  .api-buscador-form .btn-api-search {
+    grid-column: 2 !important;
+    padding: 0 14px !important;
+  }
 
-      .api-search-form .coleccion-search-box,
-      .api-buscador-form .coleccion-search-box,
-      .api-buscador-form .api-search-input-wrap {
-        grid-column: 1 !important;
-      }
+  .api-search-form .btn-abrir-escaner-modal,
+  .api-buscador-form .btn-abrir-escaner-modal {
+    grid-column: span 2 !important;
+    width: 100% !important;
+    height: 44px !important;
+    display: flex !important;
+  }
 
-      .api-search-form .btn-api-search {
+  .api-layout {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
 
-        .api-search-form .btn-api-search,
-        .api-buscador-form .btn-api-search {
-          grid-column: 2 !important;
-          padding: 0 14px !important;
-        }
+  .api-resultados-col {
+    height: auto !important;
+    max-height: 280px !important;
+  }
 
-        .api-search-form .btn-abrir-escaner-modal {
+  /* Botón Flotante Permanente en Móvil */
+  .btn-flotante-escanear-movil {
+    display: flex !important;
+    position: fixed !important;
+    bottom: calc(env(safe-area-inset-bottom, 16px) + 16px) !important;
+    right: 16px !important;
+    z-index: 9999 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 12px 20px !important;
+    border-radius: 9999px !important;
+    background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%) !important;
+    color: #ffffff !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 8px 26px rgba(168, 85, 247, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
 
-          .api-search-form .btn-abrir-escaner-modal,
-          .api-buscador-form .btn-abrir-escaner-modal {
-            grid-column: span 2 !important;
-            width: 100% !important;
-            height: 42px !important;
-            height: 44px !important;
-            display: flex !important;
-          }
+  .btn-flotante-escanear-movil:active {
+    transform: scale(0.94) !important;
+  }
+}
 
-          .api-layout {
-            grid-template-columns: 1fr !important;
-            gap: 14px !important;
-          }
-
-          .api-resultados-col {
-            height: auto !important;
-            max-height: 280px !important;
-          }
-
-          /* Botón Flotante Permanente en Móvil */
-          .btn-flotante-escanear-movil {
-            display: flex !important;
-            position: fixed !important;
-            bottom: calc(env(safe-area-inset-bottom, 16px) + 16px) !important;
-            right: 16px !important;
-            z-index: 9999 !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 8px !important;
-            padding: 12px 20px !important;
-            border-radius: 9999px !important;
-            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%) !important;
-            color: #ffffff !important;
-            font-size: 13.5px !important;
-            font-weight: 700 !important;
-            box-shadow: 0 8px 26px rgba(168, 85, 247, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid rgba(255, 255, 255, 0.25) !important;
-            cursor: pointer !important;
-            -webkit-tap-highlight-color: transparent !important;
-          }
-
-          .btn-flotante-escanear-movil:active {
-            transform: scale(0.94) !important;
-          }
-        }
-
-        /* ======================================================================
-   BOTÓN ESCÁNER EN PANEL ADMIN & BOTÓN FLOTANTE BASE
+/* ======================================================================
+   BOTÓN FLOTANTE BASE
    ====================================================================== */
-        .btn-flotante-escanear-movil {
-          display: none;
-        }
-
-        .admin-search-btn-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-          width: 100%;
-        }
-
-        .btn-admin-escanear {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          width: 100%;
-          padding: 11px 14px;
-          border-radius: 8px;
-          background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-          color: #ffffff;
-          border: none;
-          font-size: 13.5px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.15s ease;
-          box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
-          white-space: nowrap;
-        }
-
-        .btn-admin-escanear:hover {
-          filter: brightness(1.1);
-          transform: translateY(-1px);
-          box-shadow: 0 6px 18px rgba(168, 85, 247, 0.45);
-        }
-
-        .btn-admin-escanear:active {
-          transform: translateY(0);
-        }
+.btn-flotante-escanear-movil {
+  display: none;
+}

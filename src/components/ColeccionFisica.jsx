@@ -39,6 +39,7 @@ const JUEGOS_TABS = [
   { id: "onepiece", label: "One Piece TCG", icono: "🏴‍☠️" },
   { id: "pokemon", label: "Pokémon TCG", icono: "⚡" },
   { id: "magic", label: "Magic: The Gathering", icono: "🧙" },
+  { id: "scanner", label: "Escáner", icono: "📷" },
   { id: "manual", label: "Entrada Manual", icono: "✍️" },
 ];
 
@@ -507,7 +508,7 @@ export default function ColeccionFisica({ user }) {
             }}
           >
             <Plus size={16} />
-            <span>Buscar en API</span>
+            <span>Agregar carta desde API</span>
           </button>
         </div>
       </div>
@@ -774,8 +775,16 @@ export default function ColeccionFisica({ user }) {
               ))}
             </div>
 
-            {/* SI ESTÁ EN MODO API (ONE PIECE, POKÉMON O MAGIC) */}
-            {juegoActivo !== "manual" ? (
+            {/* SI ESTÁ EN MODO ESCÁNER */}
+            {juegoActivo === "scanner" ? (
+              <CardScanner
+                onAgregarColeccion={async (nuevaCarta) => {
+                  await guardarCartaEnBaseDatos(nuevaCarta);
+                  setMostrarModal(false);
+                }}
+                onClose={() => setJuegoActivo("onepiece")}
+              />
+            ) : juegoActivo !== "manual" ? (
               <div className="modal-api-seccion">
                 {/* BUSCADOR DE API */}
                 <form onSubmit={ejecutarBusquedaApi} className="api-search-form">
@@ -807,14 +816,11 @@ export default function ColeccionFisica({ user }) {
                     <button
                       type="button"
                       className="btn-abrir-escaner-modal"
-                      onClick={() => {
-                        setMostrarModal(false);
-                        setMostrarEscaner(true);
-                      }}
-                      title="Escanear carta física con la cámara"
+                      onClick={() => setJuegoActivo("scanner")}
+                      title="Escanear carta física con la cámara e IA"
                     >
                       <Camera size={16} />
-                      <span>Agregar con Escáner</span>
+                      <span>Escanear con IA</span>
                     </button>
                   )}
                 </form>

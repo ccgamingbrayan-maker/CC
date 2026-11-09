@@ -199,24 +199,14 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
       let resultadoIa = null;
       const keyActual = apiKey || getGeminiApiKey();
 
-      if (keyActual) {
-        try {
-          setEstadoTexto("Analizando carta con IA (Gemini Flash)...");
-          resultadoIa = await escanearCartaConGemini(base64Data, keyActual);
-        } catch (geminiErr) {
-          console.warn("Fallo con Gemini API Key, intentando respaldo:", geminiErr);
-          if (geminiErr.message?.includes("API key not valid") || geminiErr.message?.includes("API_KEY_INVALID")) {
-            throw new Error("La API Key de Gemini ingresada no es válida. Revisa tu clave en ai.google.dev");
-          }
-          // Intento con respaldo BaseCC
-          setEstadoTexto("Consultando servidor de respaldo BaseCC...");
-          resultadoIa = await escanearConBaseCcFallback(base64Data).catch(() => null);
-          if (!resultadoIa) throw geminiErr;
+      setEstadoTexto("Analizando carta con IA (Gemini Vision)...");
+      try {
+        resultadoIa = await escanearCartaConGemini(base64Data, keyActual);
+      } catch (geminiErr) {
+        if (geminiErr.message?.includes("API key not valid") || geminiErr.message?.includes("API_KEY_INVALID")) {
+          throw new Error("La API Key de Gemini ingresada no es válida. Revisa tu clave en ai.google.dev");
         }
-      } else {
-        // Sin clave propia: usar endpoint de respaldo BaseCC
-        setEstadoTexto("Consultando servidor de IA de BaseCC...");
-        resultadoIa = await escanearConBaseCcFallback(base64Data);
+        throw geminiErr;
       }
 
       if (!resultadoIa) {
