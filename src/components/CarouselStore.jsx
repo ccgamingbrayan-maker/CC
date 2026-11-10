@@ -33,12 +33,9 @@ export default function CarouselStore({ onPick, onlyCarrusel = false, imageWidth
       }
     }
     load();
-    const poll = setInterval(load, 8000);
     return () => {
       mountedRef.current = false;
-      clearInterval(poll);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onlyCarrusel]);
 
   useEffect(() => {

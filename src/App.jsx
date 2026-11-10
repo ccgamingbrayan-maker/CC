@@ -38,7 +38,7 @@ export default function App() {
       <Navbar />
 
       <Routes>
-        <Route path="/" element={<Home onAgregar={agregar} />} />
+        <Route path="/" element={<Home />} />
         <Route path="/catalogo/:juegoId" element={<Catalogo onAgregar={agregar} />} />
         <Route path="/accesorios" element={<Accesorios onAgregar={agregar} />} />
         <Route path="/accesorio/:accesorioId" element={<DetalleAccesorio onAgregar={agregar} />} />

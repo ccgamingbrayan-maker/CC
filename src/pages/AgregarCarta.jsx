@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   Grid2X2,
@@ -7,11 +7,9 @@ import {
   Maximize2,
   Check,
   X,
-  Sparkles,
   Layers,
   Package,
   Loader2,
-  ArrowRight,
   RotateCcw,
   Plus,
   Trophy,
@@ -19,7 +17,7 @@ import {
   Camera,
 } from "lucide-react";
 import { buscarCartaScryfall, buscarPrintsDesdeUri } from "../lib/scryfall.js";
-import { buscarCartaRiftbound, buscarPrintsRiftbound } from "../lib/riftbound.js";
+import { buscarPrintsRiftbound } from "../lib/riftbound.js";
 import {
   buscarPrintsOnePiece,
   buscarDecksFiltered,
@@ -48,7 +46,17 @@ const FUENTES_JUEGOS = [
 ];
 
 export default function AgregarCarta() {
-  const [pestana, setPestana] = useState("cartas");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pestana = searchParams.get("tab") === "accesorios" ? "accesorios" : "cartas";
+
+  function setPestana(nuevaPestana) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (nuevaPestana === "accesorios") next.set("tab", "accesorios");
+      else next.delete("tab");
+      return next;
+    });
+  }
   const [fuenteActiva, setFuenteActiva] = useState("onepiece");
   const [nombre, setNombre] = useState("");
   const [datosApi, setDatosApi] = useState(null);

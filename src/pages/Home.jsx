@@ -6,7 +6,7 @@ import Footer from "../components/Footer.jsx";
 import { useState, useEffect } from "react";
 import { listarJuegos } from "../lib/catalogos.js";
 
-export default function Home({ onAgregar }) {
+export default function Home() {
   const [juegos, setJuegos] = useState([]);
 
   useEffect(() => {
@@ -37,7 +37,6 @@ export default function Home({ onAgregar }) {
                 id={j.id}
                 nombre={j.nombre}
                 imagen={j.imagen}
-                onAgregar={onAgregar}
               />
             ))}
           </div>

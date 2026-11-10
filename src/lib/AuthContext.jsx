@@ -1,10 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "./supabase.js";
 
-// Correo autorizado como administrador. Se puede sobreescribir con VITE_ADMIN_EMAIL.
-const ADMIN_EMAIL = (
+// Correo autorizado como administrador. Se puede sobreescribir con VITE_ADMIN_EMAIL (uno o varios separados por coma).
+const ADMIN_EMAILS = (
   import.meta.env.VITE_ADMIN_EMAIL || "ccgamingbrayan@gmail.com"
-).toLowerCase();
+)
+  .toLowerCase()
+  .split(",")
+  .map((e) => e.trim());
 
 const AuthContext = createContext(null);
 
@@ -31,7 +34,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   const user = session?.user ?? null;
-  const esAdmin = !!user && user.email?.toLowerCase() === ADMIN_EMAIL;
+  const esAdmin =
+    !!user &&
+    (ADMIN_EMAILS.includes(user.email?.toLowerCase()) ||
+      user.app_metadata?.role === "admin" ||
+      user.user_metadata?.es_admin === true ||
+      user.user_metadata?.rol === "admin");
 
   const value = {
     session,

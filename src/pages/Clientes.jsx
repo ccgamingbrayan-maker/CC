@@ -161,7 +161,7 @@ export default function Clientes() {
             <Layers size={15} />
             <span>Cartas TCG</span>
           </Link>
-          <Link to="/accesorios" className="admin-nav-tab">
+          <Link to="/admin/agregar?tab=accesorios" className="admin-nav-tab">
             <Package size={15} />
             <span>Accesorios</span>
           </Link>
