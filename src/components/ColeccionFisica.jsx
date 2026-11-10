@@ -12,8 +12,6 @@ import {
   Image as ImageIcon,
   Check,
   Loader2,
-  BookOpen,
-  Filter,
   Camera,
 } from "lucide-react";
 import CardScanner from "./CardScanner.jsx";
@@ -114,8 +112,9 @@ export default function ColeccionFisica({ user }) {
   const [manualCodigo, setManualCodigo] = useState("");
   const [manualImagen, setManualImagen] = useState("");
 
-  // Expansiones existentes en la base de datos de la tienda
+  // Expansiones existentes en la tienda para sugerencias
   const [expansionesDb, setExpansionesDb] = useState([]);
+
 
   // Cargar colección directamente desde la tabla SQL coleccion_usuario de Supabase
   useEffect(() => {
@@ -764,6 +763,11 @@ export default function ColeccionFisica({ user }) {
                   type="button"
                   className={`modal-juego-tab ${juegoActivo === tab.id ? "active" : ""}`}
                   onClick={() => {
+                    if (tab.id === "scanner") {
+                      setMostrarModal(false);
+                      setMostrarEscaner(true);
+                      return;
+                    }
                     setJuegoActivo(tab.id);
                     setResultadosApi([]);
                     setCartaSeleccionada(null);
@@ -775,16 +779,7 @@ export default function ColeccionFisica({ user }) {
               ))}
             </div>
 
-            {/* SI ESTÁ EN MODO ESCÁNER */}
-            {juegoActivo === "scanner" ? (
-              <CardScanner
-                onAgregarColeccion={async (nuevaCarta) => {
-                  await guardarCartaEnBaseDatos(nuevaCarta);
-                  setMostrarModal(false);
-                }}
-                onClose={() => setJuegoActivo("onepiece")}
-              />
-            ) : juegoActivo !== "manual" ? (
+            {juegoActivo !== "manual" ? (
               <div className="modal-api-seccion">
                 {/* BUSCADOR DE API */}
                 <form onSubmit={ejecutarBusquedaApi} className="api-search-form">
@@ -816,7 +811,10 @@ export default function ColeccionFisica({ user }) {
                     <button
                       type="button"
                       className="btn-abrir-escaner-modal"
-                      onClick={() => setJuegoActivo("scanner")}
+                      onClick={() => {
+                        setMostrarModal(false);
+                        setMostrarEscaner(true);
+                      }}
                       title="Escanear carta física con la cámara e IA"
                     >
                       <Camera size={16} />
@@ -1085,8 +1083,14 @@ export default function ColeccionFisica({ user }) {
                       placeholder="Ej: Romance Dawn, OP-01..."
                       value={manualExpansion}
                       onChange={(e) => setManualExpansion(e.target.value)}
+                      list="expansiones-db-list"
                       required
                     />
+                    <datalist id="expansiones-db-list">
+                      {expansionesDb.map((exp) => (
+                        <option key={exp} value={exp} />
+                      ))}
+                    </datalist>
                   </div>
 
                   <div className="form-campo">

@@ -163,13 +163,7 @@ export default function Torneos() {
   const [premioCatCantidad, setPremioCatCantidad] = useState("1");
   const [descontandoStock, setDescontandoStock] = useState(false);
 
-  // Apartado de Productos de Premiación (personalizado opcional)
-  const [prodNombre, setProdNombre] = useState("");
-  const [prodPuesto, setProdPuesto] = useState("1");
-  const [prodCantidad, setProdCantidad] = useState("1");
-  const [prodImagen, setProdImagen] = useState("");
-  const [prodValorCop, setProdValorCop] = useState("");
-  const [guardandoProducto, setGuardandoProducto] = useState(false);
+  // Apartado de Productos de Premiación
   const [asignandoProductos, setAsignandoProductos] = useState(false);
   const [mensajeProdPremio, setMensajeProdPremio] = useState("");
 
@@ -275,7 +269,7 @@ export default function Torneos() {
       } else {
         setEstadoOcr("OCR completado. Revisa o ajusta el texto si hay caracteres confusos.");
       }
-    } catch (err) {
+    } catch {
       setEstadoOcr("Error al procesar la imagen con OCR. Puedes copiar y pegar el texto de la tabla.");
     } finally {
       setProcesandoOcr(false);
@@ -846,52 +840,6 @@ export default function Torneos() {
     setDescontandoStock(false);
   }
 
-  function handleSubirFotoProducto(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("La imagen es mayor a 2MB. Por favor sube una imagen más ligera.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setProdImagen(ev.target.result);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  async function handleAgregarProductoPremio(e) {
-    e.preventDefault();
-    if (!torneoDetalle || !prodNombre.trim()) return;
-
-    setGuardandoProducto(true);
-    const nuevoProd = {
-      id: `prod-${Date.now()}`,
-      nombre: prodNombre.trim(),
-      puesto: prodPuesto,
-      cantidad: Math.max(1, parseInt(prodCantidad, 10) || 1),
-      imagen: prodImagen || "",
-      valorCop: Number(prodValorCop) || 0,
-    };
-
-    const listaActual = torneoDetalle.productosPremios || [];
-    const nuevaLista = [...listaActual, nuevoProd];
-
-    const actualizado = await guardarProductosPremiosTorneo(torneoDetalle.id, nuevaLista);
-    if (actualizado) {
-      setTorneoDetalle(actualizado);
-      setTorneos((prev) => prev.map((t) => (t.id === actualizado.id ? actualizado : t)));
-      setProdNombre("");
-      setProdPuesto("1");
-      setProdCantidad("1");
-      setProdImagen("");
-      setProdValorCop("");
-      setMensajeProdPremio("Producto agregado a la premiación del torneo.");
-      setTimeout(() => setMensajeProdPremio(""), 4000);
-    }
-    setGuardandoProducto(false);
-  }
-
   async function handleEliminarProductoPremio(prodId) {
     if (!torneoDetalle) return;
     const listaActual = torneoDetalle.productosPremios || [];
@@ -1016,6 +964,14 @@ export default function Torneos() {
         </div>
 
         <div className="torneos-header-actions">
+          <Link
+            to="/admin/agregar"
+            className="btn-ver-clientes"
+            title="Ir al panel de administración de cartas y catálogo"
+          >
+            <Layers size={16} />
+            <span>Admin Cartas</span>
+          </Link>
           <Link
             to="/admin/clientes"
             className="btn-ver-clientes"

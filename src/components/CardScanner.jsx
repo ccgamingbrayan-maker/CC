@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Camera,
   X,
@@ -23,7 +23,6 @@ import {
   buscarYEmparejarCarta,
   getGeminiApiKey,
   setGeminiApiKey,
-  preprocesarImagenParaIA,
 } from "../lib/geminiOnePieceScanner.js";
 
 const CONDICIONES = [
@@ -92,7 +91,7 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
           },
           audio: false,
         });
-      } catch (errConstraint) {
+      } catch {
         // Segundo intento con resolución intermedia
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -204,9 +203,15 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
         resultadoIa = await escanearCartaConGemini(base64Data, keyActual);
       } catch (geminiErr) {
         if (geminiErr.message?.includes("API key not valid") || geminiErr.message?.includes("API_KEY_INVALID")) {
-          throw new Error("La API Key de Gemini ingresada no es válida. Revisa tu clave en ai.google.dev");
+          throw new Error("La API Key de Gemini ingresada no es válida. Revisa tu clave en ai.google.dev", { cause: geminiErr });
         }
-        throw geminiErr;
+        // Respaldo automático mediante servidor de contingencia BaseCC
+        try {
+          setEstadoTexto("Reintentando con servidor de respaldo BaseCC...");
+          resultadoIa = await escanearConBaseCcFallback(base64Data);
+        } catch {
+          throw geminiErr;
+        }
       }
 
       if (!resultadoIa) {
@@ -336,7 +341,10 @@ export default function CardScanner({ onAgregarColeccion, onClose }) {
       }
     } catch {}
 
-    const base64 = capturarFrame();
+    let base64 = capturarFrame();
+    if (!base64) {
+      base64 = capturarVideoCompleto();
+    }
     if (!base64) {
       setErrorMensaje("La cámara aún se está inicializando. Espera un segundo.");
       return;

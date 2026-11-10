@@ -483,7 +483,7 @@ export default function AgregarCarta() {
                 <span>Accesorios</span>
               </button>
               <Link
-                to="/torneos"
+                to="/admin/torneos"
                 className="admin-nav-tab"
               >
                 <Trophy size={16} />

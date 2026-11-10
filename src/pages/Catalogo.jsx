@@ -188,7 +188,14 @@ export default function Catalogo({ onAgregar }) {
                 Stock: {c.stock}
                 {c.condicion ? ` · ${c.condicion}` : ""}
               </p>
-              <button onClick={() => onAgregar({ tipo: "carta", id: c.id })}>Agregar al carrito</button>
+              <button
+                type="button"
+                onClick={() => onAgregar({ tipo: "carta", id: c.id })}
+                disabled={Number(c.stock) <= 0}
+                style={Number(c.stock) <= 0 ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+              >
+                {Number(c.stock) <= 0 ? "Agotado" : "Agregar al carrito"}
+              </button>
             </div>
           ))}
         </div>

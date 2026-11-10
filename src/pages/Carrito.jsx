@@ -53,6 +53,11 @@ export default function Carrito() {
                     <span className="carrito-item-unit">
                       ${i.precio.toLocaleString("es-CO")} c/u
                     </span>
+                    {i.stock != null && i.cantidad >= i.stock && (
+                      <span className="carrito-item-max-stock" style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 600 }}>
+                        Máximo en stock ({i.stock})
+                      </span>
+                    )}
                   </div>
 
                   <div className="carrito-cantidad">
@@ -67,7 +72,9 @@ export default function Carrito() {
                     <button
                       type="button"
                       onClick={() => cambiarCantidad(i.tipo, i.item_id, 1)}
+                      disabled={i.stock != null && i.cantidad >= i.stock}
                       aria-label="Agregar uno"
+                      style={i.stock != null && i.cantidad >= i.stock ? { opacity: 0.4, cursor: "not-allowed" } : {}}
                     >
                       <Plus size={14} />
                     </button>

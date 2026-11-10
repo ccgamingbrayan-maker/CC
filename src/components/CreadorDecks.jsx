@@ -22,8 +22,6 @@ import {
   FileText,
   Edit2,
   Shield,
-  Zap,
-  Info,
 } from "lucide-react";
 import { supabase } from "../lib/supabase.js";
 import { useCart } from "../lib/CartContext.jsx";
@@ -1177,7 +1175,13 @@ export default function CreadorDecks({ user }) {
             <div className="tcg-decks-showcase-grid">
               {decks.map((deck) => {
                 const lider =
-                  deck.cartas?.find((c) => c.rareza === "L" || c.tipo === "Leader") ||
+                  deck.lider ||
+                  deck.cartas?.find(
+                    (c) =>
+                      (c.tipo || "").toUpperCase() === "LEADER" ||
+                      (c.rareza || "").toUpperCase() === "L" ||
+                      (c.categoria || "").toUpperCase() === "LEADER"
+                  ) ||
                   deck.cartas?.[0];
 
                 const totalCartasDeck = (deck.cartas || []).reduce(
@@ -1185,7 +1189,11 @@ export default function CreadorDecks({ user }) {
                   0
                 );
 
-                const liderImg = lider?.versiones?.normal?.imagen || lider?.imagen;
+                const liderImg =
+                  lider?.imagenActiva ||
+                  lider?.versiones?.normal?.imagen ||
+                  lider?.imagen ||
+                  lider?.image_url;
 
                 return (
                   <div key={deck.id} className="tcg-deck-item-card">
@@ -1336,7 +1344,12 @@ export default function CreadorDecks({ user }) {
                   title="Clic para inspeccionar Líder"
                 >
                   <img
-                    src={analisisDeck.lider.imagenActiva || analisisDeck.lider.imagen}
+                    src={
+                      analisisDeck.lider.imagenActiva ||
+                      analisisDeck.lider.imagen ||
+                      analisisDeck.lider.versiones?.normal?.imagen ||
+                      analisisDeck.lider.image_url
+                    }
                     alt={analisisDeck.lider.nombre}
                     className="tcg-leader-img"
                   />

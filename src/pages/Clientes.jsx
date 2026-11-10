@@ -165,7 +165,7 @@ export default function Clientes() {
             <Package size={15} />
             <span>Accesorios</span>
           </Link>
-          <Link to="/torneos" className="admin-nav-tab">
+          <Link to="/admin/torneos" className="admin-nav-tab">
             <Trophy size={15} />
             <span>Torneos</span>
           </Link>

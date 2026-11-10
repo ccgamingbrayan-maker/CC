@@ -7,6 +7,7 @@ import Accesorios from "./pages/Accesorios.jsx";
 import DetalleAccesorio from "./pages/DetalleAccesorio.jsx";
 import DetalleCarta from "./pages/DetalleCarta.jsx";
 import Carrito from "./pages/Carrito.jsx";
+import Checkout from "./pages/Checkout.jsx";
 import Login from "./pages/Login.jsx";
 import RestablecerClave from "./pages/RestablecerClave.jsx";
 import ConfirmarCuenta from "./pages/ConfirmarCuenta.jsx";
@@ -15,6 +16,7 @@ import Torneos from "./pages/Torneos.jsx";
 import Clientes from "./pages/Clientes.jsx";
 import RutaAdmin from "./components/RutaAdmin.jsx";
 import Cargando from "./components/Cargando.jsx";
+import NotFound from "./pages/NotFound.jsx";
 import { useCart } from "./lib/CartContext.jsx";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -42,6 +44,7 @@ export default function App() {
         <Route path="/accesorio/:accesorioId" element={<DetalleAccesorio onAgregar={agregar} />} />
         <Route path="/carta/:cartaId" element={<DetalleCarta onAgregar={agregar} />} />
         <Route path="/carrito" element={<Carrito />} />
+        <Route path="/checkout" element={<Checkout />} />
         <Route path="/torneos" element={<RutaTorneosGuard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/restablecer-clave" element={<RestablecerClave />} />
@@ -79,6 +82,7 @@ export default function App() {
             </RutaAdmin>
           }
         />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

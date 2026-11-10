@@ -2348,7 +2348,8 @@ img {
 
 }
 
-.game-card button {
+.game-card button,
+.game-card-btn {
 
   margin: 12px;
 
@@ -2368,9 +2369,16 @@ img {
 
   min-width: 160px;
 
+  display: inline-block;
+
+  text-align: center;
+
+  text-decoration: none;
+
 }
 
-.game-card button:hover {
+.game-card button:hover,
+.game-card-btn:hover {
   filter: brightness(1.1);
 }
 
@@ -5967,6 +5975,21 @@ img {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.3);
+}
+
+@media (max-width: 640px) {
+  .tcg-decks-showcase-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .tcg-deck-banner-wrap {
+    min-height: 250px;
+    max-height: 300px;
+    padding: 12px 8px 24px 8px;
+  }
+  .tcg-deck-banner-img {
+    max-height: 230px;
+  }
 }
 
 /* ========================================================
