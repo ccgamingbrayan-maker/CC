@@ -100,14 +100,6 @@ export default function Torneos() {
   const [torneos, setTorneos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  if (cargandoAuth) {
-    return <Cargando texto="Verificando permisos de administrador..." />;
-  }
-
-  if (!esAdmin) {
-    return null;
-  }
-
   // Filtros
   const [filtroJuego, setFiltroJuego] = useState("todos");
   const [filtroEstado, setFiltroEstado] = useState("todos"); // "todos" | "proximo" | "en_curso" | "finalizado"
@@ -1004,6 +996,15 @@ export default function Torneos() {
     if (!juego) return "OP TCG";
     if (juego.includes("Riftbound")) return "RIFT";
     return "OP TCG";
+  }
+
+  // Verificación de autenticación y permisos de Administrador tras inicializar todos los hooks
+  if (cargandoAuth) {
+    return <Cargando texto="Verificando permisos de administrador..." />;
+  }
+
+  if (!esAdmin) {
+    return null;
   }
 
   return (

@@ -23,13 +23,24 @@ import { obtenerTorneosUsuario } from "../lib/torneos.js";
 import Cargando from "../components/Cargando.jsx";
 import ColeccionFisica from "../components/ColeccionFisica.jsx";
 import CreadorDecks from "../components/CreadorDecks.jsx";
-import Torneos from "./Torneos.jsx";
 
 export default function Perfil() {
   const { user, esAdmin, cargando } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(() => searchParams.get("tab") || "coleccion");
+
+  // Sincronizar el estado del tab si cambia el parámetro de búsqueda en la URL
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "gestion_torneos" && esAdmin) {
+      navigate("/admin/torneos", { replace: true });
+      return;
+    }
+    if (tabParam && ["datos", "coleccion", "decks", "wishlist", "pedidos", "torneos"].includes(tabParam)) {
+      setTab(tabParam);
+    }
+  }, [searchParams, esAdmin, navigate]);
 
   useEffect(() => {
     if (!cargando && !user) navigate("/login", { replace: true });
@@ -129,20 +140,24 @@ export default function Perfil() {
               <span>Mis Torneos</span>
             </button>
             {esAdmin && (
-              <button
-                type="button"
-                className={`perfil-tab-btn perfil-tab-admin-torneos ${tab === "gestion_torneos" ? "active" : ""}`}
-                onClick={() => setTab("gestion_torneos")}
+              <Link
+                to="/admin/torneos"
+                className="perfil-tab-btn perfil-tab-admin-torneos"
                 style={{
-                  background: tab === "gestion_torneos" ? "linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(249, 115, 22, 0.2) 100%)" : "rgba(234, 179, 8, 0.08)",
+                  background: "rgba(234, 179, 8, 0.08)",
                   borderColor: "rgba(234, 179, 8, 0.4)",
                   color: "#fbbf24",
                   fontWeight: 700,
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
+                title="Ir al panel completo de administración de torneos, premios e importador"
               >
                 <Trophy size={16} />
-                <span>Gestión Torneos (Admin)</span>
-              </button>
+                <span>Panel Torneos (Admin)</span>
+              </Link>
             )}
           </div>
         </nav>
@@ -158,11 +173,6 @@ export default function Perfil() {
         {tab === "wishlist" && <Wishlist user={user} />}
         {tab === "pedidos" && <Pedidos user={user} />}
         {tab === "torneos" && <MisTorneos user={user} />}
-        {tab === "gestion_torneos" && esAdmin && (
-          <div className="perfil-admin-torneos-panel" style={{ marginTop: "16px" }}>
-            <Torneos />
-          </div>
-        )}
       </div>
     </section>
   );
@@ -488,7 +498,7 @@ function MisTorneos({ user }) {
       p.includes("1°") || p.includes("2°") || p.includes("3°") || p.includes("4°") ||
       p.includes("top 4");
   }).length;
-  const deudaTotal = torneos.reduce((acc, t) => acc + (t.deuda || 0), 0);
+  const deudaTotal = torneos.reduce((acc, t) => acc + (Number(t.deuda) || 0), 0);
 
   return (
     <div className="perfil-panel">
@@ -518,14 +528,14 @@ function MisTorneos({ user }) {
         <div className={`perfil-kpi-item ${deudaTotal > 0 ? "danger" : "green"}`}>
           <span className="p-kpi-label">{deudaTotal > 0 ? "Saldo Pendiente" : "Estado de Cuenta"}</span>
           <strong className="p-kpi-val">
-            {deudaTotal > 0 ? `$${deudaTotal.toLocaleString("es-CO")} COP` : "Al día (Sin deuda)"}
+            {deudaTotal > 0 ? `$${Number(deudaTotal).toLocaleString("es-CO")} COP` : "Al día (Sin deuda)"}
           </strong>
         </div>
       </div>
 
       {/* Listado de tarjetas de torneos del usuario */}
       <div className="perfil-torneos-list">
-        {torneos.map((t) => {
+        {torneos.map((t, tIdx) => {
           const numPuesto = String(t.puesto || "");
           const esPrimero = numPuesto === "1" || numPuesto.includes("1°") || numPuesto.toLowerCase().includes("campeón");
           const esSegundo = numPuesto === "2" || numPuesto.includes("2°");
@@ -534,7 +544,7 @@ function MisTorneos({ user }) {
 
           let badgePuestoClass = "puesto-general";
           let iconoPuesto = "🎖️";
-          let textoPuesto = `Puesto: ${numPuesto}`;
+          let textoPuesto = numPuesto ? `Puesto: ${numPuesto}` : "Participante";
 
           if (esPrimero) {
             badgePuestoClass = "puesto-oro";
@@ -554,34 +564,46 @@ function MisTorneos({ user }) {
             textoPuesto = "Top 4";
           }
 
-          const estaPagado = t.estadoPago === "pagado" || t.deuda === 0;
-          const esAbono = t.estadoPago === "abono" && t.deuda > 0;
+          const montoPagado = Number(t.montoPagado || 0);
+          const deuda = Number(t.deuda || 0);
+          const estaPagado = t.estadoPago === "pagado" || deuda === 0;
+          const esAbono = t.estadoPago === "abono" && deuda > 0;
           const debeTotal = t.estadoPago === "debe" || (!estaPagado && !esAbono);
 
+          const fechaFormateada = t.fecha ? (() => {
+            try {
+              return new Date(t.fecha).toLocaleDateString("es-CO", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+            } catch {
+              return String(t.fecha);
+            }
+          })() : "Fecha por confirmar";
+
+          const tienePremios = Boolean(
+            t.premioGanado || (Array.isArray(t.productosPremios) && t.productosPremios.length > 0)
+          );
+
           return (
-            <div key={`${t.torneoId}-${t.participanteId}`} className={`perfil-torneo-card ${esPrimero ? "first-place-glow" : ""}`}>
+            <div key={`${t.torneoId || tIdx}-${t.participanteId || tIdx}`} className={`perfil-torneo-card ${esPrimero ? "first-place-glow" : ""}`}>
               <div className="perfil-tc-header">
                 <div>
                   <div className="perfil-tc-meta-row">
-                    <span className="perfil-tc-game-badge">{t.juego}</span>
+                    <span className="perfil-tc-game-badge">{t.juego || "One Piece TCG"}</span>
                     <span className={`perfil-tc-puesto-badge ${badgePuestoClass}`}>
                       <span>{iconoPuesto}</span>
                       <strong>{textoPuesto}</strong>
                     </span>
                   </div>
-                  <h4 className="perfil-tc-title">{t.nombreTorneo}</h4>
+                  <h4 className="perfil-tc-title">{t.nombreTorneo || "Torneo Oficial"}</h4>
                   <div className="perfil-tc-info-row">
-                    <span>
-                      📅 {new Date(t.fecha).toLocaleDateString("es-CO", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                    <span>📍 {t.lugar}</span>
+                    <span>📅 {fechaFormateada}</span>
+                    <span>📍 {t.lugar || "Sede Capsule Corp Gaming"}</span>
                   </div>
                 </div>
 
@@ -590,19 +612,19 @@ function MisTorneos({ user }) {
                   {estaPagado && (
                     <div className="pago-status-pill pagado">
                       <CheckCircle2 size={14} />
-                      <span>Pagado (${t.montoPagado.toLocaleString("es-CO")} COP)</span>
+                      <span>Pagado (${montoPagado.toLocaleString("es-CO")} COP)</span>
                     </div>
                   )}
                   {esAbono && (
                     <div className="pago-status-pill abono">
                       <AlertCircle size={14} />
-                      <span>Abonó: ${t.montoPagado.toLocaleString("es-CO")} • Debe: ${t.deuda.toLocaleString("es-CO")} COP</span>
+                      <span>Abonó: ${montoPagado.toLocaleString("es-CO")} • Debe: ${deuda.toLocaleString("es-CO")} COP</span>
                     </div>
                   )}
                   {debeTotal && (
                     <div className="pago-status-pill debe">
                       <AlertCircle size={14} />
-                      <span>Debe Inscripción: ${t.deuda.toLocaleString("es-CO")} COP</span>
+                      <span>Debe Inscripción: ${deuda.toLocaleString("es-CO")} COP</span>
                     </div>
                   )}
                 </div>
@@ -617,7 +639,7 @@ function MisTorneos({ user }) {
               )}
 
               {/* QUÉ GANÓ (PREMIO OBTENIDO) */}
-              {(t.premioGanado || (t.productosPremios && t.productosPremios.length > 0)) ? (
+              {tienePremios ? (
                 <div className="perfil-tc-premio-box">
                   <div className="premio-icon-badge">
                     <Sparkles size={18} />
@@ -625,16 +647,16 @@ function MisTorneos({ user }) {
                   <div className="premio-content">
                     <span className="premio-title">Premio Ganado en el Torneo:</span>
                     {t.premioGanado && <strong className="premio-text">{t.premioGanado}</strong>}
-                    {t.productosPremios && t.productosPremios.length > 0 && (
+                    {Array.isArray(t.productosPremios) && t.productosPremios.length > 0 && (
                       <div className="perfil-tc-prod-list">
                         {t.productosPremios.map((prod, prIdx) => (
                           <div key={prIdx} className="perfil-tc-prod-pill">
-                            {prod.imagen ? (
-                              <img src={prod.imagen} alt={prod.nombre} className="perfil-tc-prod-img" />
+                            {prod?.imagen ? (
+                              <img src={prod.imagen} alt={prod?.nombre || "Premio"} className="perfil-tc-prod-img" />
                             ) : (
                               <Package size={12} />
                             )}
-                            <span>{prod.cantidad > 1 ? `${prod.cantidad}x ` : ""}{prod.nombre}</span>
+                            <span>{Number(prod?.cantidad || 1) > 1 ? `${prod.cantidad}x ` : ""}{prod?.nombre || "Premio"}</span>
                           </div>
                         ))}
                       </div>

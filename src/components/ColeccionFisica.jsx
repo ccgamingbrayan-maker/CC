@@ -447,7 +447,7 @@ export default function ColeccionFisica({ user }) {
       .map((exp) => ({
         expansion: exp,
         cartas: grupos[exp],
-        totalCartas: grupos[exp].reduce((acc, c) => acc + c.cantidad, 0),
+        totalCartas: grupos[exp].reduce((acc, c) => acc + (Number(c.cantidad) || 1), 0),
       }));
   }, [cartasFiltradas]);
 
@@ -458,7 +458,7 @@ export default function ColeccionFisica({ user }) {
 
   // Total de cartas físicas sumando copias
   const totalCartasFisicas = useMemo(() => {
-    return coleccion.reduce((acc, c) => acc + (c.cantidad || 1), 0);
+    return coleccion.reduce((acc, c) => acc + (Number(c.cantidad) || 1), 0);
   }, [coleccion]);
 
   if (cargandoColeccion) {
