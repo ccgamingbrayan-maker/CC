@@ -9895,6 +9895,111 @@ img {
   letter-spacing: -0.3px;
 }
 
+/* Listado de tarjetas de torneos del usuario */
+.perfil-torneos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.perfil-torneo-card {
+  background: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.perfil-torneo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.12);
+}
+
+.perfil-torneo-card.first-place-glow {
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 4px 22px rgba(245, 158, 11, 0.16);
+}
+
+.perfil-tc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.perfil-tc-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.perfil-tc-game-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--t08);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+}
+
+.perfil-tc-puesto-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.perfil-tc-puesto-badge.puesto-oro {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+}
+
+.perfil-tc-puesto-badge.puesto-plata {
+  background: rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #e2e8f0;
+}
+
+.perfil-tc-puesto-badge.puesto-bronce {
+  background: rgba(217, 119, 6, 0.16);
+  border: 1px solid rgba(217, 119, 6, 0.4);
+  color: #f59e0b;
+}
+
+.perfil-tc-puesto-badge.puesto-top4 {
+  background: rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+}
+
+.perfil-tc-puesto-badge.puesto-general {
+  background: var(--t06);
+  border: 1px solid var(--borde);
+  color: var(--texto-suave);
+}
+
+.perfil-tc-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--texto);
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
 .perfil-tc-info-row {
   display: flex;
   align-items: center;
@@ -9908,6 +10013,7 @@ img {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  flex-shrink: 0;
 }
 
 .pago-status-pill {
@@ -16103,6 +16209,224 @@ img {
     width: 100% !important;
   }
 
+  /* Prevenir desborde horizontal general en Android e iPhone */
+  body, html {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .contenedor {
+    padding: 0 12px !important;
+  }
+
+  /* Barra de navegación en móvil */
+  .navbar .navbar-inner {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+
+  .navbar-nav-group {
+    display: flex !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 6px !important;
+    padding-bottom: 3px !important;
+  }
+
+  .navbar-nav-group::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .nav-pill {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Sección Perfil en móvil */
+  .perfil {
+    padding: 16px 0 40px !important;
+    min-height: auto !important;
+  }
+
+  .perfil-card-header {
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .perfil-user-spotlight {
+    display: flex !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+
+  .perfil-avatar-circle {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 20px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .perfil-user-name {
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+  }
+
+  .perfil-name-badge-row {
+    gap: 6px !important;
+    margin-bottom: 3px !important;
+  }
+
+  .perfil-badge-verified,
+  .perfil-badge-nickname,
+  .perfil-badge-no-nickname {
+    font-size: 10px !important;
+    padding: 2px 7px !important;
+  }
+
+  .perfil-user-email {
+    font-size: 12px !important;
+    word-break: break-all !important;
+  }
+
+  .perfil-member-date {
+    font-size: 11px !important;
+  }
+
+  /* Pestañas de Perfil en móvil */
+  .perfil-nav-bar {
+    margin-bottom: 16px !important;
+    padding: 0 0 6px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .perfil-nav-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .perfil-nav-tabs {
+    display: flex !important;
+    width: max-content !important;
+    min-width: 100% !important;
+    gap: 5px !important;
+    padding: 4px !important;
+    border-radius: 12px !important;
+  }
+
+  .perfil-tab-btn {
+    padding: 7px 11px !important;
+    font-size: 12px !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  /* Sección Mis Torneos del Cliente en Móvil */
+  .perfil-torneos-header {
+    padding-bottom: 12px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .perfil-torneos-header h3 {
+    font-size: 16px !important;
+  }
+
+  .perfil-torneos-kpi-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .perfil-kpi-item {
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .p-kpi-label {
+    font-size: 10px !important;
+  }
+
+  .p-kpi-val {
+    font-size: 16px !important;
+  }
+
+  .perfil-torneo-card {
+    padding: 14px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .perfil-tc-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .perfil-tc-title {
+    font-size: 15px !important;
+  }
+
+  .perfil-tc-info-row {
+    gap: 8px !important;
+    font-size: 11.5px !important;
+  }
+
+  .perfil-tc-pago-col {
+    align-items: flex-start !important;
+    width: 100% !important;
+    margin-top: 4px !important;
+  }
+
+  .pago-status-pill {
+    width: 100% !important;
+    justify-content: center !important;
+    font-size: 11.5px !important;
+    padding: 6px 10px !important;
+  }
+
+  .perfil-tc-deck-row {
+    width: 100% !important;
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+
+  .perfil-tc-premio-box {
+    padding: 10px 12px !important;
+    gap: 10px !important;
+  }
+
+  .premio-text {
+    font-size: 13px !important;
+  }
+
+  /* Colección física métricas en móvil: 3 columnas parejas */
+  .coleccion-stats {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .coleccion-stats .stat-card {
+    padding: 10px 6px !important;
+    text-align: center !important;
+    align-items: center !important;
+    border-radius: 10px !important;
+  }
+
+  .coleccion-stats .stat-numero {
+    font-size: 18px !important;
+  }
+
+  .coleccion-stats .stat-label {
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+  }
+
   /* Colección física en móvil */
   .coleccion-contenedor {
     padding: 14px 10px !important;
@@ -16125,12 +16449,11 @@ img {
     width: 100% !important;
     justify-content: center !important;
     padding: 10px 8px !important;
-    font-size: 13px !important;
-    white-space: nowrap !important;
-    padding: 10px 6px !important;
     font-size: 12.5px !important;
     font-weight: 700 !important;
     text-align: center !important;
+    height: 42px !important;
+    border-radius: 10px !important;
   }
 
   .coleccion-empty-actions {
@@ -16242,6 +16565,170 @@ img {
 
   .btn-flotante-escanear-movil:active {
     transform: scale(0.94) !important;
+  }
+
+  /* Vista de Torneos y Panel de Gestión en Móvil */
+  .torneos-page-view {
+    padding: 12px 6px 48px !important;
+  }
+
+  .torneos-header-banner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding-bottom: 16px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .torneos-header-left {
+    width: 100% !important;
+  }
+
+  .torneos-main-title {
+    font-size: 22px !important;
+  }
+
+  .torneos-main-subtitle {
+    font-size: 13px !important;
+  }
+
+  .torneos-header-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .btn-nuevo-torneo,
+  .btn-catalogo-premios {
+    width: 100% !important;
+    justify-content: center !important;
+    height: 42px !important;
+    font-size: 13px !important;
+  }
+
+  .torneos-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .torneo-kpi-card {
+    padding: 12px 10px !important;
+    gap: 10px !important;
+  }
+
+  .kpi-icon-wrap {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .kpi-icon-wrap svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .kpi-num-col strong {
+    font-size: 16px !important;
+  }
+
+  .kpi-num-col span {
+    font-size: 10.5px !important;
+  }
+
+  .torneos-filter-toolbar {
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+
+  .torneos-game-chips {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 4px !important;
+  }
+
+  .torneos-toolbar-controls {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .torneos-toolbar-controls .search-box-wrap,
+  .torneos-toolbar-controls .select-filter-wrap {
+    width: 100% !important;
+  }
+
+  .torneos-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Modales de Gestión de Torneos en móvil: Tipo Bottom Sheet */
+  .torneo-modal-backdrop {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .torneo-modal-dialog,
+  .modal-container,
+  .torneo-modal-dialog.modal-large,
+  .modal-catalogo-dialog,
+  .modal-prizewall-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92dvh !important;
+    margin: 0 !important;
+  }
+
+  .torneo-modal-header {
+    padding: 14px 16px !important;
+  }
+
+  .torneo-modal-body {
+    padding: 16px 14px calc(env(safe-area-inset-bottom, 16px) + 16px) !important;
+  }
+
+  .torneo-modal-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 4px !important;
+    width: 100% !important;
+  }
+
+  /* Panel de inventario en móvil */
+  .torneo-sync-inventory-panel {
+    padding: 14px 12px !important;
+    border-radius: 12px !important;
+    gap: 14px !important;
+  }
+
+  .tsip-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .tsip-action-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .tsip-left-actions,
+  .tsip-right-actions {
+    width: 100% !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .btn-sync-action {
+    width: 100% !important;
+    justify-content: center !important;
+    height: 42px !important;
   }
 }
 
