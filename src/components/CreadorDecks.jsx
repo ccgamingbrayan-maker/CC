@@ -1191,10 +1191,16 @@ export default function CreadorDecks({ user }) {
                   <div key={deck.id} className="tcg-deck-item-card">
                     <div className="tcg-deck-banner-wrap">
                       {liderImg ? (
-                        <img src={liderImg} alt={deck.nombre} className="tcg-deck-banner-img" />
+                        <>
+                          <img src={liderImg} alt="" className="tcg-deck-ambient-bg" aria-hidden="true" />
+                          <div className="tcg-deck-img-holder">
+                            <img src={liderImg} alt={lider?.nombre || deck.nombre} className="tcg-deck-banner-img" />
+                          </div>
+                        </>
                       ) : (
                         <div className="tcg-deck-banner-empty">
-                          <Layers size={32} />
+                          <Layers size={36} />
+                          <span>Sin Líder</span>
                         </div>
                       )}
                       <div className="tcg-deck-chip-total">
@@ -1202,7 +1208,7 @@ export default function CreadorDecks({ user }) {
                       </div>
                       {lider && (
                         <div className="tcg-deck-chip-lider">
-                          {lider.nombre || "Líder"}
+                          👑 {lider.nombre || "Líder"}
                         </div>
                       )}
                     </div>

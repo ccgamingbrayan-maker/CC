@@ -5793,31 +5793,67 @@ img {
 }
 
 .tcg-deck-banner-wrap {
-  height: 155px;
   width: 100%;
+  min-height: 290px;
+  max-height: 340px;
   position: relative;
-  background: #020617;
+  background: radial-gradient(circle at 50% 30%, #1e1b4b 0%, #030712 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
+  padding: 16px 12px 28px 12px;
 }
 
-.tcg-deck-banner-img {
-  width: 100%;
-  height: 100%;
+.tcg-deck-ambient-bg {
+  position: absolute;
+  inset: -20px;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
   object-fit: cover;
-  object-position: center 25%;
-  transition: transform 0.35s ease;
+  filter: blur(28px) brightness(0.35) saturate(1.4);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.tcg-deck-item-card:hover .tcg-deck-banner-img {
-  transform: scale(1.06);
-}
-
-.tcg-deck-banner-empty {
+.tcg-deck-img-holder {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
+  width: 100%;
+}
+
+.tcg-deck-banner-img {
+  max-height: 275px;
+  width: auto;
+  max-width: 88%;
+  object-fit: contain;
+  border-radius: 9px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.75), 0 0 14px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: block;
+}
+
+.tcg-deck-item-card:hover .tcg-deck-banner-img {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.9), 0 0 20px rgba(168, 85, 247, 0.4);
+}
+
+.tcg-deck-banner-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 180px;
   color: #64748b;
+  gap: 8px;
+  font-size: 13px;
+  z-index: 1;
 }
 
 .tcg-deck-chip-total {
@@ -5832,15 +5868,16 @@ img {
   font-weight: 800;
   padding: 3px 9px;
   border-radius: 6px;
+  z-index: 2;
 }
 
 .tcg-deck-chip-lider {
   position: absolute;
   bottom: 8px;
   left: 10px;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid rgba(212, 175, 55, 0.4);
   color: #fef08a;
   font-size: 11px;
   font-weight: 700;
@@ -5850,6 +5887,7 @@ img {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  z-index: 2;
 }
 
 .tcg-deck-item-content {
@@ -6079,7 +6117,8 @@ img {
 .tcg-leader-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #000;
   display: block;
 }
 
