@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   ChevronDown,
   Trophy,
-  Users
+  Users,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useCart } from "../lib/CartContext.jsx";

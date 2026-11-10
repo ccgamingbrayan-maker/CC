@@ -61,7 +61,7 @@ export default class ErrorBoundary extends React.Component {
           <p
             style={{
               maxWidth: "520px",
-              margin: "0 0 24px 0",
+              margin: "0 0 16px 0",
               color: "var(--texto-suave, #a1a1aa)",
               fontSize: "14px",
               lineHeight: "1.6",
@@ -70,6 +70,25 @@ export default class ErrorBoundary extends React.Component {
             Detectamos un error inesperado al renderizar el contenido. Puedes recargar la
             página o volver al catálogo principal.
           </p>
+
+          {this.state.error?.message && (
+            <div
+              style={{
+                maxWidth: "600px",
+                margin: "0 0 20px 0",
+                padding: "8px 14px",
+                background: "rgba(239, 68, 68, 0.08)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                borderRadius: "8px",
+                fontSize: "12px",
+                color: "#fca5a5",
+                fontFamily: "monospace",
+                wordBreak: "break-word",
+              }}
+            >
+              {this.state.error.message}
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
             <button
@@ -112,3 +131,4 @@ export default class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
