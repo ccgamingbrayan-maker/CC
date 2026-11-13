@@ -7,6 +7,8 @@ export default function CartasRecomendadas() {
   const [cartas, setCartas] = useState([]);
   const scrollRef = useRef(null);
   const isHoveredRef = useRef(false);
+  const isInteractingRef = useRef(false);
+  const pauseTimerRef = useRef(null);
 
   useEffect(() => {
     let activo = true;
@@ -28,7 +30,7 @@ export default function CartasRecomendadas() {
         }
 
         if (activo && data) {
-          // Curaduría: destacar joyas y limitar cartas DON repetitivas
+          // Curaduría: destacar joyas y evitar saturación de cartas DON
           const donCards = [];
           const chaseCards = [];
 
@@ -43,7 +45,6 @@ export default function CartasRecomendadas() {
             }
           }
 
-          // Combinar destacadas con cartas seleccionadas
           const seleccionadas = [...chaseCards, ...donCards];
           setCartas(seleccionadas);
         }
@@ -58,6 +59,16 @@ export default function CartasRecomendadas() {
     };
   }, []);
 
+  function pausarMovimiento(duracionMs = 2500) {
+    isInteractingRef.current = true;
+    if (pauseTimerRef.current) {
+      clearTimeout(pauseTimerRef.current);
+    }
+    pauseTimerRef.current = setTimeout(() => {
+      isInteractingRef.current = false;
+    }, duracionMs);
+  }
+
   // Animación continua y lenta (loop infinito suave)
   useEffect(() => {
     const el = scrollRef.current;
@@ -67,7 +78,7 @@ export default function CartasRecomendadas() {
     const speed = 0.35; // Desplazamiento lento y relajado (~21px/segundo)
 
     function step() {
-      if (!isHoveredRef.current && el) {
+      if (!isHoveredRef.current && !isInteractingRef.current && el) {
         el.scrollLeft += speed;
         // Cuando llega a la mitad de la lista duplicada, reinicia sin salto visual
         if (el.scrollLeft >= el.scrollWidth / 2) {
@@ -81,10 +92,8 @@ export default function CartasRecomendadas() {
 
     const onEnter = () => { isHoveredRef.current = true; };
     const onLeave = () => { isHoveredRef.current = false; };
-    const onTouchStart = () => { isHoveredRef.current = true; };
-    const onTouchEnd = () => {
-      setTimeout(() => { isHoveredRef.current = false; }, 2000);
-    };
+    const onTouchStart = () => { pausarMovimiento(3000); };
+    const onTouchEnd = () => { pausarMovimiento(2000); };
 
     el.addEventListener("mouseenter", onEnter);
     el.addEventListener("mouseleave", onLeave);
@@ -93,6 +102,7 @@ export default function CartasRecomendadas() {
 
     return () => {
       cancelAnimationFrame(animId);
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
       el.removeEventListener("mouseenter", onEnter);
       el.removeEventListener("mouseleave", onLeave);
       el.removeEventListener("touchstart", onTouchStart);
@@ -104,12 +114,15 @@ export default function CartasRecomendadas() {
     const el = scrollRef.current;
     if (!el) return;
 
-    // Si retrocede cerca del inicio, ajustar a la segunda mitad para permitir retroceso infinito
-    if (dir < 0 && el.scrollLeft < 100) {
+    // Pausar la animación automática para permitir que el smooth scroll del navegador se complete
+    pausarMovimiento(2000);
+
+    // Si retrocede y está cerca del inicio, saltar a la segunda mitad para permitir retroceso infinito
+    if (dir < 0 && el.scrollLeft < 200) {
       el.scrollLeft += el.scrollWidth / 2;
     }
 
-    el.scrollBy({ left: dir * 260, behavior: "smooth" });
+    el.scrollBy({ left: dir * 320, behavior: "smooth" });
   }
 
   if (cartas.length === 0) return null;
@@ -145,18 +158,7 @@ export default function CartasRecomendadas() {
         </div>
 
         {/* TRACK DESLIZANTE */}
-        <div
-          className="carrusel-rel-track"
-          ref={scrollRef}
-          style={{
-            display: "flex",
-            gap: "16px",
-            overflowX: "auto",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-            paddingBottom: "12px",
-          }}
-        >
+        <div className="carrusel-rel-track" ref={scrollRef}>
           {listaDuplicada.map((c, i) => (
             <Link
               key={`${c.id}-${i}`}
