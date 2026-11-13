@@ -1,36 +1,17 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import {
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  ShoppingCart,
-  Check,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "../lib/supabase.js";
-import { useCart } from "../lib/CartContext.jsx";
-
-const JUEGOS_MAP = {
-  1: { nombre: "One Piece", badgeClass: "op" },
-  2: { nombre: "Riftbound", badgeClass: "rift" },
-  3: { nombre: "Pokémon", badgeClass: "pkmn" },
-  4: { nombre: "Magic", badgeClass: "mtg" },
-  5: { nombre: "Pre-Venta", badgeClass: "prev" },
-};
 
 export default function CartasRecomendadas() {
-  const [todasCartas, setTodasCartas] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [filtroJuego, setFiltroJuego] = useState("todos"); // "todos" | 1 | 2 | 4 | 5
-  const [agregados, setAgregados] = useState({});
+  const [cartas, setCartas] = useState([]);
   const scrollRef = useRef(null);
-  const { agregar } = useCart();
+  const isHoveredRef = useRef(false);
 
   useEffect(() => {
     let activo = true;
 
     async function cargarRecomendadas() {
-      setCargando(true);
       try {
         const { data, error } = await supabase
           .from("cartas")
@@ -47,16 +28,13 @@ export default function CartasRecomendadas() {
         }
 
         if (activo && data) {
-          // Filtrado inteligente:
-          // 1. Evitar inundación de cartas DON!! genéricas o con fondos blancos defectuosos
-          // 2. Dar prioridad a joyas coleccionables (Parallel, Signature, altos valores)
+          // Curaduría: destacar joyas y limitar cartas DON repetitivas
           const donCards = [];
           const chaseCards = [];
 
           for (const c of data) {
             const nom = (c.nombre || "").toUpperCase();
             if (nom.includes("DON!!")) {
-              // Permitir máximo 2 cartas DON!! de arte alternativo limpio
               if (donCards.length < 2 && !nom.includes("DOUBLE PACK SET VOL. 11")) {
                 donCards.push(c);
               }
@@ -65,17 +43,12 @@ export default function CartasRecomendadas() {
             }
           }
 
-          // Barajar ligeramente las cartas destacadas manteniendo joyas al frente
-          const prioritarias = chaseCards.slice(0, 10);
-          const resto = chaseCards.slice(10);
-          const mezcladas = [...prioritarias, ...resto, ...donCards];
-
-          setTodasCartas(mezcladas);
+          // Combinar destacadas con cartas seleccionadas
+          const seleccionadas = [...chaseCards, ...donCards];
+          setCartas(seleccionadas);
         }
       } catch (err) {
-        console.error("Error al obtener recomendadas:", err);
-      } finally {
-        if (activo) setCargando(false);
+        console.error("Error al obtener cartas recomendadas:", err);
       }
     }
 
@@ -85,178 +58,127 @@ export default function CartasRecomendadas() {
     };
   }, []);
 
-  const cartasFiltradas = useMemo(() => {
-    if (filtroJuego === "todos") return todasCartas;
-    return todasCartas.filter((c) => Number(c.juego_id) === Number(filtroJuego));
-  }, [todasCartas, filtroJuego]);
+  // Animación continua y lenta (loop infinito suave)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || cartas.length === 0) return;
+
+    let animId;
+    const speed = 0.35; // Desplazamiento lento y relajado (~21px/segundo)
+
+    function step() {
+      if (!isHoveredRef.current && el) {
+        el.scrollLeft += speed;
+        // Cuando llega a la mitad de la lista duplicada, reinicia sin salto visual
+        if (el.scrollLeft >= el.scrollWidth / 2) {
+          el.scrollLeft -= el.scrollWidth / 2;
+        }
+      }
+      animId = requestAnimationFrame(step);
+    }
+
+    animId = requestAnimationFrame(step);
+
+    const onEnter = () => { isHoveredRef.current = true; };
+    const onLeave = () => { isHoveredRef.current = false; };
+    const onTouchStart = () => { isHoveredRef.current = true; };
+    const onTouchEnd = () => {
+      setTimeout(() => { isHoveredRef.current = false; }, 2000);
+    };
+
+    el.addEventListener("mouseenter", onEnter);
+    el.addEventListener("mouseleave", onLeave);
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(animId);
+      el.removeEventListener("mouseenter", onEnter);
+      el.removeEventListener("mouseleave", onLeave);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [cartas]);
 
   function moverScroll(dir) {
-    if (!scrollRef.current) return;
-    const offset = dir * (scrollRef.current.clientWidth * 0.75 || 320);
-    scrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
+    const el = scrollRef.current;
+    if (!el) return;
+
+    // Si retrocede cerca del inicio, ajustar a la segunda mitad para permitir retroceso infinito
+    if (dir < 0 && el.scrollLeft < 100) {
+      el.scrollLeft += el.scrollWidth / 2;
+    }
+
+    el.scrollBy({ left: dir * 260, behavior: "smooth" });
   }
 
-  function handleAgregarRapido(e, carta) {
-    e.preventDefault();
-    e.stopPropagation();
+  if (cartas.length === 0) return null;
 
-    agregar({ tipo: "carta", id: carta.id });
-    setAgregados((prev) => ({ ...prev, [carta.id]: true }));
-
-    setTimeout(() => {
-      setAgregados((prev) => ({ ...prev, [carta.id]: false }));
-    }, 1800);
-  }
-
-  if (!cargando && todasCartas.length === 0) return null;
+  // Duplicar la lista para lograr el loop continuo sin cortes
+  const listaDuplicada = [...cartas, ...cartas];
 
   return (
-    <section className="rec-section">
+    <section className="recomendadas">
       <div className="contenedor">
-        {/* ENCABEZADO Y CONTROLES */}
-        <div className="rec-header-row">
-          <div className="rec-title-wrap">
-            <h2 className="rec-title">
-              <span className="rec-title-sparkle">
-                <Sparkles size={22} />
-              </span>
-              <span>Cartas recomendadas para ti</span>
-            </h2>
-          </div>
+        {/* ENCABEZADO: TÍTULO Y FLECHAS */}
+        <div className="carrusel-rel-head">
+          <h3>Cartas recomendadas para ti</h3>
 
-          <div className="rec-controls-cluster">
-            {/* TABS DE FILTRO POR JUEGO */}
-            <div className="rec-filter-tabs">
-              <button
-                type="button"
-                className={`rec-tab-btn ${filtroJuego === "todos" ? "active" : ""}`}
-                onClick={() => setFiltroJuego("todos")}
-              >
-                Todas
-              </button>
-              <button
-                type="button"
-                className={`rec-tab-btn ${filtroJuego === 1 ? "active" : ""}`}
-                onClick={() => setFiltroJuego(1)}
-              >
-                One Piece
-              </button>
-              <button
-                type="button"
-                className={`rec-tab-btn ${filtroJuego === 2 ? "active" : ""}`}
-                onClick={() => setFiltroJuego(2)}
-              >
-                Riftbound
-              </button>
-              <button
-                type="button"
-                className={`rec-tab-btn ${filtroJuego === 4 ? "active" : ""}`}
-                onClick={() => setFiltroJuego(4)}
-              >
-                Magic
-              </button>
-              <button
-                type="button"
-                className={`rec-tab-btn ${filtroJuego === 5 ? "active" : ""}`}
-                onClick={() => setFiltroJuego(5)}
-              >
-                Pre-Ventas
-              </button>
-            </div>
-
-            {/* FLECHAS DE NAVEGACIÓN */}
-            <div className="rec-nav-arrows">
-              <button
-                type="button"
-                className="rec-arrow-btn"
-                onClick={() => moverScroll(-1)}
-                aria-label="Ver anteriores"
-                title="Desplazar hacia la izquierda"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                type="button"
-                className="rec-arrow-btn"
-                onClick={() => moverScroll(1)}
-                aria-label="Ver siguientes"
-                title="Desplazar hacia la derecha"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
+          <div className="carrusel-rel-nav">
+            <button
+              type="button"
+              onClick={() => moverScroll(-1)}
+              aria-label="Anterior"
+              title="Ver anteriores"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => moverScroll(1)}
+              aria-label="Siguiente"
+              title="Ver siguientes"
+            >
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
 
-        {/* CAROUSEL TRACK */}
-        <div className="rec-carousel-viewport">
-          <div className="rec-carousel-track" ref={scrollRef}>
-            {cartasFiltradas.map((c) => {
-              const juegoInfo = JUEGOS_MAP[c.juego_id] || { nombre: "TCG", badgeClass: "op" };
-              const yaAgregado = agregados[c.id];
-
-              return (
-                <Link
-                  key={c.id}
-                  to={`/carta/${c.id}`}
-                  className="rec-card"
-                  title={`Ver detalle de ${c.nombre}`}
-                >
-                  {/* POSTER CON MARCO */}
-                  <div className="rec-card-poster-wrap">
-                    <span className={`rec-badge-game ${juegoInfo.badgeClass}`}>
-                      {juegoInfo.nombre}
-                    </span>
-
-                    {c.stock > 0 && (
-                      <span className="rec-badge-stock">
-                        ✓ En stock ({c.stock})
-                      </span>
-                    )}
-
-                    <img
-                      src={c.imagen}
-                      alt={c.nombre}
-                      loading="lazy"
-                      className="rec-card-poster-img"
-                    />
-                  </div>
-
-                  {/* CONTENIDO Y PRECIO */}
-                  <div className="rec-card-content">
-                    <h3 className="rec-card-title" title={c.nombre}>
-                      {c.nombre}
-                    </h3>
-
-                    {c.expansion ? (
-                      <p className="rec-card-set">{c.expansion}</p>
-                    ) : (
-                      <p className="rec-card-set" style={{ opacity: 0.5 }}>Carta Suelta</p>
-                    )}
-
-                    <div className="rec-card-footer">
-                      <div className="rec-card-price-col">
-                        <span className="rec-card-price-label">Precio</span>
-                        <strong className="rec-card-price">
-                          ${Number(c.precio).toLocaleString("es-CO")} COP
-                        </strong>
-                      </div>
-
-                      <button
-                        type="button"
-                        className={`rec-btn-add ${yaAgregado ? "added" : ""}`}
-                        onClick={(e) => handleAgregarRapido(e, c)}
-                        title={yaAgregado ? "¡Agregado al carrito!" : "Agregar rápidamente al carrito"}
-                        aria-label={`Agregar ${c.nombre} al carrito`}
-                      >
-                        {yaAgregado ? <Check size={16} /> : <ShoppingCart size={15} />}
-                      </button>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+        {/* TRACK DESLIZANTE */}
+        <div
+          className="carrusel-rel-track"
+          ref={scrollRef}
+          style={{
+            display: "flex",
+            gap: "16px",
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            paddingBottom: "12px",
+          }}
+        >
+          {listaDuplicada.map((c, i) => (
+            <Link
+              key={`${c.id}-${i}`}
+              to={`/carta/${c.id}`}
+              className="carrusel-rel-item"
+              title={c.nombre}
+            >
+              <div className="carrusel-rel-img-box">
+                <img
+                  src={c.imagen}
+                  alt={c.nombre}
+                  loading="lazy"
+                />
+              </div>
+              <p className="carrusel-rel-nombre">{c.nombre}</p>
+              {c.precio != null && (
+                <p className="carrusel-rel-precio">
+                  ${Number(c.precio).toLocaleString("es-CO")} COP
+                </p>
+              )}
+            </Link>
+          ))}
         </div>
       </div>
     </section>
