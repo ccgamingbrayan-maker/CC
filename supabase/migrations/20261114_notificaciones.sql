@@ -21,6 +21,20 @@ CREATE TABLE IF NOT EXISTS public.notificaciones (
     creado_en TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Asegurar columnas si la tabla ya existía
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS titulo TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS mensaje TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'general';
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS canal TEXT DEFAULT 'ambos';
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS leido BOOLEAN DEFAULT false;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS es_global BOOLEAN DEFAULT false;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS enlace TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS metadatos JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS enviado_por TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ DEFAULT NOW();
+
 -- Índices para búsquedas eficientes
 CREATE INDEX IF NOT EXISTS idx_notificaciones_user ON public.notificaciones(user_id);
 CREATE INDEX IF NOT EXISTS idx_notificaciones_email ON public.notificaciones(LOWER(email));
@@ -46,3 +60,4 @@ CREATE POLICY "Lectura de notificaciones propias o globales" ON public.notificac
 DROP POLICY IF EXISTS "Gestion de notificaciones (Admin o autor)" ON public.notificaciones;
 CREATE POLICY "Gestion de notificaciones (Admin o autor)" ON public.notificaciones
     FOR ALL USING (true);
+

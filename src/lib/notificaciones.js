@@ -393,3 +393,4 @@ export function generarMailtoUrl({ email, asunto, mensaje }) {
   const qMensaje = encodeURIComponent(mensaje || "");
   return `mailto:${email || ""}?subject=${qAsunto}&body=${qMensaje}`;
 }
+

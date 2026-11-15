@@ -913,3 +913,4 @@ export default function ModuloNotificaciones({ user, esAdmin }) {
     </div>
   );
 }
+

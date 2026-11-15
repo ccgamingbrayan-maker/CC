@@ -35,6 +35,19 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Asegurar columnas en public.profiles si la tabla ya existía previamente
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS nombre TEXT;
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS nickname TEXT;
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS bandai_id TEXT;
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS telefono TEXT;
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS ciudad TEXT DEFAULT 'Cali';
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS notas_admin TEXT;
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS rol TEXT DEFAULT 'cliente';
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
 -- Índices para búsquedas ultra rápidas de participantes
 CREATE INDEX IF NOT EXISTS idx_profiles_nickname ON public.profiles(LOWER(nickname));
 CREATE INDEX IF NOT EXISTS idx_profiles_bandai_id ON public.profiles(bandai_id);
@@ -462,6 +475,29 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
     actualizado_en TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Asegurar columnas en public.pedidos si la tabla ya existía previamente
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS nickname TEXT;
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'entregado';
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS total NUMERIC(12, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS items JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS metodo_pago TEXT DEFAULT 'ePayco (Nequi)';
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS referencia_epayco TEXT;
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE IF EXISTS public.pedidos ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ DEFAULT NOW();
+
+-- Si la columna id en pedidos era numérica, convertirla a TEXT de manera segura
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'pedidos' AND column_name = 'id' AND data_type NOT LIKE '%text%' AND data_type NOT LIKE '%char%'
+    ) THEN
+        ALTER TABLE public.pedidos ALTER COLUMN id TYPE TEXT;
+    END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_pedidos_user_id ON public.pedidos(user_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_nickname ON public.pedidos(LOWER(nickname));
 CREATE INDEX IF NOT EXISTS idx_pedidos_estado ON public.pedidos(estado);
@@ -547,6 +583,17 @@ CREATE TABLE IF NOT EXISTS public.catalogo_premios (
     actualizado_en TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Asegurar columnas en catalogo_premios si la tabla ya existía
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS nombre TEXT;
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS juego TEXT DEFAULT 'One Piece TCG';
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'Sobres';
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS imagen TEXT;
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS stock INT DEFAULT 0;
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS valor_cop NUMERIC(12, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS notas TEXT;
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE IF EXISTS public.catalogo_premios ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ DEFAULT NOW();
+
 CREATE INDEX IF NOT EXISTS idx_catalogo_premios_juego ON public.catalogo_premios(juego);
 CREATE INDEX IF NOT EXISTS idx_catalogo_premios_stock ON public.catalogo_premios(stock);
 
@@ -592,6 +639,18 @@ CREATE TABLE IF NOT EXISTS public.prizewall_items (
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Asegurar columnas en prizewall_items si la tabla ya existía
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS nombre TEXT;
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'Accesorios';
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS costo_coins INT DEFAULT 1;
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS valor_cop NUMERIC(12, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS stock INT DEFAULT 0;
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS imagen TEXT;
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS descripcion TEXT;
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE IF EXISTS public.prizewall_items ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_prizewall_items_cat ON public.prizewall_items(categoria);
 CREATE INDEX IF NOT EXISTS idx_prizewall_items_stock ON public.prizewall_items(stock);
@@ -670,6 +729,20 @@ CREATE TABLE IF NOT EXISTS public.notificaciones (
     enviado_por TEXT,
     creado_en TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Asegurar columnas en notificaciones si la tabla ya existía
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS titulo TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS mensaje TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'general';
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS canal TEXT DEFAULT 'ambos';
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS leido BOOLEAN DEFAULT false;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS es_global BOOLEAN DEFAULT false;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS enlace TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS metadatos JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS enviado_por TEXT;
+ALTER TABLE IF EXISTS public.notificaciones ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_notificaciones_user ON public.notificaciones(user_id);
 CREATE INDEX IF NOT EXISTS idx_notificaciones_email ON public.notificaciones(LOWER(email));
