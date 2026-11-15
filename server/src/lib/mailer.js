@@ -242,3 +242,142 @@ export async function enviarCorreoPrueba(destinatario) {
     html,
   });
 }
+
+/**
+ * Plantilla HTML profesional y responsive para comunicados oficiales,
+ * novedades de torneos, avisos de pedidos y notificaciones de tienda.
+ */
+export function generarHtmlMensaje({ titulo, asunto, mensaje, enlace, enlaceTexto, remitenteNombre }) {
+  const urlTienda = process.env.CORS_ORIGIN || "https://www.basecc.cyou";
+  const fecha = new Date().toLocaleDateString("es-CO", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // Convertir saltos de línea del mensaje en párrafos HTML
+  const parrafos = (mensaje || "")
+    .split(/\n+/)
+    .map((p) => `<p style="margin: 0 0 16px; font-size: 14px; color: #d4d4d8; line-height: 1.6;">${p}</p>`)
+    .join("");
+
+  const botonAccion = enlace
+    ? `
+      <div style="margin-top: 28px; text-align: center;">
+        <a href="${enlace.startsWith("http") ? enlace : `${urlTienda}${enlace}`}" target="_blank" style="display: inline-block; background-color: #5b3fd1; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 4px 14px rgba(91, 63, 209, 0.4);">
+          ${enlaceTexto || "Ver detalles en CapsuleCorp"}
+        </a>
+      </div>
+    `
+    : "";
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>${asunto || titulo || "Comunicado Oficial"} - CapsuleCorp Gaming</title>
+</head>
+<body style="margin: 0; padding: 40px 16px; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 580px; background-color: #121215; border: 1px solid #27272a; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6);" cellspacing="0" cellpadding="0">
+          
+          <!-- Encabezado con marca y fecha -->
+          <tr>
+            <td style="padding: 28px 32px 20px; border-bottom: 1px solid #27272a; background: linear-gradient(180deg, #18181b 0%, #121215 100%);">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td>
+                    <div style="font-size: 17px; font-weight: 800; letter-spacing: 0.5px; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                      CapsuleCorp <span style="background: #5b3fd1; color: #ffffff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Gaming</span>
+                    </div>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 12px; color: #71717a;">${fecha}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Contenido Principal -->
+          <tr>
+            <td style="padding: 32px 32px 24px;">
+              <div style="font-size: 20px; font-weight: 700; color: #ffffff; margin-bottom: 16px; line-height: 1.35;">
+                ${titulo || asunto || "Comunicado Oficial"}
+              </div>
+
+              ${parrafos}
+
+              ${botonAccion}
+            </td>
+          </tr>
+
+          <!-- Pie de página formal -->
+          <tr>
+            <td style="padding: 24px 32px; background-color: #0a0a0c; border-top: 1px solid #27272a; font-size: 12px; color: #71717a; line-height: 1.5;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td>
+                    <div style="color: #f4f4f5; font-weight: 600;">CapsuleCorp Gaming Cali</div>
+                    <div style="font-size: 11px; color: #71717a; margin-top: 3px;">Sede Cra 34 # 4-50 · Tienda de Juegos de Cartas Coleccionables</div>
+                  </td>
+                  <td align="right" style="font-size: 11px; color: #71717a;">
+                    <a href="mailto:${process.env.EMAIL_USER || "ccshop2026@gmail.com"}" style="color: #a1a1aa; text-decoration: underline;">
+                      ${process.env.EMAIL_USER || "ccshop2026@gmail.com"}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Envía un correo genérico (comunicado, novedad, notificación de torneo o pedido)
+ * a uno o múltiples destinatarios usando Nodemailer / Gmail SMTP.
+ */
+export async function enviarCorreoMensaje({ destinatarios, asunto, titulo, mensaje, enlace, enlaceTexto }) {
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.warn("[Mailer] Transporter no disponible (EMAIL_USER o EMAIL_PASS ausente).");
+    return false;
+  }
+
+  const remitente = process.env.EMAIL_USER || "ccshop2026@gmail.com";
+  const html = generarHtmlMensaje({
+    titulo: titulo || asunto,
+    asunto,
+    mensaje,
+    enlace,
+    enlaceTexto: enlaceTexto || "Ver en CapsuleCorp",
+    remitenteNombre: "CapsuleCorp Gaming",
+  });
+
+  const mailOptions = {
+    from: `"CapsuleCorp Gaming" <${remitente}>`,
+    to: Array.isArray(destinatarios) ? destinatarios.join(", ") : destinatarios,
+    bcc: remitente,
+    subject: asunto,
+    html,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Mailer] Mensaje "${asunto}" enviado exitosamente a ${destinatarios}:`, info.messageId);
+    return true;
+  } catch (error) {
+    console.error("[Mailer] Error enviando correo personalizado:", error);
+    return false;
+  }
+}

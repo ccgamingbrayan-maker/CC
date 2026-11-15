@@ -16,19 +16,35 @@ import {
   MapPin,
   ExternalLink,
   Gamepad2,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { supabase } from "../lib/supabase.js";
 import { obtenerTorneosUsuario } from "../lib/torneos.js";
+import { obtenerNotificacionesUsuario } from "../lib/notificaciones.js";
 import Cargando from "../components/Cargando.jsx";
 import ColeccionFisica from "../components/ColeccionFisica.jsx";
 import CreadorDecks from "../components/CreadorDecks.jsx";
+import ModuloNotificaciones from "../components/ModuloNotificaciones.jsx";
 
 export default function Perfil() {
   const { user, esAdmin, cargando } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(() => searchParams.get("tab") || "coleccion");
+  const [noLeidasTotal, setNoLeidasTotal] = useState(0);
+
+  // Cargar contador de mensajes no leídos
+  useEffect(() => {
+    if (!user) return;
+    obtenerNotificacionesUsuario(user)
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setNoLeidasTotal(data.filter((n) => !n.leido).length);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   // Sincronizar el estado del tab si cambia el parámetro de búsqueda en la URL
   useEffect(() => {
@@ -37,8 +53,8 @@ export default function Perfil() {
       navigate("/admin/torneos", { replace: true });
       return;
     }
-    if (tabParam && ["datos", "coleccion", "decks", "wishlist", "pedidos", "torneos"].includes(tabParam)) {
-      setTab(tabParam);
+    if (tabParam && ["datos", "coleccion", "decks", "wishlist", "pedidos", "torneos", "mensajes", "notificaciones"].includes(tabParam)) {
+      setTab(tabParam === "notificaciones" ? "mensajes" : tabParam);
     }
   }, [searchParams, esAdmin, navigate]);
 
@@ -139,6 +155,21 @@ export default function Perfil() {
               <Trophy size={16} />
               <span>Mis Torneos</span>
             </button>
+            <button
+              type="button"
+              className={`perfil-tab-btn ${tab === "mensajes" ? "active" : ""}`}
+              onClick={() => {
+                setTab("mensajes");
+                setNoLeidasTotal(0);
+              }}
+              title="Mensajes al correo, notificaciones de pedidos, torneos y tienda"
+            >
+              <Bell size={16} />
+              <span>Mensajes y Notificaciones</span>
+              {noLeidasTotal > 0 && (
+                <span className="perfil-tab-badge-notif">{noLeidasTotal}</span>
+              )}
+            </button>
             {esAdmin && (
               <Link
                 to="/admin/torneos"
@@ -173,6 +204,7 @@ export default function Perfil() {
         {tab === "wishlist" && <Wishlist user={user} />}
         {tab === "pedidos" && <Pedidos user={user} />}
         {tab === "torneos" && <MisTorneos user={user} />}
+        {tab === "mensajes" && <ModuloNotificaciones user={user} esAdmin={esAdmin} />}
       </div>
     </section>
   );

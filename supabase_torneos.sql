@@ -652,4 +652,39 @@ ON CONFLICT (id) DO UPDATE SET
     descripcion = EXCLUDED.descripcion,
     actualizado_en = NOW();
 
+-- ==============================================================================
+-- 11. TABLA: NOTIFICACIONES Y MENSAJERÍA
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.notificaciones (
+    id TEXT PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT,
+    titulo TEXT NOT NULL,
+    mensaje TEXT NOT NULL,
+    categoria TEXT DEFAULT 'general' CHECK (categoria IN ('general', 'torneo', 'pedido', 'preventa', 'promo')),
+    canal TEXT DEFAULT 'ambos' CHECK (canal IN ('plataforma', 'correo', 'ambos')),
+    leido BOOLEAN DEFAULT false,
+    es_global BOOLEAN DEFAULT false,
+    enlace TEXT,
+    metadatos JSONB DEFAULT '{}'::jsonb,
+    enviado_por TEXT,
+    creado_en TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notificaciones_user ON public.notificaciones(user_id);
+CREATE INDEX IF NOT EXISTS idx_notificaciones_email ON public.notificaciones(LOWER(email));
+CREATE INDEX IF NOT EXISTS idx_notificaciones_global ON public.notificaciones(es_global);
+CREATE INDEX IF NOT EXISTS idx_notificaciones_fecha ON public.notificaciones(creado_en DESC);
+
+ALTER TABLE public.notificaciones ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Lectura de notificaciones propias o globales" ON public.notificaciones;
+CREATE POLICY "Lectura de notificaciones propias o globales" ON public.notificaciones
+    FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Gestion de notificaciones (Admin o autor)" ON public.notificaciones;
+CREATE POLICY "Gestion de notificaciones (Admin o autor)" ON public.notificaciones
+    FOR ALL USING (true);
+
+
 

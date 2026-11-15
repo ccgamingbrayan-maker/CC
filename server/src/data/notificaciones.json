@@ -1,0 +1,20 @@
+[
+  {
+    "id": "notif-1794710224391-o3cx5",
+    "titulo": "Torneo de Fin de Semana",
+    "asunto": "Torneo de Fin de Semana",
+    "mensaje": "¡Inscripciones abiertas para One Piece OP-09!",
+    "canal": "plataforma",
+    "categoria": "general",
+    "destinatario_tipo": "todos",
+    "destinatario_email": "Todos los clientes",
+    "destinatarios_conteo": 1,
+    "enlace": null,
+    "enlace_texto": null,
+    "leido": false,
+    "es_global": true,
+    "enviado_por": "usr-admin-1",
+    "correo_enviado": false,
+    "creado_en": "2026-11-15T02:37:04.391Z"
+  }
+]
